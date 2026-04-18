@@ -1,0 +1,374 @@
+[
+  {
+    "description": "新主 Agent 想知道该怎么组建团队",
+    "query": "TeamCreate",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "多 Agent 协作必须使用 TeamCreate",
+      "团队成员必须带 team_name",
+      "禁止孤立 subAgent"
+    ],
+    "expected_not_hits": [],
+    "notes": "TeamCreate 是硬规则，核心入口知识"
+  },
+  {
+    "description": "主 Agent 想偷偷自己动手或扮演多角色",
+    "query": "主 Agent 动手",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "主 Agent 纯监督调度",
+      "禁止主 Agent 角色扮演多角色"
+    ],
+    "expected_not_hits": [],
+    "notes": "用户的强硬红线，防止 leader 偷工减料"
+  },
+  {
+    "description": "新成员想知道 spawn 后第一步该做什么",
+    "query": "成员启动协议",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "成员启动强制协议",
+      "activate 返回什么",
+      "search_experience 复用前人经验"
+    ],
+    "expected_not_hits": [],
+    "notes": "team-hub activate 流程必读"
+  },
+  {
+    "description": "成员想结束工作释放记忆",
+    "query": "deactivate 顺序",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "save_memory 前不能 deactivate",
+      "成员任务结束流程",
+      "submit_experience 共享团队经验"
+    ],
+    "expected_not_hits": [],
+    "notes": "跳步会丢经验，必须按顺序"
+  },
+  {
+    "description": "leader 想紧急修正某个成员，疑惑为啥消息半天没生效",
+    "query": "插队机制",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "Claude Team 没有插队机制",
+      "SendMessage 不是实时中断",
+      "Task 没有 priority 字段",
+      "任务颗粒度要拆细"
+    ],
+    "expected_not_hits": [],
+    "notes": "用户真实踩的坑，整个机制的根因"
+  },
+  {
+    "description": "想强制停掉一个跑偏的成员",
+    "query": "TaskStop 强制中止",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "TaskStop 是工具边界中断",
+      "shutdown_request 是礼貌请求退出",
+      "两段式 shutdown 协议"
+    ],
+    "expected_not_hits": [],
+    "notes": "TaskStop vs shutdown_request 区分"
+  },
+  {
+    "description": "新 Agent 想定位 mailbox 文件",
+    "query": "mailbox 路径",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "mailbox 路径约定",
+      "成员 500ms 轮询 mailbox",
+      "团队配置存 ~/.claude/teams/"
+    ],
+    "expected_not_hits": [],
+    "notes": "文件型邮箱系统的基础知识"
+  },
+  {
+    "description": "想给成员发消息却发现只写文本对方看不到",
+    "query": "SendMessage 怎么用",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "SendMessage 用 to 参数",
+      "SendMessage 不是实时中断",
+      "teammate-message 格式"
+    ],
+    "expected_not_hits": [],
+    "notes": "光写文本不调 SendMessage 无效"
+  },
+  {
+    "description": "收到 assignedBy 是自己的任务重放消息该怎么办",
+    "query": "消息回环重复",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "消息回环现象"
+    ],
+    "expected_not_hits": [],
+    "notes": "实战中遇到的消息总线回环陷阱"
+  },
+  {
+    "description": "AionUi e2e 里 team lifecycle 测试超时",
+    "query": "team lifecycle 超时",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "lifecycle 测试需要 300s 超时",
+      "两段式 shutdown 协议",
+      "Fire 前必须点回 Leader tab"
+    ],
+    "expected_not_hits": [],
+    "notes": "专属 AionUi 项目的 e2e 教训"
+  },
+  {
+    "description": "code-reviewer 结论是否可信",
+    "query": "交叉验证成员结论",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "fact-checker 交叉验证模式",
+      "peer_pair 同伴复核"
+    ],
+    "expected_not_hits": [],
+    "notes": "AGPL vs MIT 的 License 错报是经典案例"
+  },
+  {
+    "description": "tag 搜索所有团队规则",
+    "query": "team-rule",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "多 Agent 协作必须使用 TeamCreate",
+      "主 Agent 纯监督调度",
+      "禁止孤立 subAgent",
+      "禁止主 Agent 角色扮演多角色"
+    ],
+    "expected_not_hits": [],
+    "notes": "所有本类别知识都应能被 team-rule 标签命中"
+  },
+  {
+    "description": "找所有 team-hub 相关知识",
+    "query": "team-hub",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "team-hub 是团队记忆持久化系统",
+      "成员启动强制协议",
+      "activate 返回什么",
+      "save_memory 前不能 deactivate"
+    ],
+    "expected_not_hits": [],
+    "notes": "team-hub 专项工具集"
+  },
+  {
+    "description": "找 SendMessage 机制细节",
+    "query": "send-message",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "SendMessage 不是实时中断",
+      "SendMessage 用 to 参数",
+      "pendingMessages 排队机制",
+      "idle_notification 空闲通知",
+      "teammate-message 格式"
+    ],
+    "expected_not_hits": [],
+    "notes": "跨成员通信全景"
+  },
+  {
+    "description": "成员拿到 persona 需要注意什么",
+    "query": "persona 身份",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "activate 返回什么",
+      "成员启动强制协议",
+      "project_rules 含 forbidden 和 rules"
+    ],
+    "expected_not_hits": [],
+    "notes": "persona 是成员的身份定义来源"
+  },
+  {
+    "description": "agent name 带 -2 后缀是什么情况",
+    "query": "重复 Agent 数字后缀",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "成员名数字后缀是重复实例"
+    ],
+    "expected_not_hits": [],
+    "notes": "防止重复 spawn 浪费"
+  },
+  {
+    "description": "mnemo 项目团队怎么分工",
+    "query": "mnemo 团队分工",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "mnemo-phase1-final 开发团队分工",
+      "kb-research 调研团队 4 成员",
+      "mnemo-data-extract 12 类别并行提取"
+    ],
+    "expected_not_hits": [],
+    "notes": "项目级团队模式"
+  },
+  {
+    "description": "想做大规模数据提取工程",
+    "query": "数据工程分阶段",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "数据工程分两阶段",
+      "mnemo-data-extract 12 类别并行提取",
+      "任务依赖链显式声明"
+    ],
+    "expected_not_hits": [],
+    "notes": "总编辑 + 并行类别是 mnemo 验证过的模式"
+  },
+  {
+    "description": "fire 一个成员为什么会等很久",
+    "query": "fire 成员 shutdown 协议",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "两段式 shutdown 协议",
+      "shutdown_approved 成员同意退出",
+      "shutdown 流程三步"
+    ],
+    "expected_not_hits": [],
+    "notes": "shutdown 要成员主动同意"
+  },
+  {
+    "description": "team config.json 里有什么字段",
+    "query": "team config 字段",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "team config.json 字段",
+      "团队配置存 ~/.claude/teams/",
+      "成员颜色区分"
+    ],
+    "expected_not_hits": [],
+    "notes": "team 元数据结构"
+  },
+  {
+    "description": "成员完成后 leader 怎么判断它空闲了",
+    "query": "空闲通知",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "idle_notification 空闲通知",
+      "成员任务结束流程",
+      "shutdown 流程三步"
+    ],
+    "expected_not_hits": [],
+    "notes": "idle_notification 是信号"
+  },
+  {
+    "description": "成员要防跑偏有什么内置机制",
+    "query": "成员跑偏 checkpoint",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "checkpoint 子任务自查",
+      "任务颗粒度要拆细",
+      "peer_pair 同伴复核"
+    ],
+    "expected_not_hits": [],
+    "notes": "防跑偏多种手段"
+  },
+  {
+    "description": "用户在 workspace 说咱们团队",
+    "query": "咱们团队",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "咱们团队唤醒固定 11 人"
+    ],
+    "expected_not_hits": [],
+    "notes": "workspace 级约定"
+  },
+  {
+    "description": "找 mnemo 的产品级验收标准",
+    "query": "mnemo 验收新 Agent",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "leader 终极检验标准"
+    ],
+    "expected_not_hits": [],
+    "notes": "mnemo 成败标准是 Agent 能融入"
+  },
+  {
+    "description": "要共享某条经验给后续成员",
+    "query": "submit_experience 团队经验",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "submit_experience 共享团队经验",
+      "成员任务结束流程",
+      "search_experience 复用前人经验"
+    ],
+    "expected_not_hits": [],
+    "notes": "经验池的写入路径"
+  },
+  {
+    "description": "chat-salon 示例团队怎么配置",
+    "query": "chat-salon 示例",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "chat-salon 四角色沙龙",
+      "team config.json 字段",
+      "成员颜色区分"
+    ],
+    "expected_not_hits": [],
+    "notes": "示例团队结构参考"
+  },
+  {
+    "description": "成员汇报交付物用什么格式",
+    "query": "成员汇报格式",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "成员汇报带文件绝对路径",
+      "teammate-message 格式"
+    ],
+    "expected_not_hits": [],
+    "notes": "规范化汇报降低 leader 审阅成本"
+  },
+  {
+    "description": "关联查询：消息机制相关知识",
+    "query": "SendMessage 不是实时中断",
+    "query_type": "related",
+    "scope": null,
+    "expected_hits": [
+      "mailbox 路径约定",
+      "成员 500ms 轮询 mailbox",
+      "TaskStop 是工具边界中断",
+      "pendingMessages 排队机制"
+    ],
+    "expected_not_hits": [],
+    "notes": "验证 related 链路完整性"
+  },
+  {
+    "description": "关联查询：TeamCreate 相关规则",
+    "query": "多 Agent 协作必须使用 TeamCreate",
+    "query_type": "related",
+    "scope": null,
+    "expected_hits": [
+      "禁止孤立 subAgent",
+      "主 Agent 纯监督调度",
+      "团队成员必须带 team_name"
+    ],
+    "expected_not_hits": [],
+    "notes": "核心规则的 related 环"
+  }
+]

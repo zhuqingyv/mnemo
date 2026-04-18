@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>mnemo · knowledge dashboard</title>
+<style>
+  :root {
+    --bg-0: #0f1115;
+    --bg-1: #161920;
+    --bg-2: #1c2028;
+    --bg-3: #242934;
+    --border: #23272f;
+    --border-strong: #2e333d;
+
+    --text-0: #e8ecf1;
+    --text-1: #a8b1bd;
+    --text-2: #6a7280;
+    --text-3: #464d57;
+
+    --accent: #3f8cff;
+    --accent-dim: #2a6fd6;
+    --warn: #d4a43a;
+    --danger: #e05353;
+
+    --mono: "JetBrains Mono", "SF Mono", "Menlo", "Consolas", ui-monospace, monospace;
+    --radius: 6px;
+    --radius-lg: 8px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-0); color: var(--text-0);
+    font-family: var(--mono); font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  button, input { font-family: inherit; font-size: inherit; color: inherit; }
+  button { cursor: pointer; background: none; border: none; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 24px;
+    background: var(--bg-0);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+  }
+  .brand {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    font-weight: 600; font-size: 14px;
+    letter-spacing: 0.2px; user-select: none;
+  }
+  .brand .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); display: inline-block;
+    transform: translateY(-1px);
+  }
+  .brand .muted { color: var(--text-3); font-weight: 400; font-size: 12px; margin-left: 4px; }
+
+  .search { flex: 1; max-width: 540px; position: relative; }
+  .search input {
+    width: 100%;
+    background: var(--bg-1); color: var(--text-0);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 8px 36px 8px 34px;
+    font-family: var(--mono); font-size: 13px;
+    outline: none;
+    transition: border-color 120ms, background 120ms;
+  }
+  .search input::placeholder { color: var(--text-3); }
+  .search input:focus {
+    border-color: var(--accent-dim);
+    background: var(--bg-2);
+  }
+  .search .icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--text-3); pointer-events: none;
+  }
+  .search kbd {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--text-3); font-size: 10.5px;
+    border: 1px solid var(--border); border-radius: 3px;
+    padding: 1px 5px; background: var(--bg-2);
+  }
+
+  .topbar .actions { display: flex; gap: 8px; margin-left: auto; }
+  .btn {
+    color: var(--text-1);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 6px 12px; background: var(--bg-1);
+    transition: background 120ms, border-color 120ms, color 120ms;
+  }
+  .btn:hover { background: var(--bg-2); color: var(--text-0); border-color: var(--border-strong); }
+
+  /* ---------- Page layout ---------- */
+  .page { max-width: 1280px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  .section-label {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+    color: var(--text-2);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+  }
+  .section-label .right {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--text-3); font-size: 11px;
+    letter-spacing: 0; text-transform: none;
+  }
+  .section-label .right .health {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 3px 10px;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: var(--bg-1);
+  }
+  .section-label .right .health .hbar {
+    width: 60px; height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden;
+  }
+  .section-label .right .health .hbar > span {
+    display: block; height: 100%; background: var(--accent);
+    transition: width 400ms ease;
+  }
+  .section-label .right .health.low .hbar > span { background: var(--warn); }
+  .section-label .right .health.bad .hbar > span { background: var(--danger); }
+  .section-label .right .health .val { color: var(--text-1); font-feature-settings: "tnum"; }
+  .section-label .right .health.low .val { color: var(--warn); }
+  .section-label .right .health.bad .val { color: var(--danger); }
+  .section-label .right .ts {
+    font-family: var(--mono);
+    color: var(--text-3);
+  }
+
+  /* ---------- Metric grid ---------- */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 1100px) { .metric-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 680px)  { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .metric {
+    position: relative;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px 14px;
+    display: flex; flex-direction: column;
+    min-height: 118px;
+    transition: border-color 120ms, background 120ms;
+  }
+  .metric:hover { border-color: var(--border-strong); background: var(--bg-2); }
+  .metric.clickable { cursor: pointer; }
+  .metric.clickable:hover { border-color: var(--accent-dim); }
+
+  .metric .label {
+    font-size: 11px; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .metric .label .tag-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    display: inline-block; background: var(--text-3);
+  }
+  .metric.is-good .tag-dot    { background: var(--accent); }
+  .metric.is-warn .tag-dot    { background: var(--warn); }
+  .metric.is-danger .tag-dot  { background: var(--danger); }
+  .metric.is-neutral .tag-dot { background: var(--text-3); }
+
+  /* right-top arrow for clickable nav cards */
+  .metric .jump {
+    position: absolute; top: 14px; right: 14px;
+    color: var(--text-3); font-size: 12px;
+    transition: color 120ms, transform 120ms;
+    pointer-events: none;
+  }
+  .metric.clickable:hover .jump { color: var(--text-1); transform: translateX(2px); }
+
+  .metric .value {
+    font-size: 28px; font-weight: 500;
+    color: var(--text-0);
+    font-feature-settings: "tnum";
+    line-height: 1.1; letter-spacing: -0.5px;
+  }
+  .metric.is-danger .value { color: var(--danger); }
+  .metric.is-warn   .value { color: var(--warn); }
+
+  .metric .sub {
+    margin-top: auto;
+    padding-top: 10px;
+    font-size: 11px;
+    color: var(--text-2);
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .metric .sub .pct { color: var(--text-1); font-feature-settings: "tnum"; }
+  .metric.is-good   .sub .pct { color: var(--accent); }
+  .metric.is-warn   .sub .pct { color: var(--warn); }
+  .metric.is-danger .sub .pct { color: var(--danger); }
+  .metric .sub .low-sample { color: var(--text-3); font-size: 10.5px; }
+
+  .metric .bar {
+    margin-top: 8px;
+    height: 3px; background: var(--bg-3); border-radius: 2px;
+    overflow: hidden;
+  }
+  .metric .bar > span {
+    display: block; height: 100%; background: var(--accent);
+    transition: width 400ms ease;
+  }
+  .metric.is-warn   .bar > span { background: var(--warn); }
+  .metric.is-danger .bar > span { background: var(--danger); }
+  .metric.is-neutral .bar > span { background: var(--text-3); }
+
+  /* ---------- Knowledge list ---------- */
+  .list-wrap { margin-top: 40px; scroll-margin-top: 80px; }
+  .list-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+    color: var(--text-2);
+  }
+  .chip-row { display: inline-flex; gap: 6px; margin-left: 12px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--text-2);
+    background: transparent;
+    transition: border-color 120ms, color 120ms, background 120ms;
+  }
+  .chip:hover { color: var(--text-0); border-color: var(--border-strong); }
+  .chip.active {
+    color: var(--text-0);
+    border-color: var(--accent-dim);
+    background: rgba(63, 140, 255, 0.08);
+  }
+  .chip .c { color: var(--text-3); margin-left: 4px; font-feature-settings: "tnum"; }
+  .chip.active .c { color: var(--text-1); }
+
+  .list {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-1);
+    overflow: hidden;
+  }
+  .list-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px 80px 76px;
+    gap: 16px;
+    padding: 10px 20px;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-3);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .list-header > *:nth-child(2),
+  .list-header > *:nth-child(3),
+  .list-header > *:nth-child(4) { text-align: right; }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px 80px 76px;
+    gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 120ms;
+    align-items: center;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: var(--bg-2); }
+  /* .row.selected 的样式合入 L545 纵深规则(inset 蓝条 + 浮起阴影一起画) */
+  .row.dim { opacity: 0.42; }
+  .row.dim:hover { opacity: 0.85; }
+  .row.halo { animation: haloPulse 1.4s ease-out; }
+  @keyframes haloPulse {
+    0%   { box-shadow: inset 2px 0 0 var(--accent), 0 0 0 0 rgba(63,140,255,0.45); }
+    80%  { box-shadow: inset 2px 0 0 var(--accent), 0 0 0 8px rgba(63,140,255,0); }
+    100% { box-shadow: inset 2px 0 0 var(--accent), 0 0 0 0 rgba(63,140,255,0); }
+  }
+
+  .row .main { min-width: 0; }
+  .row .title {
+    color: var(--text-0);
+    font-size: 13.5px; font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .row .summary {
+    color: var(--text-2);
+    font-size: 12px; margin-top: 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .row .meta-row {
+    display: flex; gap: 10px; align-items: center;
+    margin-top: 6px;
+    color: var(--text-3);
+    font-size: 11px;
+    flex-wrap: wrap;
+  }
+  .row .meta-row .sep { color: var(--text-3); }
+
+  .tag {
+    font-size: 10.5px;
+    color: var(--text-2);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .tag.ok          { color: var(--text-2); }
+  .tag.stale       { color: var(--warn); }
+  .tag.contradicts { color: var(--danger); }
+  .tag.superseded  { color: var(--text-3); text-decoration: line-through; }
+  .tag.archived    { color: var(--text-3); }
+  .tag.type        { color: var(--text-2); }
+  .tag.more        { color: var(--text-3); }
+
+  .row .feedback {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 4px;
+    color: var(--text-2);
+    font-size: 12px;
+    font-feature-settings: "tnum";
+  }
+  .row .feedback .arrow { color: var(--text-3); font-size: 11px; }
+
+  .row .time {
+    text-align: right;
+    color: var(--text-3);
+    font-size: 12px;
+    font-feature-settings: "tnum";
+  }
+
+  /* rerank mini viz (column 2) */
+  .rerank {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 8px;
+    font-size: 11px; color: var(--text-2);
+    font-feature-settings: "tnum";
+  }
+  .rerank .score {
+    color: var(--text-3);
+    font-size: 11px;
+    min-width: 24px; text-align: right;
+  }
+  body.is-searching .row.hit .rerank .score { color: var(--accent); font-weight: 600; }
+  .rerank .bars {
+    display: flex; gap: 2px; align-items: flex-end;
+    height: 14px;
+  }
+  .rerank .bars b {
+    display: block;
+    width: 4px;
+    background: var(--text-3);
+    border-radius: 1px;
+    transition: height 200ms ease, background 200ms;
+  }
+  body.is-searching .row.hit .rerank .bars b { background: var(--accent); }
+  .row.selected .rerank .bars b { background: var(--accent); }
+  .rerank .bars b.dim { background: var(--bg-3); }
+
+  /* expand on selected/hover: show 5 factor bars + labels */
+  .row .rerank-detail {
+    display: none;
+    grid-column: 1 / -1;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--bg-0);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .row.selected .rerank-detail { display: block; }
+  body.is-searching .row.hit.selected .rerank-detail { display: block; }
+
+  .rerank-detail .rd-title {
+    font-size: 10.5px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between;
+  }
+  .rerank-detail .rd-title .formula { color: var(--text-2); font-family: var(--mono); }
+  .rerank-detail .rd-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .rerank-detail .f {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .rerank-detail .f .fn {
+    font-size: 10px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .rerank-detail .f .fv {
+    color: var(--text-1); font-size: 12px;
+    font-feature-settings: "tnum";
+  }
+  body.is-searching .row.hit .rerank-detail .f .fv { color: var(--accent); }
+  .row.selected.hit .rerank-detail .f .fv { color: var(--accent); }
+  .rerank-detail .f .fbar {
+    height: 4px; background: var(--bg-3); border-radius: 2px; overflow: hidden;
+  }
+  .rerank-detail .f .fbar > span {
+    display: block; height: 100%;
+    background: var(--text-2);
+    transition: width 300ms ease;
+  }
+  body.is-searching .row.hit .rerank-detail .f .fbar > span { background: var(--accent); }
+  .row.selected.hit .rerank-detail .f .fbar > span { background: var(--accent); }
+  .rerank-detail .f.inactive .fv { color: var(--text-3); }
+  .rerank-detail .f.inactive .fbar > span { background: var(--bg-3); }
+
+  /* ---------- Detail panel ---------- */
+  .panel {
+    position: fixed;
+    top: 0; right: 0;
+    width: 440px;
+    height: 100vh;
+    background: var(--bg-1);
+    border-left: 1px solid var(--border);
+    box-shadow: -16px 0 40px rgba(0,0,0,0.4);
+    z-index: 50;
+    transform: translateX(100%);
+    transition: transform 220ms cubic-bezier(.4,.0,.2,1);
+    display: flex; flex-direction: column;
+  }
+  .panel.open { transform: translateX(0); }
+
+  .panel .ph {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .panel .ph .close {
+    margin-left: auto; color: var(--text-2);
+    padding: 4px 8px; border-radius: 4px;
+  }
+  .panel .ph .close:hover { color: var(--text-0); background: var(--bg-2); }
+  .panel .pbody { flex: 1; overflow-y: auto; padding: 24px 24px 80px; }
+
+  .panel h2 {
+    margin: 0 0 8px;
+    font-size: 16px; font-weight: 600;
+    color: var(--text-0);
+    line-height: 1.4;
+  }
+  .panel .psum { color: var(--text-1); font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+  .panel .meta-grid {
+    display: grid; grid-template-columns: 96px 1fr;
+    gap: 8px 12px;
+    margin-bottom: 20px;
+    font-size: 12px;
+  }
+  .panel .meta-grid .k { color: var(--text-3); }
+  .panel .meta-grid .v { color: var(--text-1); word-break: break-word; }
+  .panel .meta-grid .v.warn   { color: var(--warn); }
+  .panel .meta-grid .v.danger { color: var(--danger); }
+
+  .panel .section { margin-top: 24px; }
+  .panel .section .h {
+    color: var(--text-3); font-size: 10.5px;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .panel pre.content {
+    background: var(--bg-0);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-family: var(--mono); font-size: 12px;
+    color: var(--text-1);
+    white-space: pre-wrap; word-break: break-word;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .rel {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 120ms, background 120ms;
+  }
+  .rel:hover { border-color: var(--border-strong); background: var(--bg-2); }
+  .rel .rel-kind {
+    font-size: 10.5px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 4px;
+  }
+  .rel.contradicts .rel-kind { color: var(--danger); }
+  .rel.supersedes  .rel-kind { color: var(--accent); }
+  .rel.superseded  .rel-kind { color: var(--text-3); }
+  .rel.depends_on  .rel-kind { color: var(--text-2); }
+  .rel .rel-title { color: var(--text-0); font-size: 13px; }
+
+  .panel .compare-btn {
+    margin-top: 6px;
+    display: inline-block;
+    padding: 5px 10px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text-3);
+    font-size: 11px;
+    cursor: not-allowed;
+    background: transparent;
+  }
+  .panel .compare-btn:hover { color: var(--text-2); border-color: var(--text-3); }
+
+  /* ---------- Empty / hints ---------- */
+  .empty-state {
+    padding: 40px 20px;
+    color: var(--text-3);
+    text-align: center;
+    font-size: 12px;
+  }
+  .foot-hint {
+    margin-top: 32px;
+    color: var(--text-3);
+    font-size: 11px;
+    text-align: center;
+  }
+  .foot-hint kbd {
+    font-family: var(--mono); font-size: 10.5px;
+    background: var(--bg-2); color: var(--text-1);
+    padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);
+  }
+
+  /* ---------- Depth layer (C 方案 · "层次" 不是 "空间") ----------
+     hover/selected 微抬 1px + 阴影;panel 打开时主页退后 blur+scale。
+     不是 3D,是 DevTools/Linear/Raycast 的专业层次语言。 */
+  .row { transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+  /* .row.selected 同时承载:
+     - 左侧 inset 蓝条(主视觉锚点,halo 动画结束时无缝衔接)
+     - 整行微抬 + 落地阴影(纵深层感)
+     合成一条,避免后规则吃掉前规则的 box-shadow */
+  .row.selected {
+    background: var(--bg-2);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 2px 0 0 var(--accent),
+      0 4px 14px rgba(0,0,0,0.35);
+    z-index: 1;
+    position: relative;
+  }
+  /* A3 · 搜索聚光灯纵深 ·
+     命中行浮起、放大 1%、亮度微升 → 像被灯打在上面;
+     未命中行 opacity 0.42 + brightness 0.72 → 退到背景。 */
+  body.is-searching .list { filter: brightness(0.85); transition: filter 180ms ease; }
+  body.is-searching .row.hit {
+    transform: translateY(-2px) scale(1.008);
+    box-shadow:
+      0 8px 24px rgba(0,0,0,0.42),
+      0 0 0 1px rgba(63, 140, 255, 0.18);
+    filter: brightness(1.18);
+    z-index: 2;
+    position: relative;
+  }
+  body.is-searching .row.dim { filter: brightness(0.72); }
+  .metric { transition: transform 140ms ease, border-color 120ms, background 120ms, box-shadow 140ms; }
+  .metric:hover            { transform: translateY(-1px); }
+  .metric.clickable:hover  {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+  body.panel-open .page {
+    filter: blur(1px);
+    transform: scale(0.996);
+    transition: filter 220ms ease, transform 220ms ease;
+    transform-origin: center 40%;
+  }
+  .page { transition: filter 220ms ease, transform 220ms ease; }
+
+  /* A1 · 纸张翻角堆叠 · panel 关系区的 supersedes/superseded ----------
+     pm-advisor 三审定稿三层版:
+       顶: border-strong 1px 边线 = 纸张切口
+       中: bg-2 4px 偏移色块,露一条"第二张纸"(bg-1 底上可辨识)
+       底: 8px 16px 虚阴影 = 纸堆落地感
+     比 6 层循环干净,暗色下色差够。
+     伪元素 ::after 是右上角翻角撕边,纯静态,截图稳。 */
+  .rel.supersedes, .rel.superseded {
+    position: relative;
+    box-shadow:
+      0 1px 0 var(--border-strong),
+      0 4px 0 -1px var(--bg-2),
+      0 5px 0 -1px var(--border-strong),
+      0 8px 16px rgba(0,0,0,0.45);
+    margin-bottom: 14px;
+    padding-right: 22px;
+  }
+  .rel.supersedes::after,
+  .rel.superseded::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 14px; height: 14px;
+    background:
+      linear-gradient(
+        225deg,
+        var(--bg-2) 0 50%,
+        var(--border-strong) 50% calc(50% + 1px),
+        var(--bg-1) calc(50% + 1px) 100%
+      );
+    border-top-right-radius: var(--radius);
+  }
+
+  /* ---------- A2 · ContradictionDuel ----------
+     filter=contradicts 时,列表区切换为两卡对峙视图:
+     - 两张卡片左右并排,perspective + rotateY(±3deg) 向中心微倾
+     - 中间一道红色锯齿 ⚡ (clip-path + linear-gradient)
+     - 其他 row 折叠为单行灰条 */
+  body.duel-mode .list { padding: 24px; background: var(--bg-1); }
+  body.duel-mode .list-header { display: none; }
+  body.duel-mode #rows { display: grid; grid-template-columns: 1fr 48px 1fr; gap: 0; align-items: stretch; }
+  body.duel-mode .row {
+    position: relative;
+    display: flex; flex-direction: column;
+    padding: 18px 20px;
+    background: var(--bg-0);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    grid-template-columns: none;
+    min-height: 180px;
+    transform-origin: center center;
+    transition: transform 280ms ease, box-shadow 280ms ease;
+  }
+  body.duel-mode .row:hover { background: var(--bg-0); }
+  body.duel-mode .row.selected { background: var(--bg-0); box-shadow: 0 0 0 2px var(--accent), -6px 10px 28px rgba(0,0,0,0.42); }
+  body.duel-mode .row:first-of-type {
+    grid-column: 1;
+    transform: perspective(1000px) rotateY(3deg) translateZ(4px);
+    box-shadow: -6px 10px 28px rgba(0,0,0,0.42);
+  }
+  body.duel-mode .row:last-of-type {
+    grid-column: 3;
+    transform: perspective(1000px) rotateY(-3deg) translateZ(4px);
+    box-shadow: 6px 10px 28px rgba(0,0,0,0.42);
+  }
+  body.duel-mode .row .rerank,
+  body.duel-mode .row .feedback,
+  body.duel-mode .row .time,
+  body.duel-mode .row .rerank-detail { display: none !important; }
+  body.duel-mode .row .main { flex: 1; }
+  body.duel-mode .row .title { white-space: normal; font-size: 14px; line-height: 1.5; }
+  body.duel-mode .row .summary { white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  body.duel-mode .row::before {
+    content: attr(data-version-label);
+    position: absolute;
+    top: 10px; right: 12px;
+    font-size: 10px; color: var(--text-3);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  .duel-rift {
+    grid-column: 2;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 180px;
+  }
+  .duel-rift::before {
+    content: '';
+    position: absolute;
+    top: 10%; bottom: 10%; left: 50%;
+    width: 3px;
+    background: linear-gradient(180deg,
+      transparent 0%, var(--danger) 15%, var(--danger) 85%, transparent 100%);
+    clip-path: polygon(
+      50% 0%, 100% 7%, 30% 20%, 85% 35%, 20% 50%, 90% 65%, 25% 80%, 100% 93%, 50% 100%,
+      0% 93%, 75% 80%, 10% 65%, 80% 50%, 15% 35%, 70% 20%, 0% 7%);
+    transform: translateX(-50%);
+    opacity: 0.85;
+  }
+  .duel-rift::after {
+    content: '⚡';
+    position: relative;
+    color: var(--danger);
+    font-size: 20px;
+    background: var(--bg-0);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--danger);
+    box-shadow: 0 0 18px rgba(224, 83, 83, 0.45);
+    z-index: 2;
+  }
+  .duel-banner {
+    grid-column: 1 / -1;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; margin-bottom: 20px;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    background: rgba(224, 83, 83, 0.08);
+    color: var(--danger);
+    font-size: 12px;
+  }
+  .duel-banner .left { display: flex; align-items: center; gap: 8px; }
+  .duel-banner .actions { display: flex; gap: 8px; }
+  .duel-banner .action {
+    color: var(--text-1);
+    border: 1px solid var(--border-strong);
+    background: var(--bg-2);
+    padding: 4px 10px; border-radius: var(--radius);
+    font-size: 11px;
+    cursor: not-allowed;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  /* F4 · WIP 小角标,静态可见,不靠 hover */
+  .duel-banner .action .wip {
+    display: inline-block;
+    padding: 0 5px;
+    font-size: 9px;
+    line-height: 14px;
+    border: 1px solid var(--text-3);
+    border-radius: 3px;
+    color: var(--text-3);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ---------- Scrollbar ---------- */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 6px; border: 2px solid var(--bg-0); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span>mnemo <span class="muted">knowledge dashboard</span></div>
+  <div class="search">
+    <span class="icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </span>
+    <input id="search-input" placeholder="search knowledge …  (try: mcp, rerank, 中文)" />
+    <kbd id="search-kbd">⌘K</kbd>
+  </div>
+  <div class="actions">
+    <button class="btn" id="export-btn" title="Download JSON snapshot of this dashboard">Export snapshot</button>
+  </div>
+</div>
+
+<main class="page">
+
+  <!-- Dashboard -->
+  <div class="section-label">
+    <span>overview</span>
+    <span class="right">
+      <span class="health" id="health">
+        <span>health</span>
+        <span class="hbar"><span id="health-bar"></span></span>
+        <span class="val" id="health-val">—</span>
+      </span>
+      <span class="ts" id="snap-ts">snapshot · —</span>
+    </span>
+  </div>
+
+  <div class="metric-grid" id="metric-grid"></div>
+
+  <!-- Knowledge list -->
+  <div class="list-wrap" id="list-wrap">
+    <div class="section-label">
+      <span>knowledge</span>
+      <span class="right"><span id="list-count">—</span> shown · sorted by <span id="sort-mode">attention</span></span>
+    </div>
+
+    <div class="list-toolbar">
+      <span>filter</span>
+      <div class="chip-row" id="chip-row">
+        <button class="chip active" data-filter="all">all <span class="c" data-count="all"></span></button>
+        <button class="chip" data-filter="contradicts">contradicts <span class="c" data-count="contradicts"></span></button>
+        <button class="chip" data-filter="stale">stale <span class="c" data-count="stale"></span></button>
+        <button class="chip" data-filter="active">active <span class="c" data-count="active"></span></button>
+        <button class="chip" data-filter="superseded">superseded <span class="c" data-count="superseded"></span></button>
+        <button class="chip" data-filter="archived">archived <span class="c" data-count="archived"></span></button>
+      </div>
+    </div>
+
+    <div class="list">
+      <div class="list-header">
+        <div>knowledge</div>
+        <div>rerank</div>
+        <div>feedback</div>
+        <div>updated</div>
+      </div>
+      <div id="rows"></div>
+    </div>
+  </div>
+
+  <div class="foot-hint">
+    <kbd>⌘K</kbd> focus search · <kbd>Esc</kbd> clear / close · click a metric to filter · hover or select a row to inspect rerank factors
+  </div>
+</main>
+
+<!-- Side panel -->
+<aside class="panel" id="panel" aria-hidden="true">
+  <div class="ph">
+    <span id="panel-type">KNOWLEDGE</span>
+    <button class="close" id="panel-close">close ✕</button>
+  </div>
+  <div class="pbody" id="panel-body"></div>
+</aside>
+
+<script>
+/* ========== Data ========== */
+const DATA = [
+  { id:'k01', title:'MCP 默认超时设置为 30s',
+    summary:'30s 在大多数 MCP server 上够用；实测 nft-gmgn 的 RPC 聚合链能在 25s 内返回。',
+    content:'# MCP 超时配置（旧结论）\n\n- connect_timeout: 30s\n- tool_call_timeout: 30s\n- 失败时自动 fallback 到只读查询',
+    claim_type:'decision', status:'active', scope:'global',
+    tags:['mcp','config','timeout'], version:1,
+    created_at:'2026-02-10', accessed_at:'2026-04-08',
+    feedback_helpful:5, feedback_misleading:1, source:'config.md',
+    contradicts:['k02'] },
+  { id:'k02', title:'MCP 默认超时应设为 60s',
+    summary:'30s 在批量 RPC 场景下 20% 超时；调到 60s 后超时率 <1%。README 已更新。',
+    content:'# MCP 超时配置（新建议）\n\n- connect_timeout: 30s\n- **tool_call_timeout: 60s**（推荐）',
+    claim_type:'decision', status:'active', scope:'global',
+    tags:['mcp','config','timeout'], version:1,
+    created_at:'2026-04-15', accessed_at:'2026-04-20',
+    feedback_helpful:1, feedback_misleading:0, source:'README.md',
+    contradicts:['k01'] },
+  { id:'k03', title:'SQLite FTS5 中文分词选 unicode61 + simplify',
+    summary:'unicode61 + simplify_diacritics + custom separators 可做字级匹配；召回率 91.2%。',
+    content:'# SQLite FTS5 中文分词 v3\n\nCREATE VIRTUAL TABLE docs USING fts5(..., tokenize="unicode61 remove_diacritics 2");\n\n- 召回 91.2%（v2 85.6%）',
+    claim_type:'procedure', status:'active', scope:'project',
+    tags:['sqlite','fts5','中文','search'], version:3, supersedes:'k03v2',
+    created_at:'2026-04-10', accessed_at:'2026-04-19',
+    feedback_helpful:3, feedback_misleading:0, source:'src/search/tokenizer.py' },
+  { id:'k03v2', title:'SQLite FTS5 中文分词用 jieba bridge',
+    summary:'v2 使用 sqlite-jieba 扩展做词级分词，召回 85.6%，部署复杂。已被 v3 替代。',
+    content:'v2 旧方案：sqlite-jieba 扩展。\n\n缺点：需要编译 .so，跨平台部署复杂。',
+    claim_type:'procedure', status:'superseded', scope:'project',
+    tags:['sqlite','fts5','jieba'], version:2, superseded_by:'k03',
+    created_at:'2026-03-05', accessed_at:'2026-04-10',
+    feedback_helpful:2, feedback_misleading:0 },
+  { id:'k04', title:'nft-gmgn 全局搜索入口在 GlobalSearchBar',
+    summary:'src/components/search/GlobalSearchBar.tsx；AI 模式接入点在内部的 useAIMode hook。',
+    content:'# 搜索架构\n- 组件：GlobalSearchBar.tsx\n- 状态：searchStore.ts\n- 数据流：Input → debounce(200ms) → store.query()',
+    claim_type:'fact', status:'active', scope:'project',
+    tags:['nft-gmgn','搜索','react','frontend'], version:1,
+    created_at:'2026-03-22', accessed_at:'2026-04-18',
+    feedback_helpful:4, feedback_misleading:0, source:'GlobalSearchBar.tsx',
+    depends_on:['k05'] },
+  { id:'k05', title:'nft-gmgn 使用 Zustand 做全局状态',
+    summary:'弃用 Redux 改为 Zustand；所有 store 在 src/stores/ 下按领域拆分。',
+    content:'# 状态管理\n- 选型：Zustand > Redux\n- 目录：src/stores/*.ts',
+    claim_type:'decision', status:'active', scope:'project',
+    tags:['nft-gmgn','zustand','state'], version:1,
+    created_at:'2026-02-28', accessed_at:'2026-04-17',
+    feedback_helpful:3, feedback_misleading:0, source:'src/stores/' },
+  { id:'k06', title:'Phase 2 baseline 测试命令（旧）',
+    summary:'pytest tests/baseline — 上一阶段命令，Phase 3 已用 phase3_regression_gate.py 替换。',
+    content:'# Phase 2 基线\npytest tests/baseline/\n\n> Phase 3 已改为 scripts/phase3_regression_gate.py',
+    claim_type:'procedure', status:'stale', scope:'project',
+    tags:['phase2','baseline','test'], version:1,
+    created_at:'2025-12-10', accessed_at:'2026-01-12',
+    stale_reason:'92 天未访问 · Phase 3 已替换',
+    feedback_helpful:1, feedback_misleading:1, feedback_outdated:3 },
+  { id:'k07', title:'Agent 写入 mnemo 必须带 summary 字段',
+    summary:'用户强调：create_knowledge 必须显式提供 summary，不允许让 LLM 自动总结。',
+    content:'# user says:\n\n> "summary 字段不能省 — 这是硬要求。"\n\n- summary 必填\n- 长度 ≤ 120 汉字',
+    claim_type:'fact', status:'active', scope:'global',
+    tags:['mnemo','user-pref','contract'], version:1,
+    created_at:'2026-03-14', accessed_at:'2026-04-21',
+    feedback_helpful:7, feedback_misleading:0, source:'user 2026-03-14' },
+  { id:'k08', title:'rerank 权重 · FTS .35 · Vec .30 · Graph .15 · Fresh .15 · Auth .05',
+    summary:'当前 mnemo 混合检索默认权重。修改需同步更新 regression baseline。',
+    content:'# Rerank 权重\n| FTS BM25 | 0.35 |\n| Vector cos | 0.30 |\n| Graph | 0.15 |\n| Freshness | 0.15 |\n| Authority | 0.05 |',
+    claim_type:'decision', status:'active', scope:'project',
+    tags:['mnemo','rerank','search'], version:2, supersedes:'k08v1',
+    created_at:'2026-04-05', accessed_at:'2026-04-20',
+    feedback_helpful:4, feedback_misleading:0, source:'src/search/rerank.py' },
+  { id:'k08v1', title:'rerank 旧权重 FTS .5 · Vector .5',
+    summary:'v1 只用 FTS + Vector 两因子各 50%；Phase 3 加入 Graph/Fresh/Auth 后被替代。',
+    content:'v1 双因子方案：FTS 0.5 / Vector 0.5。基线 86%。',
+    claim_type:'decision', status:'superseded', scope:'project',
+    tags:['mnemo','rerank'], version:1, superseded_by:'k08',
+    created_at:'2026-01-15', accessed_at:'2026-04-05',
+    feedback_helpful:1, feedback_misleading:0 },
+  { id:'k09', title:'nft-gmgn 图标库迁移到本地 SVG Sprite',
+    summary:'打包 240KB → 34KB；首屏 TTI 提升 180ms。迁移脚本在 tools/build-sprite.ts。',
+    content:'# 图标迁移\n- 原：@iconify 运行时 240KB\n- 新：build-time SVG sprite，34KB',
+    claim_type:'decision', status:'active', scope:'project',
+    tags:['nft-gmgn','性能','build'], version:1,
+    created_at:'2026-04-02', accessed_at:'2026-04-16',
+    feedback_helpful:2, feedback_misleading:0, source:'tools/build-sprite.ts' },
+  { id:'k10', title:'假设 · 把 embedding service 改成本地 ONNX 可以省 60% 延迟',
+    summary:'OpenAI API ~80ms → 本地 MiniLM-L6 ONNX 预计 ~30ms，但召回质量需评估。',
+    content:'# 假设\n- 现状：OpenAI text-embedding-3-small, ~80ms\n- 假设：MiniLM-L6 ONNX, ~30ms\n- 待验证：召回质量',
+    claim_type:'hypothesis', status:'active', scope:'project',
+    tags:['mnemo','embedding','perf'], version:1,
+    created_at:'2026-04-18', accessed_at:'2026-04-20',
+    feedback_helpful:0, feedback_misleading:0, source:'brainstorm' },
+  { id:'k11', title:'旧的 mnemo export 命令已移除',
+    summary:'v0.3 之前有 mnemo export；v0.4 改为 mnemo dump --format json。',
+    content:'mnemo export → mnemo dump --format json',
+    claim_type:'fact', status:'archived', scope:'project',
+    tags:['mnemo','cli'], version:1,
+    created_at:'2025-11-02', accessed_at:'2026-02-20',
+    feedback_helpful:0, feedback_misleading:0 },
+  { id:'k12', title:'MCP 工具调用失败时 agent 应先 search 再 retry',
+    summary:'mcp tool 非 2xx 或超时时，先 mnemo search 检查 workaround，再决定 retry 或 abort。',
+    content:'# MCP 失败处理\n1. 工具异常 → 停下\n2. search(error_msg)\n3. 有命中 → 按 procedure 处理',
+    claim_type:'procedure', status:'active', scope:'global',
+    tags:['mcp','agent','retry'], version:1,
+    created_at:'2026-03-30', accessed_at:'2026-04-19',
+    feedback_helpful:6, feedback_misleading:0, source:'AGENT_MNEMO_WORKFLOW.md',
+    depends_on:['k07'] },
+];
+
+// STATS 是仪表盘"全局计数器"层 —— 这里用假数据演示。
+// TODO(backend): derive from real telemetry:
+//   - total_searches      ← stats.search_events count
+//   - searches_last_7d    ← stats.search_events where ts >= NOW-7d
+//   - growth_last_7d      ← ratio of created_at within last 7 days
+const STATS = {
+  total_searches: 1247,
+  searches_last_7d: 312,
+  growth_last_7d: 0.024,
+};
+
+const NOW = new Date('2026-04-21');
+
+/* ========== Aggregates ========== */
+function computeOverview() {
+  let helpful = 0, misleading = 0, outdated = 0;
+  let active = 0, stale = 0, archived = 0, superseded = 0;
+
+  const contradictPairs = new Set();
+  const totalContradictPairs = new Set();
+
+  for (const k of DATA) {
+    helpful    += k.feedback_helpful    || 0;
+    misleading += k.feedback_misleading || 0;
+    outdated   += k.feedback_outdated   || 0;
+
+    if (k.status === 'active')     active++;
+    if (k.status === 'stale')      stale++;
+    if (k.status === 'archived')   archived++;
+    if (k.status === 'superseded') superseded++;
+
+    if (k.contradicts) {
+      for (const other of k.contradicts) {
+        const pair = [k.id, other].sort().join('|');
+        totalContradictPairs.add(pair);
+        const otherK = DATA.find(x => x.id === other);
+        if (otherK && otherK.status !== 'archived' && otherK.status !== 'superseded'
+          && k.status !== 'archived' && k.status !== 'superseded') {
+          contradictPairs.add(pair);
+        }
+      }
+    }
+  }
+
+  const totalFeedback = helpful + misleading + outdated;
+  const totalKnowledge = DATA.length;
+  const positiveRate = totalFeedback ? helpful / totalFeedback : 0;
+
+  // composite health: (active + stale) / total × (1 - 未解决矛盾惩罚)
+  // stale 是正常老化不是病态,不扣分;archived/superseded 才是"消失在主视野"。
+  // contradict 惩罚按 pair 数线性:每对扣 5%,最多扣到 30%。
+  const contradictPenalty = Math.min(0.30, contradictPairs.size * 0.05);
+  const health =
+    ((active + stale) / totalKnowledge) *
+    (1 - contradictPenalty);
+
+  return {
+    totalKnowledge,
+    totalSearches: STATS.total_searches,
+    searches7d: STATS.searches_last_7d,
+    growth7d: STATS.growth_last_7d,
+    helpful, misleading, outdated,
+    totalFeedback,
+    pctHelpful: totalFeedback ? helpful / totalFeedback : 0,
+    pctBad: totalFeedback ? (misleading + outdated) / totalFeedback : 0,
+    supersedeCount: superseded,
+    pctSupersede: totalKnowledge ? superseded / totalKnowledge : 0,
+    positiveRate,
+    active, pctActive: totalKnowledge ? active / totalKnowledge : 0,
+    stale, pctStale: totalKnowledge ? stale / totalKnowledge : 0,
+    archived, pctArchived: totalKnowledge ? archived / totalKnowledge : 0,
+    contradictPairs: contradictPairs.size,
+    totalContradictPairs: totalContradictPairs.size,
+    health,
+  };
+}
+
+/* ========== Fmt ========== */
+function fmtNum(n)  { return n.toLocaleString('en-US'); }
+function fmtPct(p, d = 1) { return (p * 100).toFixed(d) + '%'; }
+function fmtPct0(p) { return (p * 100).toFixed(0) + '%'; }
+
+/* ========== Metric render ==========
+   每张卡都带一个百分比（用户硬要求）。带状态的 5 张 clickable 跳列表 + filter。 */
+function renderMetrics() {
+  const o = computeOverview();
+  const grid = document.getElementById('metric-grid');
+
+  const lowSample = o.totalFeedback < 20;
+
+  // accuracy 阈值按 pm-advisor 建议：sample < 20 时 neutral
+  let accuracyCls;
+  if (lowSample) accuracyCls = 'is-neutral';
+  else if (o.positiveRate >= 0.80) accuracyCls = 'is-good';
+  else if (o.positiveRate >= 0.60) accuracyCls = 'is-warn';
+  else accuracyCls = 'is-danger';
+
+  const cards = [
+    // Row 1 — scale & outcomes
+    { label: 'total knowledge', value: fmtNum(o.totalKnowledge),
+      pct: o.growth7d, pctPrefix: '+',
+      sub: 'growth · 7d',
+      barPct: Math.min(1, o.growth7d * 10),
+      cls: 'is-neutral' },
+
+    { label: 'searches', value: fmtNum(o.totalSearches),
+      pct: o.searches7d / Math.max(1, o.totalSearches),
+      sub: 'of total · last 7d',
+      barPct: o.searches7d / Math.max(1, o.totalSearches),
+      cls: 'is-neutral' },
+
+    { label: 'helpful rate', value: fmtPct(o.positiveRate),
+      sub: lowSample ? 'low sample' : `of ${o.totalFeedback} feedback`,
+      barPct: o.positiveRate,
+      lowSample: lowSample,
+      cls: accuracyCls },
+
+    { label: 'active',
+      value: fmtNum(o.active),
+      pct: o.pctActive, sub: 'of total',
+      barPct: o.pctActive,
+      cls: 'is-good',
+      filter: 'active' },
+
+    { label: 'contradicts',
+      value: fmtNum(o.contradictPairs),
+      pct: o.totalKnowledge ? (o.contradictPairs / o.totalKnowledge) : 0,
+      sub: o.contradictPairs
+        ? 'of total · unresolved'
+        : 'all resolved',
+      barPct: o.totalKnowledge ? (o.contradictPairs / o.totalKnowledge) : 0,
+      cls: o.contradictPairs > 0 ? 'is-danger' : 'is-good',
+      filter: o.contradictPairs > 0 ? 'contradicts' : null },
+
+    // Row 2 — quality & lifecycle
+    { label: 'feedback · helpful',
+      value: fmtNum(o.helpful),
+      pct: o.pctHelpful, sub: 'of total feedback',
+      barPct: o.pctHelpful,
+      cls: 'is-good' },
+
+    { label: 'feedback · bad',
+      value: fmtNum(o.misleading + o.outdated),
+      pct: o.pctBad, sub: 'misleading + outdated',
+      barPct: o.pctBad,
+      cls: (o.misleading + o.outdated) > 0 ? 'is-danger' : 'is-good' },
+
+    { label: 'supersedes',
+      value: fmtNum(o.supersedeCount),
+      pct: o.pctSupersede, sub: 'of total knowledge',
+      barPct: o.pctSupersede,
+      cls: 'is-neutral',
+      filter: 'superseded' },
+
+    { label: 'stale',
+      value: fmtNum(o.stale),
+      pct: o.pctStale, sub: 'of total knowledge',
+      barPct: o.pctStale,
+      cls: o.stale > 0 ? 'is-warn' : 'is-good',
+      filter: o.stale > 0 ? 'stale' : null },
+
+    { label: 'archived',
+      value: fmtNum(o.archived),
+      pct: o.pctArchived, sub: 'of total knowledge',
+      barPct: o.pctArchived,
+      cls: 'is-neutral',
+      filter: o.archived > 0 ? 'archived' : null },
+  ];
+
+  grid.innerHTML = cards.map((c, idx) => {
+    const clsList = ['metric'];
+    if (c.cls) clsList.push(c.cls);
+    if (c.filter) clsList.push('clickable');
+
+    // 百分比片段：pct 可为 null（没有合理 %）
+    let pctHtml = '';
+    if (c.pct != null) {
+      const prefix = c.pctPrefix || '';
+      pctHtml = `<span class="pct">${prefix}${fmtPct(c.pct, c.pct < 0.01 && c.pct > 0 ? 2 : 1)}</span>`;
+    }
+
+    const subText = pctHtml
+      ? `${pctHtml} · <span>${c.sub}</span>`
+      : `<span>${c.sub}</span>`;
+
+    const bar = c.barPct == null
+      ? ''
+      : `<div class="bar"><span style="width:${Math.max(2, Math.min(100, c.barPct * 100)).toFixed(1)}%"></span></div>`;
+
+    const arrow = c.filter
+      ? `<span class="jump">→</span>`
+      : '';
+
+    return `
+      <div class="${clsList.join(' ')}" ${c.filter ? `data-filter="${c.filter}"` : ''}>
+        ${arrow}
+        <div class="label"><span class="tag-dot"></span>${c.label}</div>
+        <div class="value">${c.value}</div>
+        <div class="sub">${subText}</div>
+        ${bar}
+      </div>
+    `;
+  }).join('');
+
+  // Wire clickable metric cards → filter + scroll + halo
+  grid.querySelectorAll('.metric.clickable').forEach(el => {
+    el.addEventListener('click', () => {
+      const f = el.getAttribute('data-filter');
+      applyFilter(f, { scroll: true, halo: true });
+    });
+  });
+
+  // Health badge
+  const healthEl = document.getElementById('health');
+  const healthBar = document.getElementById('health-bar');
+  const healthVal = document.getElementById('health-val');
+  const hPct = o.health;
+  healthBar.style.width = (hPct * 100).toFixed(1) + '%';
+  healthVal.textContent = fmtPct0(hPct);
+  healthEl.classList.remove('low', 'bad');
+  if (hPct < 0.60) healthEl.classList.add('bad');
+  else if (hPct < 0.80) healthEl.classList.add('low');
+
+  // Timestamp
+  document.getElementById('snap-ts').textContent = 'snapshot · 2026-04-21 14:32';
+
+  // Chip counts
+  document.querySelector('[data-count="all"]').textContent = DATA.filter(k => !['archived','superseded'].includes(k.status)).length;
+  document.querySelector('[data-count="contradicts"]').textContent = o.contradictPairs;
+  document.querySelector('[data-count="stale"]').textContent = o.stale;
+  document.querySelector('[data-count="active"]').textContent = o.active;
+  document.querySelector('[data-count="superseded"]').textContent = o.supersedeCount;
+  document.querySelector('[data-count="archived"]').textContent = o.archived;
+}
+
+/* ========== List state ========== */
+const STATE = {
+  filter: 'all',
+  searchQuery: '',
+  hits: new Map(),     // id -> { final, factors }
+  selectedId: null,
+};
+
+/* ========== Helpers ========== */
+function statusTag(k) {
+  switch (k.status) {
+    case 'active':     return `<span class="tag ok">active</span>`;
+    case 'stale':      return `<span class="tag stale">stale</span>`;
+    case 'superseded': return `<span class="tag superseded">superseded</span>`;
+    case 'archived':   return `<span class="tag archived">archived</span>`;
+  }
+  return '';
+}
+function typeTag(k)      { return `<span class="tag type">${k.claim_type}</span>`; }
+function scopeTag(k)     { return `<span class="tag type">${k.scope}</span>`; }
+function contradictTag(k) {
+  return (k.contradicts && k.contradicts.length)
+    ? `<span class="tag contradicts">contradicts</span>`
+    : '';
+}
+function relTime(dateStr) {
+  const d = new Date(dateStr);
+  const days = Math.round((NOW - d) / 86400000);
+  if (days < 1) return 'today';
+  if (days < 2) return 'yesterday';
+  if (days < 7) return days + 'd ago';
+  if (days < 30) return Math.floor(days / 7) + 'w ago';
+  if (days < 365) return Math.floor(days / 30) + 'mo ago';
+  return Math.floor(days / 365) + 'y ago';
+}
+
+/* ========== Filter ========== */
+function matchFilter(k) {
+  switch (STATE.filter) {
+    case 'all':
+      // 默认隐藏 archived + superseded（两者都是"二级现场"）
+      return k.status !== 'archived' && k.status !== 'superseded';
+    case 'active':      return k.status === 'active';
+    case 'stale':       return k.status === 'stale';
+    case 'contradicts': return !!(k.contradicts && k.contradicts.length) && k.status !== 'superseded' && k.status !== 'archived';
+    case 'superseded':  return k.status === 'superseded';
+    case 'archived':    return k.status === 'archived';
+  }
+  return true;
+}
+
+/* ========== Search (mini hybrid) ========== */
+function runSearch(query) {
+  const q = (query || '').trim().toLowerCase();
+  STATE.searchQuery = q;
+  STATE.hits = new Map();
+  if (!q) { document.body.classList.remove('is-searching'); return; }
+  document.body.classList.add('is-searching');
+  const terms = q.split(/\s+/).filter(Boolean);
+  for (const k of DATA) {
+    if (k.status === 'archived' || k.status === 'superseded') continue;
+    const hay = (k.title + ' ' + k.summary + ' ' + (k.tags||[]).join(' ') + ' ' + (k.content||'')).toLowerCase();
+    let titleMatches = 0, anyMatches = 0;
+    for (const t of terms) {
+      if (hay.includes(t)) anyMatches++;
+      if (k.title.toLowerCase().includes(t)) titleMatches++;
+    }
+    if (!anyMatches) continue;
+    // rerank 5 factors (FTS / Vector / Graph / Freshness / Authority)
+    const fts = Math.min(1, (anyMatches / terms.length) * 0.6 + titleMatches * 0.3 + (hay.includes(q) ? 0.25 : 0));
+    const vector = Math.min(1, fts * 0.85 + 0.05);
+    const graph = Math.min(1, ((k.depends_on?.length || 0) + (k.contradicts?.length || 0)) * 0.2);
+    const ageDays = (NOW - new Date(k.created_at)) / 86400000;
+    const freshness = Math.exp(-ageDays / 90);
+    const authority = Math.min(1, (k.feedback_helpful || 0) / 8);
+    const final = Math.min(0.99,
+      0.35 * fts + 0.30 * vector + 0.15 * graph + 0.15 * freshness + 0.05 * authority);
+    STATE.hits.set(k.id, { final, factors: { fts, vector, graph, freshness, authority } });
+  }
+}
+
+/* ========== Sort: attention first ========== */
+function attentionRank(k) {
+  // 0 = contradict (最前), 1 = stale, 2 = active, 3 = superseded, 4 = archived
+  const hasContradict = !!(k.contradicts && k.contradicts.length) && k.status !== 'superseded' && k.status !== 'archived';
+  if (hasContradict) return 0;
+  if (k.status === 'stale') return 1;
+  if (k.status === 'active') return 2;
+  if (k.status === 'superseded') return 3;
+  return 4;
+}
+function defaultCmp(a, b) {
+  const ra = attentionRank(a), rb = attentionRank(b);
+  if (ra !== rb) return ra - rb;
+  return new Date(b.accessed_at) - new Date(a.accessed_at);
+}
+
+/* ========== Mini 5-bar placeholder (column 2) ========== */
+function miniBarsHtml(k) {
+  const h = STATE.hits.get(k.id);
+  const factors = h
+    ? [h.factors.fts, h.factors.vector, h.factors.graph, h.factors.freshness, h.factors.authority]
+    : null;
+
+  // 非搜索态下，只用 authority 做默认 mini bar，其余 dim
+  // authority = feedback_helpful / 8 clamp 1
+  const authority = Math.min(1, (k.feedback_helpful || 0) / 8);
+  const inactiveHeights = [0, 0, 0, 0, authority];
+
+  const heights = factors || inactiveHeights;
+  const dimFlags = factors
+    ? [false, false, false, false, false]
+    : [true, true, true, true, false];
+
+  const bars = heights.map((v, i) => {
+    const hh = Math.max(2, Math.round(v * 14));
+    return `<b class="${dimFlags[i] ? 'dim' : ''}" style="height:${hh}px"></b>`;
+  }).join('');
+
+  const score = factors ? (factors[0] * 0.35 + factors[1] * 0.30 + factors[2] * 0.15 + factors[3] * 0.15 + factors[4] * 0.05) : null;
+  const scoreText = score != null
+    ? (score * 100).toFixed(0)
+    : '—';
+
+  return `
+    <div class="rerank">
+      <span class="score">${scoreText}</span>
+      <span class="bars">${bars}</span>
+    </div>
+  `;
+}
+
+function expandedFactorsHtml(k) {
+  const h = STATE.hits.get(k.id);
+  const searching = !!STATE.searchQuery;
+  const f = h ? h.factors : null;
+
+  const authority = Math.min(1, (k.feedback_helpful || 0) / 8);
+
+  const rows = [
+    { name: 'FTS',       v: f ? f.fts       : 0,         weight: 0.35 },
+    { name: 'Vector',    v: f ? f.vector    : 0,         weight: 0.30 },
+    { name: 'Graph',     v: f ? f.graph     : 0,         weight: 0.15 },
+    { name: 'Freshness', v: f ? f.freshness : 0,         weight: 0.15 },
+    { name: 'Authority', v: f ? f.authority : authority, weight: 0.05 },
+  ];
+
+  // 非搜索态:只有 Authority 有实值(和 miniBars 对齐,数据口径统一),
+  // 其余四项在 idle 态灰化为 "—" 占位 —— 和 "idle · run a search"
+  // 文案的行为承诺一致。
+  const inactiveNames = new Set(['FTS', 'Vector', 'Graph', 'Freshness']);
+
+  const score = f
+    ? (f.fts * 0.35 + f.vector * 0.30 + f.graph * 0.15 + f.freshness * 0.15 + f.authority * 0.05)
+    : null;
+
+  return `
+    <div class="rerank-detail">
+      <div class="rd-title">
+        <span>rerank factors</span>
+        <span class="formula">
+          ${score != null
+            ? `final = ${fmtPct0(score)} · .35·FTS + .30·Vec + .15·Graph + .15·Fresh + .05·Auth`
+            : `idle · static snapshot · run a search to compute live factors`}
+        </span>
+      </div>
+      <div class="rd-grid">
+        ${rows.map(r => {
+          const inactive = !searching && inactiveNames.has(r.name);
+          const widthPct = inactive ? 0 : Math.max(2, r.v * 100);
+          const val = inactive ? '—' : r.v.toFixed(2);
+          return `
+            <div class="f ${inactive ? 'inactive' : ''}">
+              <div class="fn">${r.name} <span style="color:var(--text-3); font-weight:400;">·${r.weight.toFixed(2)}</span></div>
+              <div class="fv">${val}</div>
+              <div class="fbar"><span style="width:${widthPct}%"></span></div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ========== Render list ========== */
+function rowHtml(k, searching, extraAttr = '') {
+  const h = STATE.hits.get(k.id);
+  const dim = searching && !h;
+  const cls = ['row'];
+  if (h) cls.push('hit');
+  if (dim) cls.push('dim');
+  if (k.id === STATE.selectedId) cls.push('selected');
+
+  const totalTags = (k.tags || []).length;
+  const showTags = (k.tags || []).slice(0, 2);
+  const moreTag = totalTags > 2 ? `<span class="tag more">+${totalTags - 2}</span>` : '';
+
+  const helpful = k.feedback_helpful || 0;
+  const bad = (k.feedback_misleading || 0) + (k.feedback_outdated || 0);
+  const net = helpful - bad;
+  const fbColor = net >= 2 ? 'var(--accent)' : (net < 0 ? 'var(--danger)' : 'var(--text-2)');
+
+  return `
+    <div class="${cls.join(' ')}" data-id="${k.id}"${extraAttr}>
+      <div class="main">
+        <div class="title">${escapeHtml(k.title)}</div>
+        <div class="summary">${escapeHtml(k.summary)}</div>
+        <div class="meta-row">
+          ${statusTag(k)}
+          <span class="sep">·</span>
+          ${typeTag(k)}
+          <span class="sep">·</span>
+          ${scopeTag(k)}
+          ${k.contradicts && k.contradicts.length && k.status !== 'archived' && k.status !== 'superseded'
+            ? '<span class="sep">·</span>' + contradictTag(k) : ''}
+          ${showTags.length
+            ? '<span class="sep">·</span>' + showTags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join(' ') + ' ' + moreTag
+            : ''}
+        </div>
+      </div>
+
+      ${miniBarsHtml(k)}
+
+      <div class="feedback" style="color:${fbColor}">
+        ${helpful}<span class="arrow">↑</span>
+        <span style="color:var(--text-3); margin:0 4px">/</span>
+        ${bad}<span class="arrow">↓</span>
+      </div>
+
+      <div class="time">${relTime(k.accessed_at)}</div>
+
+      ${expandedFactorsHtml(k)}
+    </div>
+  `;
+}
+
+function renderList() {
+  const rows = document.getElementById('rows');
+  const searching = !!STATE.searchQuery;
+
+  let items = DATA.filter(matchFilter);
+  if (searching) {
+    items = items
+      .filter(k => STATE.hits.has(k.id))
+      .sort((a, b) => STATE.hits.get(b.id).final - STATE.hits.get(a.id).final);
+    document.getElementById('sort-mode').textContent = 'rerank';
+  } else {
+    items = items.sort(defaultCmp);
+    document.getElementById('sort-mode').textContent = 'attention';
+  }
+
+  document.getElementById('list-count').textContent = items.length;
+
+  // ContradictionDuel mode: active only when filter=contradicts, not searching,
+  // and the 2 items are mutually contradicting (not just two unrelated contradicts).
+  const bothContradict =
+    items.length === 2
+    && (items[0].contradicts || []).includes(items[1].id)
+    && (items[1].contradicts || []).includes(items[0].id);
+  const duelActive = STATE.filter === 'contradicts' && !searching && bothContradict;
+  document.body.classList.toggle('duel-mode', duelActive);
+
+  if (!items.length) {
+    rows.innerHTML = `<div class="empty-state">no matching knowledge · try another query or clear filters</div>`;
+    return;
+  }
+
+  if (duelActive) {
+    // order older -> newer by created_at; labels use relative time (avoids v1/v2 vs claim.version collision)
+    const ordered = [...items].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const a = ordered[0];
+    const b = ordered[1];
+    const banner = `
+      <div class="duel-banner">
+        <div class="left"><span>⚡</span><span>2 decisions in direct conflict · resolution pending</span></div>
+        <div class="actions">
+          <span class="action" title="coming soon">compare in panel<span class="wip">WIP</span></span>
+          <span class="action" title="coming soon">archive older<span class="wip">WIP</span></span>
+        </div>
+      </div>`;
+    const rift = `<div class="duel-rift"></div>`;
+    const aLabel = `older · ${relTime(a.created_at)}`;
+    const bLabel = `newer · ${relTime(b.created_at)}`;
+    rows.innerHTML =
+      banner +
+      rowHtml(a, searching, ` data-version-label="${aLabel}"`) +
+      rift +
+      rowHtml(b, searching, ` data-version-label="${bLabel}"`);
+  } else {
+    rows.innerHTML = items.map(k => rowHtml(k, searching)).join('');
+  }
+
+  rows.querySelectorAll('.row').forEach(r => {
+    r.addEventListener('click', (e) => {
+      const id = r.getAttribute('data-id');
+      openPanel(id);
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+/* ========== Filter apply (+ scroll + halo) ========== */
+function applyFilter(filter, opts = {}) {
+  const chipEl = document.querySelector(`.chip[data-filter="${filter}"]`);
+  if (!chipEl) return;
+  document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+  chipEl.classList.add('active');
+  STATE.filter = filter;
+  renderList();
+
+  if (opts.scroll) {
+    document.getElementById('list-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if (opts.halo) {
+    // halo first matching row to signal "these are what you clicked for"
+    requestAnimationFrame(() => {
+      const first = document.querySelector('#rows .row');
+      if (first) {
+        first.classList.remove('halo');
+        void first.offsetWidth;
+        first.classList.add('halo');
+      }
+    });
+  }
+}
+
+/* ========== Panel ========== */
+function openPanel(id) {
+  const k = DATA.find(x => x.id === id);
+  if (!k) return;
+  STATE.selectedId = id;
+  renderList();
+
+  const panel = document.getElementById('panel');
+  const type = document.getElementById('panel-type');
+  const body = document.getElementById('panel-body');
+  type.textContent = k.claim_type.toUpperCase() + ' · ' + k.scope.toUpperCase() + ' · v' + k.version;
+
+  const relations = [];
+  if (k.contradicts) k.contradicts.forEach(id2 => {
+    const o = DATA.find(x => x.id === id2);
+    if (o) relations.push({ kind: 'contradicts', title: o.title, id: id2, canCompare: true });
+  });
+  if (k.supersedes) {
+    const o = DATA.find(x => x.id === k.supersedes);
+    if (o) relations.push({ kind: 'supersedes', title: 'supersedes · ' + o.title, id: k.supersedes });
+  }
+  if (k.superseded_by) {
+    const o = DATA.find(x => x.id === k.superseded_by);
+    if (o) relations.push({ kind: 'superseded', title: 'superseded by · ' + o.title, id: k.superseded_by });
+  }
+  if (k.depends_on) k.depends_on.forEach(id2 => {
+    const o = DATA.find(x => x.id === id2);
+    if (o) relations.push({ kind: 'depends_on', title: 'depends on · ' + o.title, id: id2 });
+  });
+
+  const helpful = k.feedback_helpful || 0;
+  const misleading = k.feedback_misleading || 0;
+  const outdated = k.feedback_outdated || 0;
+  const totalFb = helpful + misleading + outdated;
+  const rate = totalFb ? helpful / totalFb : null;
+
+  body.innerHTML = `
+    <h2>${escapeHtml(k.title)}</h2>
+    <div class="psum">${escapeHtml(k.summary)}</div>
+    <div class="meta-grid">
+      <div class="k">status</div>    <div class="v ${k.status==='stale'?'warn':''}">${k.status}${k.stale_reason ? ' · ' + escapeHtml(k.stale_reason) : ''}</div>
+      <div class="k">type</div>      <div class="v">${k.claim_type}</div>
+      <div class="k">scope</div>     <div class="v">${k.scope}</div>
+      <div class="k">version</div>   <div class="v">v${k.version}</div>
+      <div class="k">tags</div>      <div class="v">${(k.tags||[]).map(t=>'#'+escapeHtml(t)).join(' ') || '—'}</div>
+      <div class="k">source</div>    <div class="v">${escapeHtml(k.source || '—')}</div>
+      <div class="k">created</div>   <div class="v">${k.created_at}</div>
+      <div class="k">accessed</div>  <div class="v">${k.accessed_at}</div>
+      <div class="k">feedback</div>  <div class="v">
+        ${helpful} helpful · ${misleading} misleading · ${outdated} outdated
+        ${rate != null ? ' · <span class="'+(rate<0.5?'danger':'')+'">' + fmtPct0(rate) + ' helpful</span>' : ''}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="h"><span>content</span></div>
+      <pre class="content">${escapeHtml(k.content)}</pre>
+    </div>
+
+    ${relations.length ? `
+      <div class="section">
+        <div class="h"><span>relations</span></div>
+        ${relations.map(r => `
+          <div class="rel ${r.kind}" data-goto="${r.id}">
+            <div class="rel-kind">${r.kind.replace('_', ' ')}</div>
+            <div class="rel-title">${escapeHtml(r.title)}</div>
+            ${r.canCompare
+              ? `<div><button class="compare-btn" disabled>compare side-by-side (coming)</button></div>`
+              : ''}
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+  `;
+
+  body.querySelectorAll('.rel').forEach(r => {
+    r.addEventListener('click', (ev) => {
+      if (ev.target.classList.contains('compare-btn')) return;
+      openPanel(r.getAttribute('data-goto'));
+    });
+  });
+
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('panel-open');
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  document.getElementById('panel').setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('panel-open');
+  STATE.selectedId = null;
+  renderList();
+}
+
+/* ========== Export snapshot ========== */
+function exportSnapshot() {
+  const o = computeOverview();
+  const payload = {
+    generated_at: new Date().toISOString(),
+    snapshot_label: '2026-04-21 14:32',
+    metrics: {
+      total_knowledge: o.totalKnowledge,
+      total_searches: o.totalSearches,
+      helpful_rate: o.positiveRate,
+      active: o.active,
+      stale: o.stale,
+      archived: o.archived,
+      superseded: o.supersedeCount,
+      contradict_pairs: o.contradictPairs,
+      feedback_helpful: o.helpful,
+      feedback_misleading: o.misleading,
+      feedback_outdated: o.outdated,
+      health: o.health,
+    },
+    knowledge: DATA.map(k => ({
+      id: k.id, title: k.title, status: k.status, claim_type: k.claim_type,
+      scope: k.scope, version: k.version, tags: k.tags || [],
+      feedback_helpful: k.feedback_helpful || 0,
+      feedback_misleading: k.feedback_misleading || 0,
+      feedback_outdated: k.feedback_outdated || 0,
+      created_at: k.created_at, accessed_at: k.accessed_at,
+      source: k.source || null,
+      contradicts: k.contradicts || [],
+      supersedes: k.supersedes || null,
+      superseded_by: k.superseded_by || null,
+      depends_on: k.depends_on || [],
+    })),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `mnemo-snapshot-${payload.generated_at.replace(/[:.]/g,'-')}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ========== Wiring ========== */
+document.addEventListener('DOMContentLoaded', () => {
+  renderMetrics();
+  renderList();
+
+  const si = document.getElementById('search-input');
+  si.addEventListener('input', e => {
+    runSearch(e.target.value);
+    renderList();
+  });
+
+  document.querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', () => {
+      applyFilter(c.getAttribute('data-filter'));
+    });
+  });
+
+  document.getElementById('panel-close').addEventListener('click', closePanel);
+  document.getElementById('export-btn').addEventListener('click', exportSnapshot);
+
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      si.focus(); si.select();
+    } else if (e.key === 'Escape') {
+      if (STATE.selectedId) closePanel();
+      else if (si.value) { si.value=''; runSearch(''); renderList(); }
+    }
+  });
+
+  if (!navigator.platform.match(/Mac/)) {
+    document.getElementById('search-kbd').textContent = 'Ctrl K';
+  }
+});
+</script>
+</body>
+</html>

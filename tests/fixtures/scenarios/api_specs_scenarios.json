@@ -1,0 +1,668 @@
+[
+  {
+    "description": "新 Agent 接手 mnemo 要写 knowledge 时查 claim_type 合法值",
+    "query": "claim_type 枚举",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.claim_type 字段"],
+    "expected_not_hits": [],
+    "notes": "写 fixture 最容易错 claim_type 值，必须命中"
+  },
+  {
+    "description": "Agent 搞不清 scope 和 project_name 的约束关系",
+    "query": "scope project_name 关系",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.scope 字段", "mnemo Knowledge.project_name 字段", "DATA_SCHEMA scope 字段规则"],
+    "expected_not_hits": [],
+    "notes": "scope=project 时必须填 project_name，涉及三条关联知识"
+  },
+  {
+    "description": "查 knowledge title 字段的长度限制",
+    "query": "title 字段长度",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.title 字段"],
+    "expected_not_hits": [],
+    "notes": "String(512) 是常见问题"
+  },
+  {
+    "description": "想做知识关联，查 relation 表字段",
+    "query": "relation 关联 表",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Relation 表字段", "mnemo Relation.relation_type 字段", "mnemo Relation.weight 字段"],
+    "expected_not_hits": [],
+    "notes": "覆盖 relation 表及其子字段"
+  },
+  {
+    "description": "新 Agent 查 mnemo 存向量嵌入用的表",
+    "query": "向量嵌入 表",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo KnowledgeVec 表字段"],
+    "expected_not_hits": [],
+    "notes": "vector 用 LargeBinary 存储"
+  },
+  {
+    "description": "提取 Agent 想知道 fixture 中 search_queries 的最小数量",
+    "query": "search_queries 至少几个",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["DATA_SCHEMA search_queries 字段规则"],
+    "expected_not_hits": [],
+    "notes": "fixture 质量红线之一"
+  },
+  {
+    "description": "写场景文件时想查 query_type 合法值",
+    "query": "query_type 枚举",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["DATA_SCHEMA scenario query_type 枚举"],
+    "expected_not_hits": [],
+    "notes": "scenario 文件的三值枚举"
+  },
+  {
+    "description": "前端 Agent 做消息解析，需要 team-hub 信封格式",
+    "query": "消息信封 MSG 格式",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub 消息信封格式 envelope", "team-hub 会话信封 parsing regex"],
+    "expected_not_hits": [],
+    "notes": "envelope 是 team-hub 通讯的基石"
+  },
+  {
+    "description": "Agent 收到消息想搞清 type 的语义",
+    "query": "消息 type task reply broadcast system",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub 信封 type 枚举", "team-hub Message 接口", "team-hub send_msg type 输入参数"],
+    "expected_not_hits": [],
+    "notes": "type 枚举贯穿协议、Message、send_msg 三处"
+  },
+  {
+    "description": "标签搜索所有 api-spec 知识",
+    "query": "api-spec",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["mnemo Knowledge.title 字段", "team-hub 消息信封格式 envelope", "vault use_api 输入参数"],
+    "expected_not_hits": [],
+    "notes": "tag 搜索验证分类标签的完备性，示例只列几条代表"
+  },
+  {
+    "description": "在 mcp-team-hub 项目内搜 vault 相关字段",
+    "query": "vault",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": ["vault use_api 输入参数", "vault use_api 返回体", "vault ApiDefinition 字段", "vault.json 文件格式字段"],
+    "expected_not_hits": [],
+    "notes": "tag=vault 范围内的相关知识"
+  },
+  {
+    "description": "Agent 写 use_api 调用，想知道必填参数",
+    "query": "use_api 输入参数",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault use_api 输入参数"],
+    "expected_not_hits": [],
+    "notes": "api_name + url 必填，其他可选"
+  },
+  {
+    "description": "Agent 调用 use_api 后拿到错误想查错误码含义",
+    "query": "vault 错误码",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault 错误码枚举", "vault use_api 返回体"],
+    "expected_not_hits": [],
+    "notes": "vault_locked / acl_denied / rate_limit_exceeded 等 6 种错误"
+  },
+  {
+    "description": "面板 Agent 想知道 LockFile 字段结构",
+    "query": "lock.json 字段",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub LockFile 字段"],
+    "expected_not_hits": [],
+    "notes": "nonce+session_pid+session_start 三重身份验证"
+  },
+  {
+    "description": "前端 Agent 想查 sessions/{pid}.json 文件格式",
+    "query": "SessionFile 字段",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub SessionFile 字段"],
+    "expected_not_hits": [],
+    "notes": "pid/lstart/cwd/started_at 四字段"
+  },
+  {
+    "description": "Agent 想知道 ask_user 返回中 answered=false 是什么含义",
+    "query": "ask_user 返回值",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub ask_user 返回字段", "team-hub POST /api/ask-user 响应"],
+    "expected_not_hits": [],
+    "notes": "answered=false 时 reason 'timeout' 或 'cancelled'"
+  },
+  {
+    "description": "Agent 要发 ask_user，不知道 4 种 type 用哪个",
+    "query": "ask_user 类型 confirm choice input",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub ask_user type 四种交互", "team-hub ask_user 请求字段"],
+    "expected_not_hits": [],
+    "notes": "confirm/single_choice/multi_choice/input 的语义差别"
+  },
+  {
+    "description": "新人想知道 GMGN 里 ApiNetwork 为什么不用 params 而用 data",
+    "query": "ApiNetwork data 字段",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN ApiNetwork.get/post 参数 data 字段", "GMGN getAxios 废弃（禁用 params）"],
+    "expected_not_hits": [],
+    "notes": "常见错误 #4 混淆 params 和 data"
+  },
+  {
+    "description": "GMGN 新代码要鉴权，查 AuthType 枚举",
+    "query": "AuthType 枚举",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN AuthType 枚举"],
+    "expected_not_hits": [],
+    "notes": "只用 AuthType.Access 或缺省 None，其他已废弃"
+  },
+  {
+    "description": "Agent 调 X Sniper 接口想了解平台类型",
+    "query": "X.Platform 平台枚举",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN X.Platform 枚举"],
+    "expected_not_hits": [],
+    "notes": "Twitter/TruthSocial/BinanceSquare 三值"
+  },
+  {
+    "description": "Agent 渲染推文卡片，查推文类型字段",
+    "query": "推文类型 X.Type 枚举",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN X.Type 推文类型枚举"],
+    "expected_not_hits": [],
+    "notes": "10 种类型 + 不同颜色"
+  },
+  {
+    "description": "GMGN 交易 Agent 查 Preset 配置结构",
+    "query": "交易 preset P1 P2 P3",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN ITradeConfig 配置结构", "GMGN ITradeConfigSingle 单条配置"],
+    "expected_not_hits": [],
+    "notes": "tradeConfigs[3] + tradeConfigIndex"
+  },
+  {
+    "description": "查 MEV 防护三档模式",
+    "query": "IMEVMode 防夹",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN IMEVMode 枚举"],
+    "expected_not_hits": [],
+    "notes": "off/normal/secure 三档"
+  },
+  {
+    "description": "GMGN EVM 链 Gas 字段是什么",
+    "query": "EIP-1559 max_fee_per_gas",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN EVM 链 Gas 字段"],
+    "expected_not_hits": [],
+    "notes": "BSC 用 gas_price，Base/ETH 用 EIP-1559 双字段"
+  },
+  {
+    "description": "AionUi 新 Agent 查命令队列上限",
+    "query": "命令队列 上限",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 命令队列约束"],
+    "expected_not_hits": [],
+    "notes": "20 条/20000 字符/50 附件/256KB"
+  },
+  {
+    "description": "AionUi Agent 查为什么消息有时不入队",
+    "query": "shouldEnqueue 入队条件",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi shouldEnqueue 入队判定", "AionUi Conversation Command Queue 默认状态"],
+    "expected_not_hits": [],
+    "notes": "enabled && (isBusy || hasPendingCommands)"
+  },
+  {
+    "description": "Agent 要把数据持久化到哪个存储",
+    "query": "命令队列 持久化",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi Command Queue 持久化 key"],
+    "expected_not_hits": [],
+    "notes": "sessionStorage per conversation"
+  },
+  {
+    "description": "GMGN OpenAPI Agent 查密钥接口列表",
+    "query": "OpenAPI ApiKey 端点",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN OpenAPI 端点", "GMGN OpenAPI ApiKey 字段"],
+    "expected_not_hits": [],
+    "notes": "5 个端点 + ApiKey 字段集"
+  },
+  {
+    "description": "ApiKey 创建接口要不要带 txn_id？",
+    "query": "txn_id MFA",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN OpenAPI txn_id 字段"],
+    "expected_not_hits": [],
+    "notes": "创建/更新/删除 ApiKey 必须 MFA"
+  },
+  {
+    "description": "Agent 配 rate_limits 想知道字段格式",
+    "query": "vault rate_limits 速率",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault rate_limits 配置字段"],
+    "expected_not_hits": [],
+    "notes": "rpm/rpd per-api，含 default"
+  },
+  {
+    "description": "vault 请求被拒绝是不是因为 ACL",
+    "query": "vault ACL 权限",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault ACL 配置字段", "vault 错误码枚举"],
+    "expected_not_hits": [],
+    "notes": "acl_denied 错误来自 vault-acl.json"
+  },
+  {
+    "description": "Agent 调 /api/vault/proxy 被 401 拒绝，检查鉴权头",
+    "query": "X-Hub-Session 请求头",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault X-Hub-Session 请求头", "team-hub session_token 生成与分发"],
+    "expected_not_hits": [],
+    "notes": "session_token 注册 + X-Hub-Session 头"
+  },
+  {
+    "description": "Agent 写 RuleRecord 想看字段",
+    "query": "RuleRecord 字段 状态",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub RuleRecord 字段"],
+    "expected_not_hits": [],
+    "notes": "proposed/reviewing/approved/rejected 四态"
+  },
+  {
+    "description": "Agent 查 ProfileFile 里 type 是什么意思",
+    "query": "成员 permanent temporary",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub ProfileFile 字段", "team-hub member type 枚举"],
+    "expected_not_hits": [],
+    "notes": "permanent/temporary 两种成员"
+  },
+  {
+    "description": "Agent 调 list_api_keys 想知道返回结构",
+    "query": "list_api_keys 返回",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault list_api_keys 返回字段"],
+    "expected_not_hits": [],
+    "notes": "keys 数组 + vault_status"
+  },
+  {
+    "description": "弹窗超时默认是多久",
+    "query": "ask_user 默认超时",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub ask-user 请求 timeout_ms 默认值"],
+    "expected_not_hits": [],
+    "notes": "120000 毫秒 = 2 分钟"
+  },
+  {
+    "description": "几个 ask_user 弹窗可以同时显示",
+    "query": "ask_user 堆叠 同时",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub 堆叠弹窗硬限制"],
+    "expected_not_hits": [],
+    "notes": "3 张可见，其余 FIFO 排队"
+  },
+  {
+    "description": "vault 加密算法是什么，字段都有哪些",
+    "query": "AES-256-GCM 加密",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault 入口 AES-256-GCM 加密字段", "vault.json 文件格式字段"],
+    "expected_not_hits": [],
+    "notes": "iv 12B + tag 16B + salt 16B per entry"
+  },
+  {
+    "description": "master key 是怎么派生的？",
+    "query": "vault master key HKDF 派生",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault master_key HKDF 派生参数"],
+    "expected_not_hits": [],
+    "notes": "HKDF + passkey + hostname+uid 绑定"
+  },
+  {
+    "description": "关联查询 Message 接口的所有 type 用法",
+    "query": "team-hub Message 接口",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": ["team-hub 信封 type 枚举", "team-hub Message.status 字段"],
+    "expected_not_hits": [],
+    "notes": "从 Message 接口出发查关联节点"
+  },
+  {
+    "description": "ApiNetwork 的 401 重试逻辑是否自动",
+    "query": "401 自动重试 ApiNetwork",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN 401 自动重试拦截器"],
+    "expected_not_hits": [],
+    "notes": "setNetworkResInterceptors 自动重试一次"
+  },
+  {
+    "description": "Agent 写 TanStack Query queryKey 要遵循什么规则",
+    "query": "queryKey 规范 chain",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN queryKey 规范"],
+    "expected_not_hits": [],
+    "notes": "必须带 chain 保证链切换重新获取"
+  },
+  {
+    "description": "查 GMGN 里链特定的默认滑点",
+    "query": "BSC 默认滑点",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN 滑点链特定建议"],
+    "expected_not_hits": [],
+    "notes": "BSC 买 30/卖 40，其他链 20/20"
+  },
+  {
+    "description": "ip_whitelist 能填几个",
+    "query": "ip_whitelist 数量上限",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN ip_whitelist 约束"],
+    "expected_not_hits": [],
+    "notes": "1-5 个 IP"
+  },
+  {
+    "description": "Agent 要读 members/ 下的记忆文件，目录结构是什么",
+    "query": "members memory 目录结构",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub members 记忆目录结构"],
+    "expected_not_hits": [],
+    "notes": "general/ + projects/{slug}/"
+  },
+  {
+    "description": "shared 目录里有什么",
+    "query": "shared 共享 目录",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub 共享目录结构", "team-hub RuleRecord 字段"],
+    "expected_not_hits": [],
+    "notes": "experiences/ 和 rules/"
+  },
+  {
+    "description": "Agent 要写 fixture 不知道 wikilink 能不能指向不存在的 title",
+    "query": "wikilink 约束",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["DATA_SCHEMA wikilink 约束"],
+    "expected_not_hits": [],
+    "notes": "目标必须是同批次存在的 title"
+  },
+  {
+    "description": "敏感信息过滤前缀有哪些",
+    "query": "敏感信息 sk ghp AKIA",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["DATA_SCHEMA 敏感信息脱敏规则"],
+    "expected_not_hits": [],
+    "notes": "sk-* / ghp_* / AKIA* / .env"
+  },
+  {
+    "description": "Agent 想知道 check_inbox 返回是 JSON 还是字符串",
+    "query": "check_inbox 返回结构",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub check_inbox 返回结构"],
+    "expected_not_hits": [],
+    "notes": "结构化 JSON 不是 PTY 信封"
+  },
+  {
+    "description": "Agent 查 knowledge 审计事件表字段",
+    "query": "knowledge_event 事件表",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo KnowledgeEvent 表字段"],
+    "expected_not_hits": [],
+    "notes": "event_type/actor/payload_json"
+  },
+  {
+    "description": "查 knowledge 元数据挂载方式",
+    "query": "knowledge_meta 元数据",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo KnowledgeMeta 表字段"],
+    "expected_not_hits": [],
+    "notes": "KV 挂载"
+  },
+  {
+    "description": "Agent 查 activate 返回 session_leader",
+    "query": "activate session_leader",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub activate 返回 session_leader", "team-hub session_leader 变量注入"],
+    "expected_not_hits": [],
+    "notes": "leader 名字的来源"
+  },
+  {
+    "description": "Agent 想过滤只含代币的 X Sniper 推文",
+    "query": "hasToken 过滤",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN hasToken 过滤标志"],
+    "expected_not_hits": [],
+    "notes": "X Sniper 只看喊单"
+  },
+  {
+    "description": "Agent 在战壕数据出问题想知道订阅了哪些 WS",
+    "query": "战壕 WebSocket 订阅",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN 战壕 WebSocket 订阅三流"],
+    "expected_not_hits": [],
+    "notes": "新币/价格/开盘三流"
+  },
+  {
+    "description": "Agent 要查 OpenAPI 钱包绑定字段",
+    "query": "wallet_bindings 绑定",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN wallet_bindings 字段"],
+    "expected_not_hits": [],
+    "notes": "chain+address+status"
+  },
+  {
+    "description": "查 ITradeType 枚举（买入卖出跟单 scraper）",
+    "query": "ITradeType 枚举",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN ITradeType 枚举（买卖跟单）"],
+    "expected_not_hits": [],
+    "notes": "buy/sell/copy/scraper 四类"
+  },
+  {
+    "description": "Agent 查 ISellType 卖出模式",
+    "query": "ISellType 卖出百分比还是数量",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN ISellType 卖出类型"],
+    "expected_not_hits": [],
+    "notes": "pre/amount"
+  },
+  {
+    "description": "Agent 查 SlippageTypeMode 显示",
+    "query": "SlippageTypeMode loss price",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN SlippageTypeMode 显示模式"],
+    "expected_not_hits": [],
+    "notes": "loss 默认百分比，price 价格偏移"
+  },
+  {
+    "description": "Agent 想知道 vault 审计日志记什么",
+    "query": "vault 审计日志格式",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault 审计日志字段"],
+    "expected_not_hits": [],
+    "notes": "timestamp|member|api_name|method|url|status|latency_ms"
+  },
+  {
+    "description": "为什么叫 ApiNetwork 不叫 Network",
+    "query": "ApiNetwork 命名冲突",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN Network 与 ApiNetwork 重名冲突"],
+    "expected_not_hits": [],
+    "notes": "避免与链枚举 Network 重名"
+  },
+  {
+    "description": "Agent 想查 use_api 的 url 必须满足什么条件",
+    "query": "use_api url 限制",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["vault use_api 输入参数", "vault ApiDefinition 字段"],
+    "expected_not_hits": [],
+    "notes": "url 必须以 base_url 开头"
+  },
+  {
+    "description": "ApiNetwork.delete 为什么名字带 $",
+    "query": "ApiNetwork delete$ 后缀",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GMGN ApiNetwork 方法签名"],
+    "expected_not_hits": [],
+    "notes": "仅 delete$ 有 $ 后缀"
+  },
+  {
+    "description": "Agent 在 knowledge 表中用 content_hash 做什么",
+    "query": "content_hash 去重",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.content_hash 字段"],
+    "expected_not_hits": [],
+    "notes": "SHA-256 hex 长度 64 做去重"
+  },
+  {
+    "description": "knowledge status 字段能取哪些值",
+    "query": "status active 过期",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.status 字段"],
+    "expected_not_hits": [],
+    "notes": "active/superseded/expired"
+  },
+  {
+    "description": "查 team-hub 信封 body 为什么不能有换行",
+    "query": "信封 body 换行",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub 信封 body 单行约束", "team-hub 消息信封格式 envelope"],
+    "expected_not_hits": [],
+    "notes": "PTY 单行约束"
+  },
+  {
+    "description": "查 vault 所有 HTTP 端点",
+    "query": "vault HTTP 端点",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": ["vault 端点 /api/vault/proxy", "vault 端点 /api/vault/list", "vault 端点 /api/vault/status", "vault 端点 /api/session/register"],
+    "expected_not_hits": [],
+    "notes": "4 个 HTTP 端点"
+  },
+  {
+    "description": "查 mnemo knowledge 表所有字段",
+    "query": "mnemo knowledge 字段",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.title 字段", "mnemo Knowledge.tags 字段", "mnemo Knowledge.scope 字段", "mnemo Knowledge.claim_type 字段", "mnemo Knowledge.status 字段"],
+    "expected_not_hits": [],
+    "notes": "knowledge tag 覆盖所有主表字段"
+  },
+  {
+    "description": "查 timestamp 字段在 mnemo 模型里怎么处理",
+    "query": "mnemo 时间戳 UTC",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.created_at / updated_at 字段"],
+    "expected_not_hits": [],
+    "notes": "_utcnow + onupdate 自动写"
+  },
+  {
+    "description": "session_id 字段用来干嘛",
+    "query": "session_id 会话来源",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.session_id 字段"],
+    "expected_not_hits": [],
+    "notes": "追溯知识来源会话"
+  },
+  {
+    "description": "source 字段 vs session_id 区别",
+    "query": "knowledge source 字段",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.source 字段", "mnemo Knowledge.session_id 字段"],
+    "expected_not_hits": [],
+    "notes": "source 是任意文本，session_id 是结构化"
+  },
+  {
+    "description": "Agent 查 extra_json 字段放什么",
+    "query": "extra_json 扩展",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Knowledge.extra_json 字段"],
+    "expected_not_hits": [],
+    "notes": "存 related/search_queries/summary 等"
+  },
+  {
+    "description": "Agent 要看弹窗窗口尺寸",
+    "query": "弹窗 BrowserWindow 尺寸",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub BrowserWindow ask-user 配置"],
+    "expected_not_hits": [],
+    "notes": "420x360 frameless transparent"
+  },
+  {
+    "description": "Agent 查 launch_panel 工具",
+    "query": "launch_panel",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team-hub launch_panel Hub 工具"],
+    "expected_not_hits": [],
+    "notes": "启动面板"
+  },
+  {
+    "description": "查全部 fixture schema 规则（全局搜索）",
+    "query": "fixture-schema",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["DATA_SCHEMA scope 字段规则", "DATA_SCHEMA search_queries 字段规则", "DATA_SCHEMA scenario query_type 枚举", "DATA_SCHEMA knowledge 文件命名", "DATA_SCHEMA wikilink 约束", "DATA_SCHEMA 敏感信息脱敏规则"],
+    "expected_not_hits": [],
+    "notes": "fixture-schema tag 覆盖写 fixture 必读的规则"
+  }
+]

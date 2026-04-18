@@ -1,0 +1,533 @@
+[
+  {
+    "description": "新 Agent 接手 aion team 代码想知道 refine 轮次的模型分配是否稳定",
+    "query": "refine 模型 丢失",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射", "aion team 卖点：同团队混合多厂商模型"],
+    "expected_not_hits": [],
+    "notes": "多模型团队的核心功能 bug，必须命中"
+  },
+  {
+    "description": "Agent 发现 config 里配了 qualityThreshold 但没效果",
+    "query": "qualityThreshold 不生效",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["team.qualityThreshold 配置未接线"],
+    "expected_not_hits": [],
+    "notes": "避免再次误以为生效"
+  },
+  {
+    "description": "Agent 在排查 aion 直连 API 模型为什么能跑 shell",
+    "query": "直连 API bash 工具",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["直连 API 的 Agent 接入 bash 工具"],
+    "expected_not_hits": [],
+    "notes": "行为变化与安全边界需要让新 Agent 知晓"
+  },
+  {
+    "description": "前端 Agent 查 signal card 标题次数与列表长度为何不一致",
+    "query": "signal card 次数 列表",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["signal card 标题次数来自 signal_times_by_type 求和", "signal-v2 聪明钱头像读 item.data.smart_degen_wallets", "toSignalListItems 展平 item 与 item.data"],
+    "expected_not_hits": [],
+    "notes": "完整理解 signal-v2 数据流需命中多条"
+  },
+  {
+    "description": "Agent 想复用 signal 历史次数锁定实现",
+    "query": "signalHistoryHeaderCountPin",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["signalHistoryHeaderCountPin 模块级 Map 锁定策略"],
+    "expected_not_hits": [],
+    "notes": "复用需要知道 pinRevision 和 pinKey 策略"
+  },
+  {
+    "description": "Agent 接手 group-room 发现主 Agent 不回复、房间卡在 running",
+    "query": "group-room 不回复 finish",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GroupRoomOrchestrator 漏接 AcpAgent finish 信号", "group-room host/sub 显示状态依赖 turnCompleted"],
+    "expected_not_hits": [],
+    "notes": "根因与表现必须一起命中"
+  },
+  {
+    "description": "Agent 发现群聊页主面板空白但成员已有",
+    "query": "GroupRoomPage 主面板空白",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GroupRoomPage 历史覆盖实时消息"],
+    "expected_not_hits": [],
+    "notes": "历史覆盖实时是第二层 bug"
+  },
+  {
+    "description": "新 Agent 想理解 group-room 如何派发子任务",
+    "query": "dispatch_task XML 派发",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["group-room 采用 dispatch_task XML 派发协议", "E2E 模式走 E2EGroupRoomScenarioRunner 不走真实 Agent"],
+    "expected_not_hits": [],
+    "notes": "派发机制 + E2E 差异"
+  },
+  {
+    "description": "Agent 想知道 Claude Code team 成员为什么拿到无效模型 ID",
+    "query": "Claude team 成员 模型 硬编码",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["spawnMultiAgent 成员默认模型不继承 leader", "teammate fallback 在 Bedrock 硬编码 us.anthropic.claude-opus-4-6-v1", "TeamCreateTool 队长模型来源优先级"],
+    "expected_not_hits": [],
+    "notes": "Claude Code team mode 模型派发根因链"
+  },
+  {
+    "description": "Agent 发现 settings.json 里 model 带 [1m] 疑似乱码",
+    "query": "[1m] 模型 ID 乱码",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["[1m] 是 1M context 标记非脏字符"],
+    "expected_not_hits": [],
+    "notes": "避免再次误判为 ANSI 残留"
+  },
+  {
+    "description": "Agent 想搞清楚 Claude Code team mode 是推送还是轮询",
+    "query": "team mode 推送 轮询",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["useInboxPoller 每 1s 轮询，waitForNextPromptOrShutdown 每 500ms", "teammate 通信统一走文件 mailbox"],
+    "expected_not_hits": [],
+    "notes": "底层机制必须准确"
+  },
+  {
+    "description": "Agent 想定位 Bedrock 请求 400 invalid model 是哪一层问题",
+    "query": "Bedrock 400 invalid model",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["Bedrock 400 invalid model identifier 根因", "~/.claude/settings.json model 字段可被 /model 写脏"],
+    "expected_not_hits": [],
+    "notes": "根因 + 污染源一并命中"
+  },
+  {
+    "description": "Agent 想知道 /model 命令为什么反复回写坏值",
+    "query": "/model 回写 settings.json",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["~/.claude/settings.json model 字段可被 /model 写脏"],
+    "expected_not_hits": [],
+    "notes": "残留进程也是原因"
+  },
+  {
+    "description": "Agent 想清理旧 team 但看不到 '老锤' 那几个成员",
+    "query": "中文 teammate 成员 看不到",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["中文 teammate 名 inbox 文件名被压成横杠"],
+    "expected_not_hits": [],
+    "notes": "解释 '消失' 的真实机制"
+  },
+  {
+    "description": "Agent 被告知 Team 扁平但代码像 leader 主导",
+    "query": "Team 扁平 leader 主导",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["Team 是 leader-centric 非纯扁平", "ExitPlanModeV2Tool 发 plan_approval_request 协议消息"],
+    "expected_not_hits": [],
+    "notes": "架构级矫正"
+  },
+  {
+    "description": "Agent 想排查 group-room E2E 超时",
+    "query": "E2E timeout 重试 bridge",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态", "bridge invoke 默认 8-10s 超时", "Vitest 全局 testTimeout=10000"],
+    "expected_not_hits": [],
+    "notes": "多层超时原因"
+  },
+  {
+    "description": "Agent 发现 CreateGroupRoomModal 按钮长时间转圈",
+    "query": "CreateGroupRoomModal 转圈",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["CreateGroupRoomModal 转圈是 invoke 永不 settle"],
+    "expected_not_hits": [],
+    "notes": "finally 未触发"
+  },
+  {
+    "description": "Agent 发现历史消息 senderRole 不对",
+    "query": "senderRole host sub",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["group-room 历史消息 senderRole 推断错误", "group-room.get 历史消息 hydration 未被单测覆盖"],
+    "expected_not_hits": [],
+    "notes": "DB 字段 user/agent vs 推断"
+  },
+  {
+    "description": "Agent 要新增主面板 msgKind 但不知道过滤规则",
+    "query": "MAIN_PANEL_KINDS 主面板",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["MAIN_PANEL_KINDS 控制主面板显示 msgKind", "group-room Bridge API 面"],
+    "expected_not_hits": [],
+    "notes": "修改过滤前提"
+  },
+  {
+    "description": "Agent 想给 Case 16/18 E2E 添加 sub 成员的理由",
+    "query": "Case 16 skip sub 成员",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Case 16/18 在只有主对话 Tab 时被 test.skip", "Playwright 连 Electron 可模拟点击验证群组创建"],
+    "expected_not_hits": [],
+    "notes": "E2E 欠账需补"
+  },
+  {
+    "description": "Agent 读到 tests/unit/cli/teamE2E.test.ts 以为是真实 E2E",
+    "query": "teamE2E.test.ts 命名",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["tests/unit/cli/teamE2E.test.ts 命名误导", "Vitest 全局 testTimeout=10000"],
+    "expected_not_hits": [],
+    "notes": "命名误导"
+  },
+  {
+    "description": "Agent 想了解 GroupRoomOrchestrator.test.ts 的隔离策略",
+    "query": "GroupRoomOrchestrator 单测 隔离",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GroupRoomOrchestrator.test.ts 用内存 SQLite + mock 桥稳定通过", "Case 7-10 是 IPC payload 契约测试非真 WS 端到端", "Case 2 子与主能力一致断言偏弱"],
+    "expected_not_hits": [],
+    "notes": "了解当前覆盖边界"
+  },
+  {
+    "description": "Agent 看到 TeamSessionService 改动想知道修了哪些元信息",
+    "query": "TeamSessionService 模型 元信息",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["TeamSessionService 修复 Team agent 模型元信息丢失", "workerTaskManagerSingleton 只允许 Gemini 回退 useModel"],
+    "expected_not_hits": [],
+    "notes": "commit 71b5db09"
+  },
+  {
+    "description": "Agent 排查 Actions macOS build failure",
+    "query": "Actions macOS Checkout 失败",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GitHub Actions checkout 失败真实原因定位方法"],
+    "expected_not_hits": [],
+    "notes": "Notify 步骤不是根因"
+  },
+  {
+    "description": "Agent 要按 Claude 参考做群聊保真复刻",
+    "query": "保真复刻 禁止脑补",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Claude 保真复刻指令：禁止脑补补全", "group-room 采用 dispatch_task XML 派发协议"],
+    "expected_not_hits": [],
+    "notes": "硬性规则"
+  },
+  {
+    "description": "Agent 想理解为什么 '不指定模型' 还会踩坑",
+    "query": "不指定模型 继承默认",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["不指定模型≠无限制 会继承坏默认", "~/.claude/teams/<team>/config.json 持久化成员模型"],
+    "expected_not_hits": [],
+    "notes": "常见误解"
+  },
+  {
+    "description": "Agent 想知道 Claude Code team 是否有过生产事故",
+    "query": "Team 消息上限 292 agents",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["TEAMMATE_MESSAGES_UI_CAP=50 保护 292 agents 事故"],
+    "expected_not_hits": [],
+    "notes": "历史事故提醒"
+  },
+  {
+    "description": "Agent 想知道 teammate 消息时间戳字段类型",
+    "query": "TeammateMessage timestamp 类型",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["TeammateMessage.timestamp 是 ISO 字符串"],
+    "expected_not_hits": [],
+    "notes": "不是 number"
+  },
+  {
+    "description": "Agent 想确认 Claude team 激活条件",
+    "query": "isAgentSwarmsEnabled 激活",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["isAgentSwarmsEnabled 三层门槛", "writeToMailbox lock-reread-append-release"],
+    "expected_not_hits": [],
+    "notes": "OR 非 AND"
+  },
+  {
+    "description": "Agent 想确认 mnemo 的数据源和 Cursor SQLite 格式",
+    "query": "mnemo Cursor SQLite 数据源",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 数据源位置清单", "JSONL message.content 多形态需展开"],
+    "expected_not_hits": [],
+    "notes": "抽取脚本必备"
+  },
+  {
+    "description": "Agent 改 aion CLI 想知道是否破坏 Electron 主进程",
+    "query": "aion CLI Electron 主进程 影响",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["aion CLI Electron 不触及 Orchestrator", "aion index.ts --with/--agents 向后兼容"],
+    "expected_not_hits": [],
+    "notes": "加法兼容"
+  },
+  {
+    "description": "Agent 想知道 CoordinatorSession 的生命周期",
+    "query": "CoordinatorSession 长会话 plan synthesis",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["CoordinatorSession 是持久长会话不是一次性调用", "aion CLI PersistentCoordinatorLoop 停止条件"],
+    "expected_not_hits": [],
+    "notes": "Claude Operon 思路"
+  },
+  {
+    "description": "Agent 想对齐 aion team 是否真的 '多模型'",
+    "query": "aion 多模型 差异化",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["aion team 卖点：同团队混合多厂商模型", "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"],
+    "expected_not_hits": [],
+    "notes": "卖点 + 已知回退"
+  },
+  {
+    "description": "Agent 想知道 verifying 阶段是否走 LiveCoordinatorAgent",
+    "query": "LiveCoordinatorAgent verifying phase",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["aion team 面板阶段与事件模型未完全对齐"],
+    "expected_not_hits": [],
+    "notes": "技术债"
+  },
+  {
+    "description": "Agent 想知道 aion team 单测覆盖哪些",
+    "query": "aion team 单测 范围",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["aion CLI team 单测覆盖范围", "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"],
+    "expected_not_hits": [],
+    "notes": "覆盖缺口"
+  },
+  {
+    "description": "Agent 想知道 group-room 流式正文何时落库",
+    "query": "group-room 流式 落库 finish",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["group-room 主面板流式正文多在 finish 时落库", "GroupRoomOrchestrator 漏接 AcpAgent finish 信号"],
+    "expected_not_hits": [],
+    "notes": "落库粒度"
+  },
+  {
+    "description": "Agent 查 Claude Code 嵌套限制究竟有哪些",
+    "query": "Claude 嵌套 fork teammate",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["Claude Code 嵌套限制是具体 guard 非全面禁止"],
+    "expected_not_hits": [],
+    "notes": "具体而非全面"
+  },
+  {
+    "description": "Agent 在排查 teammate 邮箱文件并发",
+    "query": "writeToMailbox 锁",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["writeToMailbox lock-reread-append-release", "teammate 通信统一走文件 mailbox"],
+    "expected_not_hits": [],
+    "notes": "锁 + clearMailbox 缺陷"
+  },
+  {
+    "description": "Agent 要给 groupRoomBridge 加 API",
+    "query": "groupRoomBridge API 面",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["group-room Bridge API 面", "MAIN_PANEL_KINDS 控制主面板显示 msgKind"],
+    "expected_not_hits": [],
+    "notes": "了解现有通道"
+  },
+  {
+    "description": "Agent 查 Case 7-10 单测实际验了什么",
+    "query": "Case 7 Case 10 契约",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Case 7-10 是 IPC payload 契约测试非真 WS 端到端"],
+    "expected_not_hits": [],
+    "notes": "契约 vs E2E"
+  },
+  {
+    "description": "Agent 要改 Case 11 的前端创建断言",
+    "query": "Case 11 前端 创建群组 断言",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Playwright 连 Electron 可模拟点击验证群组创建", "CreateGroupRoomModal 转圈是 invoke 永不 settle"],
+    "expected_not_hits": [],
+    "notes": "UI 断言缺口"
+  },
+  {
+    "description": "Agent 在 feat-signal-feature 分支上遇到 Pump 冲突",
+    "query": "feat-signal-feature Pump 冲突",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["feat-signal-feature rebase Pump platform 冲突", "Pump 配置最终选上游完整版"],
+    "expected_not_hits": [],
+    "notes": "冲突和最终决策一并命中"
+  },
+  {
+    "description": "Agent 想启动 group-room E2E 但 Electron 拉不起来",
+    "query": "E2E Electron 启动失败",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["E2E fixtures 默认模式强依赖 out/ 打包产物", "group-room E2E 多处绕过 UI 直接 bridge 造数据"],
+    "expected_not_hits": [],
+    "notes": "当前 E2E 基础设施缺口"
+  },
+  {
+    "description": "Agent 发现前端不显示 host_thought/result_injection",
+    "query": "host_thought 不显示",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["GroupMessageItem 吃掉 host_thought/result_injection", "MAIN_PANEL_KINDS 控制主面板显示 msgKind"],
+    "expected_not_hits": [],
+    "notes": "声明 vs 实现不一致"
+  },
+  {
+    "description": "Agent 想单独订阅某个子 Agent 对话",
+    "query": "WS 单独订阅 子 Agent",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["WebSocketManager.broadcast 无差别广播", "group_messages 只存 sender 不存 target", "group-room Bridge API 面"],
+    "expected_not_hits": [],
+    "notes": "API 与 schema 都需要动"
+  },
+  {
+    "description": "Agent 发现主 Agent 的思考流有时数据丢失",
+    "query": "主 Agent 思考 丢失",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["group-room 主 Agent thought/reply 只攒到 finish 才落库", "GroupRoomOrchestrator 漏接 AcpAgent finish 信号"],
+    "expected_not_hits": [],
+    "notes": "攒到 finish 的数据丢失风险"
+  },
+  {
+    "description": "Agent 对比 Claude Code 和 AionUi 多 Agent 能力差距",
+    "query": "Claude Code Agent runtime 能力",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["Claude Code Agent tool 有完整 runtime 能力", "AionUi group-room 定位是协作可视化非通用 runtime"],
+    "expected_not_hits": [],
+    "notes": "能力矩阵对比"
+  },
+  {
+    "description": "Agent 排查 team 模式点 allow 没反应",
+    "query": "team allow 没反应 超时",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["TeammateManager.wake 用 skipCache:true 破坏权限回传", "ConversationChatConfirm invoke 不检查返回值"],
+    "expected_not_hits": [],
+    "notes": "权限回传 bug 与 UI 放大"
+  },
+  {
+    "description": "Agent 以为现有 E2E 已证明真实多 Agent",
+    "query": "E2E 真实多 Agent",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["E2E 真实编排 runner 仍是确定性桩", "E2E 模式走 E2EGroupRoomScenarioRunner 不走真实 Agent"],
+    "expected_not_hits": [],
+    "notes": "避免被 mock 欺骗"
+  },
+  {
+    "description": "Agent 想知道 Claude teammate 消息如何真正送到",
+    "query": "teammate 消息 投递 路径",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["Claude Team 消息投递路径是轮询+队列+attachment", "useInboxPoller 每 1s 轮询，waitForNextPromptOrShutdown 每 500ms"],
+    "expected_not_hits": [],
+    "notes": "idle/busy/attachment 三路径"
+  },
+  {
+    "description": "Agent 想列出 Claude Team 所有协议消息",
+    "query": "Claude 协议消息 类型",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["isStructuredProtocolMessage 只识别 10 类协议消息", "ExitPlanModeV2Tool 发 plan_approval_request 协议消息"],
+    "expected_not_hits": [],
+    "notes": "定义层 vs 路由层"
+  },
+  {
+    "description": "Agent 想知道 SendMessage 快速路径条件",
+    "query": "SendMessage 内存队列 string",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["SendMessage 快速路径只对 string message 生效", "teammate 通信统一走文件 mailbox"],
+    "expected_not_hits": [],
+    "notes": "string-only + resume 行为"
+  },
+  {
+    "description": "Agent 想查 Team 的 task list 存储位置",
+    "query": "Claude task list 存储 lockfile",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["Team 与 task list 1:1 对应 sanitized team name", "writeToMailbox lock-reread-append-release"],
+    "expected_not_hits": [],
+    "notes": "proper-lockfile + 目录结构"
+  },
+  {
+    "description": "Agent 发现 Team 里 preset Gemini 能聊但单 Agent 行为不一致",
+    "query": "Team preset Gemini 不一致",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["TeamSessionService preset/remote 入口参数未对齐单 Agent", "Team 下拉过滤掉 custom 非 preset agent"],
+    "expected_not_hits": [],
+    "notes": "入口参数对齐缺口"
+  },
+  {
+    "description": "Agent 跑 mnemo 提取脚本需要知道 Cursor 结构",
+    "query": "bubbleId LIKE 模式",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["bubbleId key 模式是 bubbleId:<workspace>:<bubble>", "mnemo 数据源位置清单"],
+    "expected_not_hits": [],
+    "notes": "避免 SQL 写错"
+  },
+  {
+    "description": "Agent 想知道 verify 阶段模型映射是否正确",
+    "query": "verify 任务 模型",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["aion CLI PersistentCoordinatorLoop 生成 verify-* id", "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"],
+    "expected_not_hits": [],
+    "notes": "refine + verify 同源 bug"
+  },
+  {
+    "description": "Agent 想知道 initGroupRoomBridge 竞态的根源",
+    "query": "initGroupRoomBridge 异步",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["initGroupRoomBridge 是 fire-and-forget 异步注册", "group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态"],
+    "expected_not_hits": [],
+    "notes": "注册顺序问题"
+  },
+  {
+    "description": "Agent 要处理 sub_status 状态事件",
+    "query": "sub_status 子 Agent 状态",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["group-room sub_status 是动态状态事件", "group-room Bridge API 面"],
+    "expected_not_hits": [],
+    "notes": "与 sub_thinking/sub_output 的区别"
+  },
+  {
+    "description": "Agent 想知道 rebase 后 Skeleton 是否还安全",
+    "query": "Skeleton borderRadius 样式",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Skeleton borderRadius 改到 style.borderRadius"],
+    "expected_not_hits": [],
+    "notes": "小类型修复低风险"
+  }
+]

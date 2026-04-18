@@ -1,0 +1,474 @@
+[
+  {
+    "description": "新 Agent 在 mnemo 里要跑单测",
+    "query": "mnemo 跑测试",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 跑单元测试"],
+    "expected_not_hits": ["AionUi 测试命令"],
+    "notes": "mnemo 项目用 uv run pytest，不要和 AionUi 的 bun run test 混"
+  },
+  {
+    "description": "Agent 改了 mnemo CLI 想本地验一下不污染主库",
+    "query": "MNEMO_DATA_DIR 验证",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo CLI 本地验证套路"],
+    "expected_not_hits": [],
+    "notes": "核心姿势：export 临时 DATA_DIR 后跑 uv run mnemo"
+  },
+  {
+    "description": "AionUi 开发者提 PR 前要检查代码",
+    "query": "AionUi PR 前检查",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 提 PR 前跑 prek", "AionUi lint 三件套", "AionUi i18n 校验"],
+    "expected_not_hits": [],
+    "notes": "完整交付门禁是 lint:fix + format + tsc + prek，改 renderer 还要 i18n 校验"
+  },
+  {
+    "description": "Agent 被问 lint 和 tsc 怎么跑",
+    "query": "oxlint 自动修复",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["AionUi lint 三件套"],
+    "expected_not_hits": [],
+    "notes": "AionUi 用 oxlint 不是 eslint"
+  },
+  {
+    "description": "AionUi 要跑 ACP 真实 Backend 冒烟",
+    "query": "ACP smoke 真实 Backend",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi ACP Smoke 测试"],
+    "expected_not_hits": [],
+    "notes": "必须设 ACP_SMOKE_REAL=1 否则只跑 fake CLI"
+  },
+  {
+    "description": "Agent 要同时跑两份 AionUi 仓库（主 + refactor）",
+    "query": "AionUi 多实例",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 多实例开发", "AionUi 开发启动"],
+    "expected_not_hits": [],
+    "notes": "start:multi 会自动切 userData 和端口，但 WebUI 要隐身窗口"
+  },
+  {
+    "description": "Agent 想把 AionUi 打 Linux deb 包",
+    "query": "AionUi 打包 Linux",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 打包分发"],
+    "expected_not_hits": [],
+    "notes": "dist:linux 或 build-deb 都行"
+  },
+  {
+    "description": "Agent 改了 locales 或 i18n 配置",
+    "query": "i18n 校验命令",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi i18n 校验"],
+    "expected_not_hits": [],
+    "notes": "必须同时跑 i18n:types 和 check-i18n.js"
+  },
+  {
+    "description": "AionUi MCP 配置有问题要 debug",
+    "query": "AionUi debug MCP",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi debug MCP"],
+    "expected_not_hits": [],
+    "notes": "debug:mcp / debug:mcp:list / debug:mcp:validate 三件套"
+  },
+  {
+    "description": "要在 Linux 无头服务器部署 AionUi",
+    "query": "AionUi 无头部署",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 无头服务器部署", "AionUi 服务管理脚本", "dpkg 强制安装 .deb"],
+    "expected_not_hits": [],
+    "notes": ".deb 装 + Xvfb + 启动脚本，容器环境注意 dpkg --force-all"
+  },
+  {
+    "description": "AionUi 代理偶尔断开希望自动 fallback",
+    "query": "AionUi 代理自动回退",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 代理 PAC 自动回退", "/dev/tcp 探活端口", "SSH 反向隧道转发本地代理"],
+    "expected_not_hits": [],
+    "notes": "proxy-pac-url + PROMPT_COMMAND 两层配合"
+  },
+  {
+    "description": "远程没公网 IP 怎么开放 AionUi WebUI",
+    "query": "ngrok 穿透 WebUI",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["AionUi ngrok 穿透 WebUI", "SSH 反向隧道转发本地代理"],
+    "expected_not_hits": [],
+    "notes": "ngrok http 25808 或 ssh -L 隧道"
+  },
+  {
+    "description": "teams 项目要跑 E2E 但不知道套路",
+    "query": "teams E2E",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["teams E2E 开发模式", "E2E 跑前先清进程"],
+    "expected_not_hits": [],
+    "notes": "E2E_DEV=1 是硬门槛，跑之前还要 pkill 清残留"
+  },
+  {
+    "description": "Electron 测试跑到一半卡住",
+    "query": "E2E 清残留进程",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["E2E 跑前先清进程"],
+    "expected_not_hits": [],
+    "notes": "Playwright + Electron 残留是 E2E 失败常见根因"
+  },
+  {
+    "description": "Agent 要在 teams 项目里搜 MCP 相关代码",
+    "query": "teams 代码定位 MCP",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["teams grep 关键词定位"],
+    "expected_not_hits": [],
+    "notes": "teamMcpStdioConfig / buildTeamMcpServer 是主要切入点"
+  },
+  {
+    "description": "Agent 要把 mnemo 仓库从 public 改 private",
+    "query": "gh 仓库 private",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["gh 仓库可见性切换"],
+    "expected_not_hits": [],
+    "notes": "必须带 --accept-visibility-change-consequences"
+  },
+  {
+    "description": "Agent 检查当前 gh 登录状态",
+    "query": "gh 登录状态",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["gh 认证状态检查"],
+    "expected_not_hits": [],
+    "notes": "gh auth status 基础操作"
+  },
+  {
+    "description": "新机要跑 ai-child",
+    "query": "ai-child 首次启动",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child 首次启动", "ai-child sense 主线命令"],
+    "expected_not_hits": [],
+    "notes": "npm run bootstrap 一键准备，然后从 eval:checkpoint-audit 开始验证"
+  },
+  {
+    "description": "ai-child 要带摄像头 live 模式",
+    "query": "ai-child 摄像头",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child sense 主线命令"],
+    "expected_not_hits": [],
+    "notes": "sense:view / sense:camera:diag，macOS 要开 Camera 权限"
+  },
+  {
+    "description": "nft-gmgn 要跑类型检查",
+    "query": "nft-gmgn 类型检查",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["nft-gmgn 类型检查"],
+    "expected_not_hits": [],
+    "notes": "yarn tsc 是这个项目唯一常用命令"
+  },
+  {
+    "description": "Agent 要扫描 Claude 会话记录",
+    "query": "Claude 会话 JSONL 位置",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["查 Claude 会话 JSONL", "读 JSONL 特定字段"],
+    "expected_not_hits": [],
+    "notes": "~/.claude/projects/<slug>/*.jsonl 是标准路径"
+  },
+  {
+    "description": "Agent 要清掉旧团队残留",
+    "query": "清 Claude 团队",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["清掉 Claude 团队遗留", "读团队成员配置"],
+    "expected_not_hits": [],
+    "notes": "~/.claude/teams 和 ~/.claude/tasks 两个目录同时清"
+  },
+  {
+    "description": "端口 25808 被占用需要释放",
+    "query": "释放端口",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["清端口占用"],
+    "expected_not_hits": [],
+    "notes": "kill $(lsof -t -i:PORT) 标准套路"
+  },
+  {
+    "description": "Agent 要确认当前 claude 二进制来自哪里",
+    "query": "which claude 定位",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["which / file 定位二进制"],
+    "expected_not_hits": [],
+    "notes": "which + file + head 三件套"
+  },
+  {
+    "description": "查环境变量被谁设的",
+    "query": "环境变量来源",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["查 Shell 启动脚本的环境变量"],
+    "expected_not_hits": [],
+    "notes": "zshrc/zshenv/zprofile 三个位置都要查"
+  },
+  {
+    "description": "查 Claude 全局 model 配置",
+    "query": "查 model 配置",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["查 Claude settings.json model"],
+    "expected_not_hits": [],
+    "notes": "~/.claude/settings.json 用 python3 json.tool 解析"
+  },
+  {
+    "description": "Agent 要看 package.json 有哪些 scripts",
+    "query": "列 npm scripts",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["package.json scripts 速览"],
+    "expected_not_hits": [],
+    "notes": "python3 一行命令比 jq 更广泛可用"
+  },
+  {
+    "description": "Agent 要读竞品开源仓库代码",
+    "query": "临时克隆仓库",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["git 临时克隆到 /tmp"],
+    "expected_not_hits": [],
+    "notes": "git clone --depth 1 到 /tmp 然后 rm -rf"
+  },
+  {
+    "description": "Agent 要新建一堆嵌套目录",
+    "query": "嵌套建目录",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["mkdir -p 嵌套建目录", "mnemo 项目脚手架建立"],
+    "expected_not_hits": [],
+    "notes": "mkdir -p + 大括号扩展一条命令搞定"
+  },
+  {
+    "description": "Agent 不知道新项目用什么包管理器",
+    "query": "包管理器选择",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["pip / uv / bun 依赖安装差异"],
+    "expected_not_hits": [],
+    "notes": "mnemo=uv / AionUi=bun / nft-gmgn=yarn / ai-child=npm+bootstrap"
+  },
+  {
+    "description": "Agent 要查 .gitignore 是否忽略某文件",
+    "query": "gitignore 检查",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["gitignore 检查忽略项"],
+    "expected_not_hits": [],
+    "notes": "cat .gitignore + grep 或 git status 验证"
+  },
+  {
+    "description": "bash 探活本地端口",
+    "query": "bash 探测端口",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["/dev/tcp 探活端口"],
+    "expected_not_hits": [],
+    "notes": "无需装 nc，bash 内建 /dev/tcp"
+  },
+  {
+    "description": "Agent 完成了里程碑要发通知",
+    "query": "发里程碑通知",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["MCP notify 通知"],
+    "expected_not_hits": [],
+    "notes": "mcp__notify__send_notification，不是每步都发"
+  },
+  {
+    "description": "AionUi 服务启停管理",
+    "query": "AionUi 服务管理",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 服务管理脚本"],
+    "expected_not_hits": [],
+    "notes": "start-aionui.sh 四态（start/stop/restart/status）"
+  },
+  {
+    "description": "服务器没代理本地有 VPN 怎么共享",
+    "query": "SSH 反向代理",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["SSH 反向隧道转发本地代理"],
+    "expected_not_hits": [],
+    "notes": "ssh -R 反向隧道配合 PAC 文件 fallback"
+  },
+  {
+    "description": "首次装 prek 工具",
+    "query": "prek 安装",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["prek 一次性安装"],
+    "expected_not_hits": [],
+    "notes": "npm install -g @j178/prek"
+  },
+  {
+    "description": "AionUi E2E 报 Electron 二进制缺失",
+    "query": "Electron 二进制安装",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["Electron 二进制首次装"],
+    "expected_not_hits": [],
+    "notes": "node node_modules/electron/install.js 手动装"
+  },
+  {
+    "description": "Claude Bash 跨调用 cwd 重置怎么办",
+    "query": "Claude Bash cwd",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["pwd / ls 检查当前位置"],
+    "expected_not_hits": [],
+    "notes": "优先用绝对路径"
+  },
+  {
+    "description": "Agent 要抽文件中间若干行",
+    "query": "sed 行范围",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["head / tail / sed 行级抽取"],
+    "expected_not_hits": [],
+    "notes": "优先 Read 工具 offset/limit，Bash 留给管道场景"
+  },
+  {
+    "description": "Agent 要在某目录递归搜关键词",
+    "query": "grep 限定文件类型",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["Grep 递归限定文件类型"],
+    "expected_not_hits": [],
+    "notes": "优先 Grep 工具，Bash 留给复杂管道"
+  },
+  {
+    "description": "AionUi 性能调优要启监控",
+    "query": "AionUi 性能监控",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi debug:perf"],
+    "expected_not_hits": [],
+    "notes": "debug:perf + debug:perf:report 组合"
+  },
+  {
+    "description": "Agent 要单跑某个测试点不跑全量",
+    "query": "单测点 grep",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["Vitest 单文件单测试点", "AionUi 单测 fixture CLI"],
+    "expected_not_hits": [],
+    "notes": "vitest run -t / playwright --grep 两个路径"
+  },
+  {
+    "description": "机器上没装 jq 要解析 JSON",
+    "query": "jq 替代",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["jq / python3 json.tool 解析 JSON"],
+    "expected_not_hits": [],
+    "notes": "python3 -m json.tool 可靠"
+  },
+  {
+    "description": "AionUi 测试到底用 bun test 还是 vitest",
+    "query": "bun test vs vitest",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["bun test vs vitest run"],
+    "expected_not_hits": [],
+    "notes": "AionUi 除 test:bun 外都是 vitest"
+  },
+  {
+    "description": "Windows 下 npm script 设环境变量报语法错误",
+    "query": "cross-env 跨平台",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["cross-env 跨平台环境变量"],
+    "expected_not_hits": [],
+    "notes": "package.json scripts 里统一用 cross-env"
+  },
+  {
+    "description": "ai-child 看团队谁负责啥",
+    "query": "ai-child 团队状态",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child team_status 查看"],
+    "expected_not_hits": [],
+    "notes": "python3 scripts/team_status.py"
+  },
+  {
+    "description": "AionUi 装 .deb 遇依赖错误",
+    "query": "dpkg 依赖错误",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["dpkg 强制安装 .deb", "AionUi 无头服务器部署"],
+    "expected_not_hits": [],
+    "notes": "NVIDIA 容器环境 libegl1 缺，用 --force-all 强装"
+  },
+  {
+    "description": "AionUi WebUI 忘记密码",
+    "query": "AionUi 重置密码",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 重置密码"],
+    "expected_not_hits": [],
+    "notes": "开发模式 resetpass / 生产模式 server:resetpass:prod"
+  },
+  {
+    "description": "按命令类标签过滤所有命令",
+    "query": "command",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "mnemo 跑单元测试",
+      "AionUi lint 三件套",
+      "teams E2E 开发模式",
+      "ai-child 首次启动",
+      "nft-gmgn 类型检查",
+      "清端口占用"
+    ],
+    "expected_not_hits": [],
+    "notes": "每条命令类知识都有 command 标签，抽样验证大量命中"
+  },
+  {
+    "description": "从 AionUi 代理方案找关联文档",
+    "query": "AionUi 代理 PAC 自动回退",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": ["AionUi 无头服务器部署", "/dev/tcp 探活端口", "SSH 反向隧道转发本地代理"],
+    "expected_not_hits": [],
+    "notes": "PAC 方案和部署/探活/SSH 隧道强关联"
+  },
+  {
+    "description": "只搜 mnemo 项目命令",
+    "query": "mnemo",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": [
+      "mnemo 跑单元测试",
+      "mnemo CLI 本地验证套路",
+      "mnemo 安装包",
+      "mnemo MCP 入口",
+      "mnemo 项目脚手架建立"
+    ],
+    "expected_not_hits": ["AionUi 测试命令"],
+    "notes": "scope=project + tag=mnemo 应精确过滤"
+  }
+]

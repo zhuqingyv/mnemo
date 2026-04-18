@@ -1,0 +1,510 @@
+[
+  {
+    "title": "本机可用运行时和工具",
+    "tags": [
+      "env-constraint",
+      "runtime",
+      "cli"
+    ],
+    "summary": "Claude Code CLI、Bash、git、Node.js、bun、python3 本机直接可用",
+    "content": "本机默认可用的运行时和工具：\n- Claude Code CLI、Bash、文件读写（Read/Write/Edit）、git\n- Node.js 和 bun：bun 更快可优先跑脚本和 TS（`bun run`、`bunx tsc`），Node.js 兼容 Node-only 库\n- python3：stdlib 的 json 模块足以处理 JSONL 解析、批量文件任务\n不需要额外 install 就能完成大部分工程任务。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "~/.claude/memory/TOOLING.md + session e8c1e554",
+    "related": [],
+    "search_queries": [
+      "基础工具",
+      "CLI 能力",
+      "Node.js",
+      "python3",
+      "bun",
+      "运行时"
+    ]
+  },
+  {
+    "title": "curl 可做 HTTP 测试",
+    "tags": [
+      "env-constraint",
+      "network"
+    ],
+    "summary": "curl 命令可用，验证本地服务器和外部 HTTP 接口首选",
+    "content": "curl 命令本机可用，用于验证本地 HTTP 服务（如 `curl localhost:PORT`）和调用外部 API。是前端/后端联调的首选验证手段。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "~/.claude/memory/TOOLING.md",
+    "related": [
+      "前端验证走 curl + screencapture"
+    ],
+    "search_queries": [
+      "curl",
+      "HTTP 测试",
+      "接口验证"
+    ]
+  },
+  {
+    "title": "macOS screencapture 可用",
+    "tags": [
+      "env-constraint",
+      "macos"
+    ],
+    "summary": "macOS 内置 screencapture -x 可截全屏，用于前端验证取证",
+    "content": "macOS 自带 `screencapture -x ~/screenshot.png` 可截全屏（-x 关闭快门声）。用于前端验证时留存页面证据，配合 `open` 打开浏览器。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/memory/TOOLING.md",
+    "related": [
+      "前端验证走 curl + screencapture",
+      "有证据才能说完成"
+    ],
+    "search_queries": [
+      "screencapture",
+      "截图",
+      "前端截图"
+    ]
+  },
+  {
+    "title": "Playwright 浏览器未安装",
+    "tags": [
+      "env-constraint",
+      "testing",
+      "playwright"
+    ],
+    "summary": "AionUi 等项目有 Playwright 依赖但浏览器二进制缺失，需 install chromium",
+    "content": "项目 package.json 里有 @playwright/test 依赖，但浏览器二进制没下载。运行 E2E 测试前必须执行 `npx playwright install chromium`。替代方案：Electron 项目可用 Playwright 的 Electron 模式启动打包好的应用（见 playwright.config.ts 的 packaged 模式）。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "~/.claude/memory/TOOLING.md + session ce32307a",
+    "related": [
+      "禁止启动 headless 抢占用户 Chrome"
+    ],
+    "search_queries": [
+      "playwright 安装",
+      "chromium 缺失",
+      "浏览器二进制"
+    ]
+  },
+  {
+    "title": "无全局浏览器自动化",
+    "tags": [
+      "env-constraint",
+      "browser"
+    ],
+    "summary": "本机没有全局 Puppeteer/Playwright 可直接驱动浏览器",
+    "content": "本机没有全局配置好的浏览器自动化环境。前端验证不要依赖 headless 自动化，改用 curl + screencapture + 手动 open 浏览器的组合。替代方案见 [[前端验证走 curl + screencapture]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "~/.claude/memory/TOOLING.md",
+    "related": [
+      "前端验证走 curl + screencapture",
+      "禁止启动 headless 抢占用户 Chrome"
+    ],
+    "search_queries": [
+      "浏览器自动化",
+      "无 headless",
+      "前端 E2E"
+    ]
+  },
+  {
+    "title": "前端验证走 curl + screencapture",
+    "tags": [
+      "env-constraint",
+      "procedure",
+      "frontend"
+    ],
+    "summary": "前端验证替代方案：curl 查服务、screencapture 截屏、open 手动打开",
+    "content": "前端验证三步替代方案（不用 headless）：\n1. `curl localhost:PORT` 验证服务器启动和路由响应\n2. `screencapture -x ~/screenshot.png` 截当前屏幕\n3. `open http://...` 打开默认浏览器 + 手动操作 + screencapture 留证\n适用场景：无法用 Playwright 且需要取证的前端交付验证。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/memory/TOOLING.md",
+    "related": [
+      "curl 可做 HTTP 测试",
+      "macOS screencapture 可用",
+      "无全局浏览器自动化"
+    ],
+    "search_queries": [
+      "前端验证",
+      "前端取证",
+      "替代 headless"
+    ]
+  },
+  {
+    "title": "禁止启动 headless 抢占用户 Chrome",
+    "tags": [
+      "env-constraint",
+      "forbidden"
+    ],
+    "summary": "绝对禁止启动 headless Chrome/Puppeteer/Playwright 抢占用户 Chrome 进程",
+    "content": "绝对禁止在用户 macOS 上启动 headless Chrome 或 Puppeteer/Playwright，避免抢占用户当前打开的 Chrome 进程和 profile，破坏正在进行的浏览会话。必须用前端验证替代方案（[[前端验证走 curl + screencapture]]）。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/memory/TOOLING.md",
+    "related": [
+      "前端验证走 curl + screencapture"
+    ],
+    "search_queries": [
+      "禁止 headless",
+      "Chrome 抢占",
+      "浏览器进程冲突"
+    ]
+  },
+  {
+    "title": "gh CLI 可用且已登录",
+    "tags": [
+      "env-constraint",
+      "github"
+    ],
+    "summary": "gh 命令可直接调用 GitHub API，创建 PR、fork、查询仓库",
+    "content": "gh CLI 本机可用且已登录。常用能力：`gh pr create`、`gh repo fork`、`gh api` 等。注意某些破坏性命令需要显式确认标志，例如 `gh repo edit --visibility` 需要加 `--accept-visibility-change-consequences`，否则 Exit 1。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 L349",
+    "related": [],
+    "search_queries": [
+      "gh 命令",
+      "GitHub CLI",
+      "gh pr create"
+    ]
+  },
+  {
+    "title": "mcp__notify 通知通道可用",
+    "tags": [
+      "env-constraint",
+      "notification"
+    ],
+    "summary": "mcp__notify__send_notification 用于里程碑通知，不要每步都发",
+    "content": "MCP 工具 `mcp__notify__send_notification` 可用，用于向用户发送系统通知。使用准则：只在有意义的里程碑用（任务完成、需要确认、长任务结束），不要每步都通知。配套有 `list_sounds` / `list_icons` 查可选样式。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/CLAUDE.md + session e8c1e554",
+    "related": [],
+    "search_queries": [
+      "notify 通知",
+      "里程碑通知",
+      "mcp notify"
+    ]
+  },
+  {
+    "title": "SendMessage 用于 Agent 团队通信",
+    "tags": [
+      "env-constraint",
+      "team"
+    ],
+    "summary": "团队 Agent 之间通信必须用 SendMessage，写纯文本不会传递",
+    "content": "Agent 团队协作时，与 teammate 通信必须使用 SendMessage 工具（`to: '<name>'` 或 `to: '*'` 广播）。写纯文本不会被其他 Agent 收到。Async agent 启动后会返回 agentId（形如 a59cb8168c5a80cac），后续用 SendMessage 带该 id 继续对话。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 L12-L21",
+    "related": [],
+    "search_queries": [
+      "SendMessage",
+      "Agent 通信",
+      "团队协作"
+    ]
+  },
+  {
+    "title": "ToolSearch 解锁 deferred 工具",
+    "tags": [
+      "env-constraint",
+      "tool-loading"
+    ],
+    "summary": "deferred 工具需先用 ToolSearch 加载 schema 才能调用",
+    "content": "system-reminder 中列出的 deferred 工具（如 TaskCreate、SendMessage、WebFetch、mcp__notify__*）schema 未默认加载，直接调用会 InputValidationError。必须先用 `ToolSearch` with `query: \"select:<ToolName>\"` 加载 schema 后才能调用。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "system-reminder + session e8c1e554 L75",
+    "related": [],
+    "search_queries": [
+      "ToolSearch",
+      "deferred 工具",
+      "工具加载"
+    ]
+  },
+  {
+    "title": "JSONL 会话文件大必须流式读",
+    "tags": [
+      "env-constraint",
+      "file-io"
+    ],
+    "summary": "~/.claude/projects/ 下的 JSONL 常达几 MB，必须用脚本流式处理",
+    "content": "`~/.claude/projects/` 下的 Claude 会话 JSONL 文件单个常有 1-10 MB，Read 工具读全文会截断。正确姿势：用 Bash 跑 `python3` 脚本逐行 parse JSON，按关键词/类型过滤后只打印需要的片段（text[:300]），避免把全量内容喂进上下文。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "session e8c1e554 本次任务实操",
+    "related": [],
+    "search_queries": [
+      "JSONL 会话",
+      "大文件读取",
+      "Claude 历史分析"
+    ]
+  },
+  {
+    "title": "Grep 长行会被 omit",
+    "tags": [
+      "env-constraint",
+      "tool-limit"
+    ],
+    "summary": "JSONL 单行过长时 Grep 结果会显示 Omitted long matching line",
+    "content": "Grep 工具对超长行（如 JSONL 里一整条会话消息）会返回 `[Omitted long matching line]`，只显示行号不显示内容。解决方案：用 Python 脚本从对应 JSONL 按行读、提取 message.content 后截断打印。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 本次任务实操",
+    "related": [
+      "JSONL 会话文件大必须流式读"
+    ],
+    "search_queries": [
+      "Omitted long matching line",
+      "Grep 长行",
+      "JSONL grep"
+    ]
+  },
+  {
+    "title": "Agent 线程 bash 每次 cwd 会重置",
+    "tags": [
+      "env-constraint",
+      "bash",
+      "team"
+    ],
+    "summary": "团队 Agent 线程里每次 Bash 调用后工作目录都会 reset，必须用绝对路径",
+    "content": "运行在 Agent 团队（teammate）模式下的 Bash 工具：每次调用之间 shell 状态不持久，cwd 会重置。所以所有命令必须用绝对路径，禁止 `cd xxx && ...` 假设下次还在该目录。与单机 Claude Code 的 Bash 行为不同。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "系统提示 + Agent 环境约定",
+    "related": [],
+    "search_queries": [
+      "cwd 重置",
+      "Bash 工作目录",
+      "Agent 绝对路径"
+    ]
+  },
+  {
+    "title": "Cursor 对话存 SQLite",
+    "tags": [
+      "env-constraint",
+      "reference"
+    ],
+    "summary": "Cursor 历史对话在 state.vscdb SQLite 里，key 为 cursorDiskKV.bubbleId:*",
+    "content": "Cursor 的历史对话存储位置：`~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`（SQLite 数据库）。知识提取时可用 `sqlite3` 命令查询 `cursorDiskKV` 表，key 形如 `bubbleId:*`。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "DATA_SCHEMA.md 数据源表",
+    "related": [],
+    "search_queries": [
+      "Cursor 对话",
+      "state.vscdb",
+      "bubbleId"
+    ]
+  },
+  {
+    "title": "Task 工具可能报 Task not found",
+    "tags": [
+      "env-constraint",
+      "task-system"
+    ],
+    "summary": "调用不存在的 task id 时返回 Task not found，需先用 TaskList 确认",
+    "content": "Task 系统调用一个不存在的 task id（例如已被清理或误写）时会返回 `Task not found`。排查：先用 TaskList 列出当前存在的任务，再用 TaskGet/TaskUpdate。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 L639",
+    "related": [],
+    "search_queries": [
+      "Task not found",
+      "TaskList",
+      "任务系统错误"
+    ]
+  },
+  {
+    "title": "team mode shutdown 不能插队",
+    "tags": [
+      "env-constraint",
+      "team"
+    ],
+    "summary": "SendMessage 发 shutdown_request 不能中断正在执行的成员 Agent",
+    "content": "Claude Team mode 下，给成员 Agent 发 `shutdown_request` 只在 `waitForNextPromptOrShutdown()` 轮询里被检测，而该函数只在成员 idle（空闲）时运行。结论：成员正在执行任务时，leader 无法用 SendMessage 插队中断。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 L70",
+    "related": [
+      "SendMessage 用于 Agent 团队通信"
+    ],
+    "search_queries": [
+      "shutdown 插队",
+      "team mode 中断",
+      "Agent 调度"
+    ]
+  },
+  {
+    "title": "Electron Playwright 模式需 packaged 或 dev",
+    "tags": [
+      "env-constraint",
+      "playwright",
+      "electron"
+    ],
+    "summary": "Electron 项目用 Playwright 测试有 packaged/dev 两种模式，需对应构建产物",
+    "content": "Electron + Playwright 测试两种模式：\n1. **Packaged mode**（CI 默认）：从 electron-builder 输出启动（`out/{platform}-unpacked/`），需先 build\n2. **Dev mode**：用 vite dev server + electron main，本地调试快\nLLM 推理 + MCP 调用的 lifecycle 测试单测超过 60s timeout，要改 playwright.config.ts 的 `timeout`。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "session ce32307a L13-L76",
+    "related": [
+      "Playwright 浏览器未安装"
+    ],
+    "search_queries": [
+      "Electron 测试",
+      "Playwright electron",
+      "packaged mode"
+    ]
+  },
+  {
+    "title": "子 Agent 可能用 synthetic 模型报 invalid_request",
+    "tags": [
+      "env-constraint",
+      "team",
+      "hypothesis"
+    ],
+    "summary": "subagent 会话里观察到 model='<synthetic>' 伴随 invalid_request 错误",
+    "content": "分析 `~/.claude/projects/-Users-zhuqingyu-project-teams/` 下 subagent 的 meta.json，某些历史记录中模型字段是 `<synthetic>`，且伴随多条 `invalid_request` 错误时间戳（2026-04-07）。推测是团队模式下合成消息或模型 fallback 机制，具体原因待进一步排查。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "hypothesis",
+    "source": "session 420c8b1e L140",
+    "related": [],
+    "search_queries": [
+      "synthetic 模型",
+      "invalid_request",
+      "subagent 错误"
+    ]
+  },
+  {
+    "title": "项目 .claude/settings.json 控制工具白名单",
+    "tags": [
+      "env-constraint",
+      "config"
+    ],
+    "summary": "settings.json 的 permissions.allow 决定哪些 Bash/MCP 可直接执行不弹窗",
+    "content": "项目根 `.claude/settings.json` 的 `permissions.allow` 数组控制哪些命令免弹窗。例如 `Bash(npx vitest:*)`、`mcp__notify__send_notification` 等。需要新工具时在这里加白名单，而不是每次都确认。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 420c8b1e L19-L48",
+    "related": [],
+    "search_queries": [
+      "settings.json",
+      "permissions allow",
+      "工具白名单"
+    ]
+  },
+  {
+    "title": "WebFetch 用于抓网页",
+    "tags": [
+      "env-constraint",
+      "network"
+    ],
+    "summary": "WebFetch 工具可拉取 URL 并用 prompt 处理内容，deferred 需先 ToolSearch",
+    "content": "WebFetch 工具可以拉取指定 URL 并用自然语言 prompt 处理抓到的 HTML/JSON 内容。属于 deferred 工具，使用前要 ToolSearch 加载 schema。适合抓公开文档、API 页面，不适合认证后的内容（没 cookie 机制）。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "deferred tools list",
+    "related": [
+      "ToolSearch 解锁 deferred 工具"
+    ],
+    "search_queries": [
+      "WebFetch",
+      "抓网页",
+      "HTTP 内容"
+    ]
+  },
+  {
+    "title": "Cron 系列可创建定时任务",
+    "tags": [
+      "env-constraint",
+      "schedule"
+    ],
+    "summary": "CronCreate/List/Delete 管理定时 prompt，实现轮询或周期任务",
+    "content": "`CronCreate`、`CronList`、`CronDelete` 组成的 Cron 工具族可以创建定时执行的 prompt/slash command 任务（例如每 5 分钟检查一次部署状态）。轻量轮询场景也有内置 `loop` skill 可用。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "deferred tools list + loop skill",
+    "related": [],
+    "search_queries": [
+      "Cron",
+      "定时任务",
+      "轮询"
+    ]
+  },
+  {
+    "title": "Worktree 可切多分支并行工作",
+    "tags": [
+      "env-constraint",
+      "git"
+    ],
+    "summary": "EnterWorktree/ExitWorktree 切换 git worktree 不影响主分支",
+    "content": "`EnterWorktree`/`ExitWorktree` 工具可以让 Agent 在 git worktree 里工作，不影响主 checkout 状态。适合需要同时在多分支并行（例如主分支修 bug + 新分支开发新特性）的场景。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "deferred tools list",
+    "related": [],
+    "search_queries": [
+      "worktree",
+      "多分支并行",
+      "git worktree"
+    ]
+  },
+  {
+    "title": "Opus 4.6 是当前默认模型",
+    "tags": [
+      "env-constraint",
+      "model"
+    ],
+    "summary": "当前运行模型 global.anthropic.claude-opus-4-6-v1[1m]，1M 上下文",
+    "content": "当前会话运行在 Opus 4.6（模型 ID `global.anthropic.claude-opus-4-6-v1[1m]`），知识截止 May 2025，支持 1M 上下文窗口。上下文接近上限时系统会自动压缩历史消息，但不影响对话连续性。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "系统提示 env 部分",
+    "related": [],
+    "search_queries": [
+      "Opus 4.6",
+      "模型版本",
+      "上下文长度"
+    ]
+  },
+  {
+    "title": "Skill 系统提供封装工作流",
+    "tags": [
+      "env-constraint",
+      "skill"
+    ],
+    "summary": "一批可用 skill 包括 real-verify / delivery-gate / risk-scan 等",
+    "content": "可用 Skill 包括：`real-verify`（真实场景验证）、`delivery-gate`（交付门禁）、`risk-scan`（风险扫描）、`role-audit`（角色审计）、`consensus-save`（共识落盘）、`self-recovery`（工具失败自救）、`project-register`（项目注册）等。用 Skill 工具调用，不要猜名字。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "system-reminder skills list",
+    "related": [],
+    "search_queries": [
+      "skill 列表",
+      "可用 skill",
+      "工作流"
+    ]
+  }
+]

@@ -1,0 +1,236 @@
+[
+  {
+    "description": "新 Agent 想在前端项目里做 E2E 自动化测试",
+    "query": "浏览器自动化",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "无全局浏览器自动化",
+      "Playwright 浏览器未安装",
+      "前端验证走 curl + screencapture"
+    ],
+    "expected_not_hits": [],
+    "notes": "应同时命中受限项和替代方案，否则 Agent 会直接启动 Puppeteer"
+  },
+  {
+    "description": "Agent 想 headless 跑 Chrome 做截图",
+    "query": "headless Chrome",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "禁止启动 headless 抢占用户 Chrome",
+      "前端验证走 curl + screencapture"
+    ],
+    "expected_not_hits": [],
+    "notes": "必须强命中禁止规则 + 提供替代方案"
+  },
+  {
+    "description": "Agent 需要验证本地起的前端服务",
+    "query": "前端验证",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "前端验证走 curl + screencapture",
+      "curl 可做 HTTP 测试",
+      "macOS screencapture 可用"
+    ],
+    "expected_not_hits": [],
+    "notes": "三件套应全命中"
+  },
+  {
+    "description": "Agent 调用 TaskCreate 报 schema 错",
+    "query": "deferred 工具",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "ToolSearch 解锁 deferred 工具"
+    ],
+    "expected_not_hits": [],
+    "notes": "第一次调用陌生工具报错时应能找到"
+  },
+  {
+    "description": "Agent 调用 SendMessage 失败或想广播给团队",
+    "query": "Agent 通信",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "SendMessage 用于 Agent 团队通信"
+    ],
+    "expected_not_hits": [],
+    "notes": "团队模式下的基础通信能力"
+  },
+  {
+    "description": "Agent 要分析过去 Claude 会话历史",
+    "query": "JSONL 大文件",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "JSONL 会话文件大必须流式读",
+      "Grep 长行会被 omit"
+    ],
+    "expected_not_hits": [],
+    "notes": "处理历史会话必备技巧"
+  },
+  {
+    "description": "Agent 在团队里跑 bash 发现 cd 失效",
+    "query": "Bash cwd",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "Agent 线程 bash 每次 cwd 会重置"
+    ],
+    "expected_not_hits": [],
+    "notes": "团队模式下的陷阱"
+  },
+  {
+    "description": "Agent 想发通知给用户",
+    "query": "用户通知",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "mcp__notify 通知通道可用"
+    ],
+    "expected_not_hits": [],
+    "notes": "里程碑通知的正确姿势"
+  },
+  {
+    "description": "Agent 想执行 GitHub 操作",
+    "query": "GitHub CLI",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "gh CLI 可用且已登录"
+    ],
+    "expected_not_hits": [],
+    "notes": "gh 能力盘点"
+  },
+  {
+    "description": "Agent 要改仓库可见性或做破坏性 git 操作",
+    "query": "破坏性操作",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "gh CLI 可用且已登录"
+    ],
+    "expected_not_hits": [],
+    "notes": "安全红线 + 相关工具注意事项"
+  },
+  {
+    "description": "Agent 要跑 Playwright 但缺浏览器",
+    "query": "playwright 安装",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "Playwright 浏览器未安装",
+      "Electron Playwright 模式需 packaged 或 dev"
+    ],
+    "expected_not_hits": [],
+    "notes": "受限项 + 替代模式"
+  },
+  {
+    "description": "通过标签检索所有环境约束",
+    "query": "env-constraint",
+    "query_type": "tag-search",
+    "scope": "global",
+    "expected_hits": [
+      "Playwright 浏览器未安装",
+      "禁止启动 headless 抢占用户 Chrome",
+      "前端验证走 curl + screencapture",
+      "mcp__notify 通知通道可用",
+      "SendMessage 用于 Agent 团队通信",
+      "ToolSearch 解锁 deferred 工具",
+      "Agent 线程 bash 每次 cwd 会重置"
+    ],
+    "expected_not_hits": [],
+    "notes": "验证类别标签覆盖率"
+  },
+  {
+    "description": "Agent 想定时轮询部署状态",
+    "query": "定时任务",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "Cron 系列可创建定时任务"
+    ],
+    "expected_not_hits": [],
+    "notes": "周期任务能力发现"
+  },
+  {
+    "description": "Agent 想并行在多个分支工作",
+    "query": "worktree",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "Worktree 可切多分支并行工作"
+    ],
+    "expected_not_hits": [],
+    "notes": "多分支协作"
+  },
+  {
+    "description": "Agent 想把项目工具加进白名单免弹窗",
+    "query": "permissions allow",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "项目 .claude/settings.json 控制工具白名单"
+    ],
+    "expected_not_hits": [],
+    "notes": "工具配置入口"
+  },
+  {
+    "description": "Agent 要抓公开网页内容",
+    "query": "WebFetch 抓网页",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "WebFetch 用于抓网页",
+      "ToolSearch 解锁 deferred 工具"
+    ],
+    "expected_not_hits": [],
+    "notes": "网络抓取 + 对应加载方式"
+  },
+  {
+    "description": "Agent 调用 Task 报 Task not found",
+    "query": "Task not found",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "Task 工具可能报 Task not found"
+    ],
+    "expected_not_hits": [],
+    "notes": "常见故障排查"
+  },
+  {
+    "description": "Agent 在 Team mode 想 kill 忙碌的成员",
+    "query": "shutdown 插队",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "team mode shutdown 不能插队"
+    ],
+    "expected_not_hits": [],
+    "notes": "团队调度限制"
+  },
+  {
+    "description": "Agent 想查询 Cursor 历史对话",
+    "query": "Cursor 历史",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "Cursor 对话存 SQLite"
+    ],
+    "expected_not_hits": [],
+    "notes": "Cursor 数据位置"
+  },
+  {
+    "description": "新 Agent 初次进入项目想快速了解可用工具",
+    "query": "基础工具",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "本机可用运行时和工具"
+    ],
+    "expected_not_hits": [],
+    "notes": "Onboarding 工具盘点"
+  }
+]

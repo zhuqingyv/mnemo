@@ -1,0 +1,245 @@
+[
+  {
+    "description": "新 Agent 想知道应该用什么语气回复用户",
+    "query": "沟通风格",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["直接简洁不要 AI 腔", "回答完不要再总结", "拒绝猜测式排查要直接给结论"],
+    "expected_not_hits": [],
+    "notes": "回答风格是最高频偏好，多条记录应同时命中"
+  },
+  {
+    "description": "Agent 想确认是否可以在结尾总结本次做了什么",
+    "query": "不要总结",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["回答完不要再总结"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 准备说'应该没问题'之前查用户对含糊表述的态度",
+    "query": "要确切结论",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["说话带证据不要含糊", "拒绝猜测式排查要直接给结论"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 拿到模糊需求想自己猜一个方向",
+    "query": "歧义先问",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["遇到歧义先问不要猜"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 想一口气把十件事改完再提交",
+    "query": "增量推进",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["增量推进不要一次提一大坨", "单次只交付一个重点"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "主 Agent 想在对话里分饰几个角色自问自答",
+    "query": "伪装多 Agent",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["不许主 Agent 扮演多角色"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 考虑要不要发通知",
+    "query": "发通知里程碑",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["重要里程碑才发通知"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "对话中出现了新的规则，Agent 想问要不要记下来",
+    "query": "持久化新规则",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["发现新规则主动问是否持久化", "用 consensus-save 把共识落盘"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 准备英文回复",
+    "query": "语言偏好",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["优先中文沟通"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 想执行 npm install",
+    "query": "包管理器 bun",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["用 bun 不用 npm"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "新 Agent 进到工作区想了解目录约定",
+    "query": "workspace 多项目",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["多项目 workspace 组织方式"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 排查 bug 想列出 5 种可能",
+    "query": "排查结论 废话",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["拒绝猜测式排查要直接给结论", "说话带证据不要含糊"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 改完源码想立刻说'修好了'",
+    "query": "build 再验证",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["改完 bug 要 build 再验证"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 想抄近路用 mock 凑测试",
+    "query": "偷懒 偷工减料",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["反对偷懒绕路实现"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 要 spawn 一堆 subAgent 做并行调研",
+    "query": "多 Agent 协作",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["多 Agent 协作是真实要求不是过家家", "并行调研是真实工作方式"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 拿到一份编号的 19 条 case 想整体判个 OK",
+    "query": "逐条 case 清单",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["需求清单要逐条对照验证"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 要向用户做对比调研报告",
+    "query": "对照表格调研",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["喜欢对照表格式输出结论"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 被叫到一个具体角色比如'阿构'要怎么做",
+    "query": "角色人设 阿构",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["按角色人设行事"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 想评估用户的技术水平再决定解释深度",
+    "query": "用户画像",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["用户是技术创业者深度懂技术"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 被问到'我们能 1:1 复刻 claude 吗'",
+    "query": "老板交付 1:1",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["对老板/用户承诺要可交付"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 用'我大概检查了下'这种表达前先自查",
+    "query": "不要大概",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["说话带证据不要含糊", "拒绝猜测式排查要直接给结论"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 被要求调研某个仓库顺手想改几个 bug",
+    "query": "调研只读",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["调研不改代码只读探索"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 想创建一个游离的子 Agent 不挂 team",
+    "query": "孤立 subAgent team_name",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["成员必须在 team 里不许孤立 subAgent"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "Agent 改完 UI 想直接说修好了",
+    "query": "跑起来看得见",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["跑起来看得见才信"],
+    "expected_not_hits": [],
+    "notes": null
+  },
+  {
+    "description": "tag 搜索：列出所有 user-preference 类别的知识",
+    "query": "user-preference",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["直接简洁不要 AI 腔", "说话带证据不要含糊", "不许主 Agent 扮演多角色", "跑起来看得见才信"],
+    "expected_not_hits": [],
+    "notes": "所有条目都带 user-preference 标签；这里列出代表性几条"
+  },
+  {
+    "description": "从'不要 AI 腔'跳到相关联知识",
+    "query": "直接简洁不要 AI 腔",
+    "query_type": "related",
+    "scope": null,
+    "expected_hits": ["回答完不要再总结", "说话带证据不要含糊"],
+    "expected_not_hits": [],
+    "notes": "related 导航测试"
+  },
+  {
+    "description": "Agent 从'反复出错'关联到如何持久化教训",
+    "query": "反感 Agent 反复出错后还没长记性",
+    "query_type": "related",
+    "scope": null,
+    "expected_hits": ["发现新规则主动问是否持久化", "用 consensus-save 把共识落盘"],
+    "expected_not_hits": [],
+    "notes": "related 导航测试"
+  }
+]

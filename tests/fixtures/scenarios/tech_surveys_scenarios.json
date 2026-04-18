@@ -1,0 +1,281 @@
+[
+  {
+    "description": "新 Agent 想知道为什么 mnemo 选 SQLite 而不是其他",
+    "query": "为什么选 SQLite",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 选择纯数据库而非向量黑盒", "sqlite-vec 是 sqlite-vss 后继者", "SQLite FTS5 可扩展到 10M 行"],
+    "expected_not_hits": [],
+    "notes": "存储选型关键决策"
+  },
+  {
+    "description": "Agent 想对比 mnemo 与 mem0",
+    "query": "mem0 对比",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["mem0 和 Zep 是向量黑盒不可审计", "mnemo 相对 mem0 的差异"],
+    "expected_not_hits": [],
+    "notes": "竞品对比"
+  },
+  {
+    "description": "Agent 想知道 Obsidian 为何不适合做 Agent 知识库",
+    "query": "Obsidian 限制",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["Obsidian 作为 AI 知识库的本质限制", "mnemo 相对 Obsidian+mcp-obsidian 的差异"],
+    "expected_not_hits": [],
+    "notes": "Obsidian 相关调研"
+  },
+  {
+    "description": "新同事想了解竞品对标全景",
+    "query": "竞品对标",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["basic-memory 架构优势与协议陷阱", "mcp-memory-service 偏向量存储", "engram 是 Go 生态方案", "iwe 无分层加载和知识图谱", "Khoj 是最接近 headless Agent 知识库的开源方案"],
+    "expected_not_hits": [],
+    "notes": "标签 tech-survey 下的竞品类"
+  },
+  {
+    "description": "Agent 想知道中文分词怎么处理",
+    "query": "中文分词",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["SQLite FTS5 默认不支持中文分词", "trigram tokenizer 可能够用作为备选"],
+    "expected_not_hits": [],
+    "notes": "FTS5 中文核心问题"
+  },
+  {
+    "description": "Agent 想知道混合检索为什么这样设计",
+    "query": "混合检索",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 选择 FTS5 + 向量 + 图谱三路混合检索", "GraphRAG 对复杂查询比朴素向量 RAG 高 20-70%"],
+    "expected_not_hits": [],
+    "notes": "检索架构决策"
+  },
+  {
+    "description": "Agent 想知道 basic-memory 能不能直接 fork",
+    "query": "basic-memory 协议",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["basic-memory 架构优势与协议陷阱", "mnemo 不 fork basic-memory 自研"],
+    "expected_not_hits": [],
+    "notes": "许可证陷阱，关键决策依据"
+  },
+  {
+    "description": "Agent 想知道 MCP 协议基础",
+    "query": "MCP 协议",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["MCP Tools 是 Agent 主要行动机制", "MCP 工具结果超 100K 字符会被 Claude Code 截断", "MCP stdio vs Streamable HTTP 选型"],
+    "expected_not_hits": [],
+    "notes": "MCP 协议基础"
+  },
+  {
+    "description": "Agent 想知道 embedding 选什么模型",
+    "query": "embedding 选型",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["mnemo 选择 Ollama embedding 主 + fastembed 备", "all-MiniLM-L6-v2 是轻量本地 embedding 首选"],
+    "expected_not_hits": [],
+    "notes": "embedding 方案"
+  },
+  {
+    "description": "Agent 想知道 mnemo 能装多少条知识",
+    "query": "mnemo 性能边界",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 单机性能边界是 100 万条", "SQLite FTS5 可扩展到 10M 行"],
+    "expected_not_hits": [],
+    "notes": "容量规划"
+  },
+  {
+    "description": "Agent 想看 mnemo 开发路线图",
+    "query": "mnemo 路线图",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Phase 划分（4 阶段）", "mnemo Phase 3 做 write-gate 写入门禁"],
+    "expected_not_hits": [],
+    "notes": "Phase 划分"
+  },
+  {
+    "description": "Agent 想知道 mnemo 的独特价值",
+    "query": "mnemo 独特价值",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 独特价值：文件系统 IS API", "Agent-first 市场空白"],
+    "expected_not_hits": [],
+    "notes": "USP 定位"
+  },
+  {
+    "description": "Agent 想知道并发写冲突怎么处理",
+    "query": "并发冲突",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["last-write-wins 是单人可承受的并发策略", "缺失能力：多 Agent 共享知识一致性"],
+    "expected_not_hits": [],
+    "notes": "并发策略"
+  },
+  {
+    "description": "Agent 想知道写入门禁要查什么",
+    "query": "write-gate 写入门禁",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Phase 3 做 write-gate 写入门禁", "mnemo 用 content_hash 做精确去重"],
+    "expected_not_hits": [],
+    "notes": "Phase 3 写入门禁"
+  },
+  {
+    "description": "Agent 想知道 RAG 常见坑",
+    "query": "RAG 风险",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["RAG 常见故障：分块破坏上下文", "常见失败模式：过度索引、UI 调试、通用数据库野心"],
+    "expected_not_hits": [],
+    "notes": "RAG 风险清单"
+  },
+  {
+    "description": "Agent 想知道去重策略",
+    "query": "去重",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 用 content_hash 做精确去重", "语义去重是无底洞，不应进 MVP"],
+    "expected_not_hits": [],
+    "notes": "去重决策"
+  },
+  {
+    "description": "Agent 想知道知识格式选型",
+    "query": "markdown JSON 格式",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["markdown + frontmatter 是 LLM 消费最优格式"],
+    "expected_not_hits": [],
+    "notes": "格式对比"
+  },
+  {
+    "description": "Agent 想知道 wikilink 图谱原理",
+    "query": "wikilink 双向链接",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["双向 wikilink 是隐式图谱的廉价来源"],
+    "expected_not_hits": [],
+    "notes": "wikilink 调研"
+  },
+  {
+    "description": "Agent 想了解 mnemo 分层命名空间",
+    "query": "命名空间",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 选择三级命名空间（global/project/session）"],
+    "expected_not_hits": [],
+    "notes": "命名空间"
+  },
+  {
+    "description": "Agent 想知道版本怎么处理",
+    "query": "版本链 supersede",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["不可变版本链替代 in-place update", "mnemo 定义 7 种 typed relation"],
+    "expected_not_hits": [],
+    "notes": "版本策略"
+  },
+  {
+    "description": "Agent 想知道矛盾知识怎么处理",
+    "query": "矛盾 contradiction",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["矛盾不隐藏成对暴露给 Agent", "mnemo 定义 7 种 typed relation"],
+    "expected_not_hits": [],
+    "notes": "矛盾处理"
+  },
+  {
+    "description": "Agent 想知道商业化路径",
+    "query": "商业化",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["付费路径是团队版而非个人开发者", "MCP 开源生态对优质工具饥渴"],
+    "expected_not_hits": [],
+    "notes": "商业化判断"
+  },
+  {
+    "description": "Agent 想知道 MVP 能做到什么程度",
+    "query": "MVP 范围",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["MVP 用 markdown+SQLite 即可 1-2 周完成", "单人 1-2 月 AI 辅助的能力上限"],
+    "expected_not_hits": [],
+    "notes": "范围规划"
+  },
+  {
+    "description": "Agent 想知道哪些功能明确推迟",
+    "query": "推迟 不做",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 应明确推迟的功能", "mnemo 是 headless 无 UI"],
+    "expected_not_hits": [],
+    "notes": "范围外功能"
+  },
+  {
+    "description": "Agent 想知道 embedding 模型升级风险",
+    "query": "embedding drift",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["embedding 模型更新必然使向量失效", "mnemo knowledge_vec 表支持多模型并存"],
+    "expected_not_hits": [],
+    "notes": "embedding 风险"
+  },
+  {
+    "description": "Agent 想知道图谱关系类型",
+    "query": "typed relation 关系类型",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 定义 7 种 typed relation", "SQLite 图谱用邻接表 + 递归 CTE"],
+    "expected_not_hits": [],
+    "notes": "图谱关系"
+  },
+  {
+    "description": "Agent 想看所有技术调研结论",
+    "query": "tech-survey",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["mnemo 选择纯数据库而非向量黑盒", "mnemo 选择 FTS5 + 向量 + 图谱三路混合检索", "MCP Tools 是 Agent 主要行动机制", "markdown + frontmatter 是 LLM 消费最优格式"],
+    "expected_not_hits": [],
+    "notes": "标签全局扫"
+  },
+  {
+    "description": "从一条决策看相关调研依据",
+    "query": "mnemo 选择纯数据库而非向量黑盒",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": ["Obsidian 作为 AI 知识库的本质限制", "mem0 和 Zep 是向量黑盒不可审计"],
+    "expected_not_hits": [],
+    "notes": "关系遍历"
+  },
+  {
+    "description": "Agent 想知道质量如何度量",
+    "query": "质量向量",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["质量向量：freshness × authority × corroboration × verification", "缺失能力：置信度与来源追溯"],
+    "expected_not_hits": [],
+    "notes": "质量度量"
+  },
+  {
+    "description": "Agent 想了解 GraphRAG 的学术依据",
+    "query": "GraphRAG",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["GraphRAG 对复杂查询比朴素向量 RAG 高 20-70%"],
+    "expected_not_hits": [],
+    "notes": "GraphRAG 论文引用"
+  },
+  {
+    "description": "Agent 想看市场上所有知识库方案缺什么",
+    "query": "市场空白",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["Agent-first 市场空白", "现有 MCP server 都是薄封装缺知识管理", "缺失能力：多 Agent 共享知识一致性", "缺失能力：时间感知与 as-of 查询", "缺失能力：置信度与来源追溯"],
+    "expected_not_hits": [],
+    "notes": "差异化机会"
+  }
+]

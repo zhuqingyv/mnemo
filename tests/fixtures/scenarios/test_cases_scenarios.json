@@ -1,0 +1,459 @@
+[
+  {
+    "description": "新 Agent 接手 AionUi Hub 安装链路调试",
+    "query": "hub 安装链路",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi Hub L1 集成测试：完整安装链路"],
+    "expected_not_hits": [],
+    "notes": "L1 是 Hub 安装验证核心入口"
+  },
+  {
+    "description": "新 Agent 要在 Hub 上跑 UI 层 E2E",
+    "query": "playwright electron",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["AionUi Hub L2 E2E：UI 安装流程", "ai-store 冷启动 5 秒内窗口出现"],
+    "expected_not_hits": [],
+    "notes": "两个项目都用 Playwright 驱动 Electron"
+  },
+  {
+    "description": "测试真实 Backend CLI 的 ACP 协议兼容",
+    "query": "ACP smoke",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi Hub L3 Smoke：ACP 协议兼容性"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "检查锁机制相关的并发测试 case",
+    "query": "并发 锁",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "mcp-team-hub 双进程并发清理同一锁（double-free）",
+      "mcp-team-hub check_out 盲删别人锁的 session 隔离",
+      "mcp-team-hub check_in 接管 TOCTOU",
+      "mcp-team-hub 并发抢占同一成员"
+    ],
+    "expected_not_hits": [],
+    "notes": "mcp-team-hub 的 P0 用例集合"
+  },
+  {
+    "description": "判断是否 PID 复用导致误判进程存活",
+    "query": "PID 复用 lstart",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mcp-team-hub PID 复用 lstart 双验"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "lock.json 出现损坏 JSON 时面板该怎么处理",
+    "query": "半截 JSON",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["mcp-team-hub 半截 JSON 容错", "ai-store FileStore 损坏 JSON 返回默认值"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "lock 的原子写入该怎么验证",
+    "query": "写入原子性 rename",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mcp-team-hub 锁写入原子性"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "新 session 出现应该中断面板 autoQuit",
+    "query": "面板自关 autoQuitTimer",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "mcp-team-hub 面板自关 0 session 15 秒",
+      "mcp-team-hub 面板自关中断：新 session 出现"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "系统休眠唤醒后面板状态恢复",
+    "query": "powerMonitor 休眠",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mcp-team-hub 面板休眠唤醒恢复"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "gracefulShutdown 时应先删 lock 还是 session",
+    "query": "清理顺序 先锁后 session",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mcp-team-hub 清理顺序：先锁后 session"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "面板实时更新与 5s 轮询双路机制",
+    "query": "chokidar 轮询兜底",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "mcp-team-hub 面板文件监听实时更新",
+      "mcp-team-hub 面板 5s 轮询兜底"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "kill -9 强杀后的孤儿清理验证",
+    "query": "kill -9 孤儿",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mcp-team-hub kill -9 强杀面板巡检清理"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "handoff 任务交接的预期行为",
+    "query": "handoff 交接",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mcp-team-hub handoff 任务交接"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "临时成员辞退目录清理的边界",
+    "query": "evaluate_temp dismiss",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mcp-team-hub 临时成员辞退目录清理"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "新 Agent 要做冷启动性能验收",
+    "query": "冷启动 5 秒",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 冷启动 5 秒内窗口出现"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "查看 ai-store 的 CLI 扫描预算",
+    "query": "tools.scan durationMs",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store CLI 扫描 3 秒完成"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "通过 preload 验证 IPC 工具列表",
+    "query": "window.aiStore tools.list",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store IPC tools.list 返回数组"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "E2E 分类过滤如何避免闪烁不稳定",
+    "query": "waitForFunction 稳定",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "ai-store 分类过滤列表收敛",
+      "cross-project E2E 用 waitForFunction 避免固定等待"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "切换工具开关应同步 UI 与后端",
+    "query": "tool-enable-toggle 持久化",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 启用禁用工具持久化"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "Bun 子进程 App 的生命周期验证",
+    "query": "App install start stop",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "ai-store App 生命周期 install→start→stop",
+      "ai-store App 安装无效 manifest 拒绝"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "信箱并发 send 下索引不能损坏",
+    "query": "mailbox 并发",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 信箱并发发送 index.json 合法"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "两个示例 App 之间能否通过信箱通信",
+    "query": "App 间通信",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 两 App 信箱通信"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "CLIAgentEngine 真实调 Bash 的场景用例",
+    "query": "git 最近改动 Bash",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store P1 场景 A：git 查看最近改动"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "多轮对话不崩的验证",
+    "query": "多轮问答 不崩",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store P1 场景 E：多轮问答不崩"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "如何测 SSE 流式分片拼接",
+    "query": "SSE 流式分片",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["supercell 流式聊天集成：分片拼接"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "流式中断或切换会话的保留策略",
+    "query": "流式中断 切换会话",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "supercell 流式中途断开保留已收到内容",
+      "supercell 切换聊天不污染新会话",
+      "supercell 用户点停止 AbortController"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "Orchestrator 防止同名 agent 重入",
+    "query": "agent already running 防重入",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["supercell Orchestrator 同名 agent 重复执行拒绝"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "agents/run 传重复 agent 名的错误处理",
+    "query": "agents/run duplicate",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["supercell API /api/agents/run duplicate 拒绝"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "agent 运行中再次触发返回什么",
+    "query": "agent 运行中 409",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["supercell API /api/agents/:name/run agent 正在运行返回 409"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "迭代循环什么条件会标记为 stunning 终止",
+    "query": "is_stunning 循环终止",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["supercell 迭代循环 is_stunning 终止"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "updateModelList 竞态怎么避免旧结果污染",
+    "query": "updateModelList 竞态",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["supercell updateModelList 竞态只生效最后一次"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "FileStore 的原子写入并发测试",
+    "query": "atomicWrite 并发",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store FileStore 并发 10 次写同一文件"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "测试环境如何隔离避免跨用例污染",
+    "query": "测试数据隔离 tmpdir",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["cross-project 测试数据目录隔离"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "是否必须连真实 CLI 还是可以 mock",
+    "query": "不 mock 测试",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["cross-project 不 mock 测试红线"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "E2E 截图的存放与 gitignore 策略",
+    "query": "Playwright 截图",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["cross-project Playwright 截图归档约定"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "UI 组件 E2E 该怎么加稳定选择器",
+    "query": "data-testid",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["cross-project data-testid 约定"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "集成测试的 SQLite 怎么搭",
+    "query": ":memory: SQLite",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["cross-project SQLite 测试用 :memory:"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "LLM 调用怎么在测试里拦截",
+    "query": "msw OpenAI",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["cross-project msw 拦截 OpenAI SDK"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "按 tag 列出所有 e2e-scenario 条目",
+    "query": "e2e-scenario",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "AionUi Hub L1 集成测试：完整安装链路",
+      "mcp-team-hub check_in 正常签到",
+      "ai-store 冷启动 5 秒内窗口出现",
+      "supercell 流式聊天集成：分片拼接",
+      "cross-project 不 mock 测试红线"
+    ],
+    "expected_not_hits": [],
+    "notes": "抽样验证 tag 索引生效，实际命中应为 61 条"
+  },
+  {
+    "description": "按 tag 筛选 mcp-team-hub 的所有测试 case",
+    "query": "mcp-team-hub",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": [
+      "mcp-team-hub check_in 正常签到",
+      "mcp-team-hub 双进程并发清理同一锁（double-free）",
+      "mcp-team-hub 面板单实例保护",
+      "mcp-team-hub handoff 任务交接"
+    ],
+    "expected_not_hits": ["AionUi Hub L1 集成测试：完整安装链路", "ai-store 冷启动 5 秒内窗口出现"]
+  },
+  {
+    "description": "按 tag 筛选所有 P0 用例",
+    "query": "P0",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "mcp-team-hub 双进程并发清理同一锁（double-free）",
+      "mcp-team-hub nonce 二次校验",
+      "mcp-team-hub check_out 盲删别人锁的 session 隔离",
+      "mcp-team-hub 半截 JSON 容错",
+      "mcp-team-hub 锁写入原子性",
+      "mcp-team-hub check_in 接管 TOCTOU",
+      "mcp-team-hub 清理顺序：先锁后 session",
+      "mcp-team-hub PID 复用 lstart 双验",
+      "mcp-team-hub kill -9 强杀面板巡检清理",
+      "mcp-team-hub 并发抢占同一成员"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "按 tag 筛选 concurrency 相关 case",
+    "query": "concurrency",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "mcp-team-hub 双进程并发清理同一锁（double-free）",
+      "mcp-team-hub check_out 盲删别人锁的 session 隔离",
+      "mcp-team-hub check_in 接管 TOCTOU",
+      "mcp-team-hub 并发抢占同一成员",
+      "ai-store 信箱并发发送 index.json 合法",
+      "ai-store FileStore 并发 10 次写同一文件",
+      "supercell Orchestrator 同名 agent 重复执行拒绝"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "和 nonce 二次校验关联的用例",
+    "query": "mcp-team-hub 双进程并发清理同一锁（double-free）",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": ["mcp-team-hub nonce 二次校验"],
+    "expected_not_hits": [],
+    "notes": "related 字段驱动的关联搜索"
+  },
+  {
+    "description": "与分片拼接关联的流式用例",
+    "query": "supercell 流式聊天集成：分片拼接",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": [
+      "supercell 流式中途断开保留已收到内容",
+      "supercell 切换聊天不污染新会话"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "查找半截 JSON 容错的相关用例",
+    "query": "mcp-team-hub 半截 JSON 容错",
+    "query_type": "related",
+    "scope": null,
+    "expected_hits": ["mcp-team-hub 锁写入原子性"],
+    "expected_not_hits": []
+  },
+  {
+    "description": "查找 App 安装相关验证",
+    "query": "app 安装 install",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "ai-store App 安装无效 manifest 拒绝",
+      "ai-store App 生命周期 install→start→stop"
+    ],
+    "expected_not_hits": []
+  },
+  {
+    "description": "按项目限定搜索 supercell",
+    "query": "Orchestrator",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "supercell Orchestrator 同名 agent 重复执行拒绝",
+      "supercell Orchestrator 并发部分失败不影响其他"
+    ],
+    "expected_not_hits": ["AionUi Hub L1 集成测试：完整安装链路"]
+  },
+  {
+    "description": "新 Agent 想快速了解所有 cross-project 约定",
+    "query": "cross-project",
+    "query_type": "tag-search",
+    "scope": "global",
+    "expected_hits": [
+      "cross-project 测试数据目录隔离",
+      "cross-project 不 mock 测试红线",
+      "cross-project Playwright 截图归档约定",
+      "cross-project data-testid 约定",
+      "cross-project E2E 用 waitForFunction 避免固定等待",
+      "cross-project SQLite 测试用 :memory:",
+      "cross-project msw 拦截 OpenAI SDK"
+    ],
+    "expected_not_hits": ["mcp-team-hub check_in 正常签到"]
+  }
+]

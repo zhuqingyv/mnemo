@@ -1,0 +1,707 @@
+[
+  {
+    "title": "不 mock 测试",
+    "tags": [
+      "testing",
+      "delivery-rule",
+      "mock"
+    ],
+    "summary": "所有测试必须连接真实依赖（真实数据库、真实 Agent、真实 IPC），禁止用 mock 糊弄",
+    "content": "用户多次强调并在 Cursor 中明确训斥：'我怀疑现在的单测有虚假 mock 糊弄我的行为'。单测必须代表真人用户真实操作级别，发现 mock 绕过真实行为会被视为偷懒/作弊。若单测失败，改功能不改单测。相关：[[新模块必须带单测]] [[有证据才能说完成]] [[E2E 必须用真实 Agent 补充不单独证明 UI]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/CLAUDE.md + ~/.claude/memory/USER_PREFERENCES.md + Cursor bubble aff791ad + 7f38fcaa",
+    "related": [
+      "新模块必须带单测",
+      "有证据才能说完成",
+      "E2E 必须用真实 Agent 补充不单独证明 UI"
+    ],
+    "search_queries": [
+      "mock 测试",
+      "单测 mock",
+      "虚假 mock",
+      "测试要求",
+      "真实测试"
+    ]
+  },
+  {
+    "title": "新模块必须带单测",
+    "tags": [
+      "testing",
+      "delivery-rule",
+      "coverage"
+    ],
+    "summary": "全局硬性规则：任何新增模块必须附带单测，不能只交功能代码",
+    "content": "全局 CLAUDE.md 代码红线第二条。新模块不带单测视为不合格交付。单测必须是真实代表用户行为的，不得为凑覆盖率写空壳测试。相关：[[不 mock 测试]] [[有证据才能说完成]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/CLAUDE.md 代码红线",
+    "related": [
+      "不 mock 测试",
+      "有证据才能说完成"
+    ],
+    "search_queries": [
+      "新模块 单测",
+      "单测规范",
+      "覆盖率",
+      "测试要求"
+    ]
+  },
+  {
+    "title": "有证据才能说完成",
+    "tags": [
+      "delivery-rule",
+      "evidence"
+    ],
+    "summary": "任何'完成'/'交付'声明必须附上真实证据：命令输出、截图、日志。不允许'应该没问题'",
+    "content": "用户偏好明文：'每个功能点有证据（命令输出/截图/日志），不允许应该没问题，要么验证了要么明说没验证'。附上：改了什么文件、跑了什么命令、结果怎样。优先真实验证。相关：[[不 mock 测试]] [[破坏性改动先确认]] [[真实验证优先]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/CLAUDE.md 用户偏好 + ~/.claude/memory/USER_PREFERENCES.md",
+    "related": [
+      "不 mock 测试",
+      "破坏性改动先确认",
+      "真实验证优先"
+    ],
+    "search_queries": [
+      "完成 证据",
+      "交付 验证",
+      "应该没问题",
+      "证据"
+    ]
+  },
+  {
+    "title": "破坏性改动先确认",
+    "tags": [
+      "delivery-rule",
+      "safety"
+    ],
+    "summary": "任何破坏性改动（删文件/改架构/迁移/不可逆操作）必须先向用户确认后再动手",
+    "content": "全局 CLAUDE.md 用户偏好。宁可多问一次，有歧义先问，不自己猜。适用范围：删除文件/分支、schema 迁移、重命名涉及多文件、replace_all、git reset --hard 等。相关：。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/CLAUDE.md + ~/.claude/memory/USER_PREFERENCES.md",
+    "related": [],
+    "search_queries": [
+      "破坏性 改动",
+      "先确认",
+      "删除 确认",
+      "不可逆"
+    ]
+  },
+  {
+    "title": "真实验证优先",
+    "tags": [
+      "delivery-rule",
+      "verification"
+    ],
+    "summary": "CLI 项目跑命令，前端项目走页面/路由/表单/控制台。能截图就截图",
+    "content": "全局规则。real-verify skill 强制真实场景验证：不允许 TS 通过即宣告完成，必须实际运行。前端要走 UI 流程，CLI 要跑命令。截图/日志是最佳证据。相关：[[有证据才能说完成]] [[不 mock 测试]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "real-verify skill + 用户偏好",
+    "related": [
+      "有证据才能说完成",
+      "不 mock 测试"
+    ],
+    "search_queries": [
+      "真实验证",
+      "真实场景",
+      "走 UI 流程",
+      "real-verify"
+    ]
+  },
+  {
+    "title": "commit 使用英文 type scope subject 格式",
+    "tags": [
+      "delivery-rule",
+      "git",
+      "aionui"
+    ],
+    "summary": "提交消息格式：<type>(<scope>): <subject>，英文，type 限定七种",
+    "content": "AionUi 和 nft-gmgn 都强制 Conventional Commits。AionUi 允许的 type：feat、fix、refactor、chore、docs、test、style、perf。nft-gmgn：feat、fix、refactor、style、docs、test、chore。scope 使用功能模块名。相关：。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "decision",
+    "source": "AionUi/AGENTS.md + nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "commit 格式",
+      "Conventional Commits",
+      "type scope",
+      "提交规范"
+    ]
+  },
+  {
+    "title": "AionUi 单目录子项不得超过 10",
+    "tags": [
+      "delivery-rule",
+      "structure",
+      "aionui"
+    ],
+    "summary": "AionUi 项目硬性：任何单个目录直接子项（文件+子目录）不超过 10 个",
+    "content": "AionUi/AGENTS.md：'Directory size limit: A single directory must not exceed 10 direct children'。接近上限时按职责拆分。agents 在创建文件/模块前必须读 architecture skill。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "decision",
+    "source": "AionUi/AGENTS.md",
+    "related": [],
+    "search_queries": [
+      "目录 10",
+      "单目录 子项",
+      "directory limit",
+      "目录大小限制"
+    ]
+  },
+  {
+    "title": "AionUi 禁止 raw HTML 交互元素",
+    "tags": [
+      "delivery-rule",
+      "ui",
+      "aionui"
+    ],
+    "summary": "AionUi 必须使用 @arco-design/web-react，禁止 button/input/select 原生标签",
+    "content": "AionUi/AGENTS.md：组件库用 @arco-design/web-react，图标用 @icon-park/react。不得直接写 <button>、<input>、<select> 等原生交互 HTML。颜色必须用 uno.config.ts 的语义 token 或 CSS 变量，不得硬编码。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "decision",
+    "source": "AionUi/AGENTS.md",
+    "related": [],
+    "search_queries": [
+      "raw HTML",
+      "arco-design",
+      "原生 button",
+      "UI 规范"
+    ]
+  },
+  {
+    "title": "AionUi TypeScript 严格禁止 any",
+    "tags": [
+      "delivery-rule",
+      "typescript",
+      "aionui"
+    ],
+    "summary": "AionUi 启用 strict mode，禁止 any、禁止隐式返回",
+    "content": "AionUi/AGENTS.md：Strict mode enabled — no any, no implicit returns。use path aliases: @/*、@process/*、@renderer/*、@worker/*。优先使用 type 而非 interface（Oxlint 约定）。代码注释用英文，公开函数配 JSDoc。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "decision",
+    "source": "AionUi/AGENTS.md",
+    "related": [],
+    "search_queries": [
+      "any 禁止",
+      "TypeScript strict",
+      "类型 严格",
+      "no any"
+    ]
+  },
+  {
+    "title": "AionUi 三进程 API 不得混用",
+    "tags": [
+      "delivery-rule",
+      "architecture",
+      "aionui"
+    ],
+    "summary": "process/renderer/worker 三类进程 API 隔离，跨进程通信走 IPC bridge",
+    "content": "AionUi/AGENTS.md：src/process/ 主进程无 DOM API；src/renderer/ 渲染进程无 Node.js API；src/process/worker/ fork worker 无 Electron API。跨进程必须经过 src/preload.ts 的 IPC bridge。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "decision",
+    "source": "AionUi/AGENTS.md",
+    "related": [],
+    "search_queries": [
+      "三进程",
+      "process renderer worker",
+      "IPC bridge",
+      "API 隔离"
+    ]
+  },
+  {
+    "title": "AionUi 测试框架 Vitest 覆盖率 80%",
+    "tags": [
+      "delivery-rule",
+      "testing",
+      "aionui"
+    ],
+    "summary": "AionUi 使用 Vitest 4，每次 commit 前跑 bun run test，覆盖率目标 ≥ 80%",
+    "content": "AionUi/AGENTS.md：Framework Vitest 4（vitest.config.ts）。Run bun run test before every commit. Coverage target ≥ 80%. 细节看 testing skill。相关：[[新模块必须带单测]]。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "decision",
+    "source": "AionUi/AGENTS.md",
+    "related": [
+      "新模块必须带单测"
+    ],
+    "search_queries": [
+      "Vitest",
+      "bun run test",
+      "覆盖率 80",
+      "coverage"
+    ]
+  },
+  {
+    "title": "AionUi PR 前跑 prek 本地复刻 CI",
+    "tags": [
+      "delivery-rule",
+      "ci",
+      "aionui"
+    ],
+    "summary": "开 PR 前必须本地跑 prek run --from-ref origin/main --to-ref HEAD，完整复刻 CI 检查",
+    "content": "AionUi/AGENTS.md：开发期用 bun run lint:fix / bun run format / bunx tsc --noEmit 自动修复。PR 前必须 prek run --from-ref origin/main --to-ref HEAD 只读复刻 CI。prek 不会 auto-fix，报错先跑 lint:fix/format 再重跑 prek。相关：[[AionUi 测试框架 Vitest 覆盖率 80%]]。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "AionUi/AGENTS.md",
+    "related": [
+      "AionUi 测试框架 Vitest 覆盖率 80%"
+    ],
+    "search_queries": [
+      "prek",
+      "CI 检查",
+      "PR 前检查",
+      "本地 CI"
+    ]
+  },
+  {
+    "title": "AionUi i18n 禁止硬编码文案",
+    "tags": [
+      "delivery-rule",
+      "i18n",
+      "aionui"
+    ],
+    "summary": "所有用户可见文案必须用 i18n key，改 renderer/locales/i18n 要跑 i18n 校验",
+    "content": "AionUi/AGENTS.md：All user-facing text must use i18n keys — never hardcode strings. 改 src/renderer/、locales/、src/common/config/i18n 必须跑 bun run i18n:types 和 node scripts/check-i18n.js，两者都要无错才能开 PR。nft-gmgn 同规则：所有文案用 react-intl。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "decision",
+    "source": "AionUi/AGENTS.md + nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "i18n 硬编码",
+      "用户可见文案",
+      "i18n keys",
+      "react-intl"
+    ]
+  },
+  {
+    "title": "nft-gmgn 禁止 Chakra UI 新代码",
+    "tags": [
+      "delivery-rule",
+      "ui",
+      "nft-gmgn"
+    ],
+    "summary": "nft-gmgn 新代码禁止使用 Chakra UI，逐步淘汰",
+    "content": "nft-gmgn/CLAUDE.md：'禁止在新代码中使用 Chakra UI（性能问题，正在逐步淘汰）'。新组件使用原生 HTML + Tailwind CSS；复杂 UI 用 @gmgn/web-component。",
+    "scope": "project",
+    "project_name": "nft-gmgn",
+    "claim_type": "decision",
+    "source": "nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "Chakra UI",
+      "禁止 Chakra",
+      "新组件",
+      "UI 库"
+    ]
+  },
+  {
+    "title": "nft-gmgn 禁止 useState+fetch 组合",
+    "tags": [
+      "delivery-rule",
+      "state",
+      "nft-gmgn"
+    ],
+    "summary": "服务端数据必须走 TanStack Query，禁止用 useState + fetch 获取",
+    "content": "nft-gmgn/CLAUDE.md 状态管理分工：TanStack Query 负责所有服务端数据获取和缓存；useState 仅限组件内 UI 状态。禁止在组件文件中直接定义 atom：全局 atoms 定义在 src/state/，feature 级在 src/features/[name]/states/。",
+    "scope": "project",
+    "project_name": "nft-gmgn",
+    "claim_type": "decision",
+    "source": "nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "useState fetch",
+      "TanStack Query",
+      "服务端数据",
+      "状态管理"
+    ]
+  },
+  {
+    "title": "nft-gmgn Tailwind 禁止 p-16 类名",
+    "tags": [
+      "delivery-rule",
+      "css",
+      "nft-gmgn"
+    ],
+    "summary": "Tailwind 数字类名禁止 rem 单位：p-16px 推荐，p-[16px] 可用，p-16 禁止",
+    "content": "nft-gmgn/CLAUDE.md：p-16px 推荐；p-[16px] 无预设时使用；p-16 禁止（会生成 rem）。字体大小使用预设（text-sm 等，已配对应行高）。颜色用 CSS 变量语义名（text-text-100、bg-card-100）。",
+    "scope": "project",
+    "project_name": "nft-gmgn",
+    "claim_type": "decision",
+    "source": "nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "p-16",
+      "Tailwind rem",
+      "类名 禁止",
+      "Tailwind 规范"
+    ]
+  },
+  {
+    "title": "nft-gmgn 任务前必读文档路由表",
+    "tags": [
+      "delivery-rule",
+      "workflow",
+      "nft-gmgn"
+    ],
+    "summary": "接到开发任务禁止直接搜/写代码，先按关键词匹配文档路由表读完匹配文档",
+    "content": "nft-gmgn/CLAUDE.md 强制执行流程：接到任务后禁止直接搜代码或编写代码，必须先读 docs/how-to.md，按关键词匹配文档路由表（交易/launch/signal/rank/搜索/下单等），读完所有匹配文档才可以开始。多数任务匹配多行。",
+    "scope": "project",
+    "project_name": "nft-gmgn",
+    "claim_type": "procedure",
+    "source": "nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "强制执行流程",
+      "文档路由表",
+      "先读文档",
+      "禁止直接搜代码"
+    ]
+  },
+  {
+    "title": "nft-gmgn 临时文件必须放 tmp 目录",
+    "tags": [
+      "delivery-rule",
+      "hygiene",
+      "nft-gmgn"
+    ],
+    "summary": "nft-gmgn 所有临时产出保存到项目根 ./tmp/，不得散落各处",
+    "content": "nft-gmgn/CLAUDE.md 重要约束：'临时文件保存到 ./tmp/'、'使用 typescript-lsp 查找代码'、'不确定的 API、配置、第三方用法，必须先查证，查不到时询问用户'。相关：。",
+    "scope": "project",
+    "project_name": "nft-gmgn",
+    "claim_type": "decision",
+    "source": "nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "临时文件",
+      "tmp 目录",
+      "typescript-lsp",
+      "hygiene"
+    ]
+  },
+  {
+    "title": "ai-child 禁止只写文档不写代码",
+    "tags": [
+      "delivery-rule",
+      "ai-child"
+    ],
+    "summary": "ai-child 项目明确列出的禁止事项，防止 Agent 空转",
+    "content": "ai-child/CLAUDE.md 禁止事项：1) 禁止只写文档不写代码 2) 禁止把聊天能力当主线 3) 禁止用外部检索假装内部记忆 4) 禁止声称'已优化'但没有代码改动 5) 禁止模糊表达'整体向好'而不给数据 6) 禁止绕过 encoder 直接注入向量后声称感知能力已验证 7) 禁止 legacy_text 路线侵入主线。相关：[[有证据才能说完成]]。",
+    "scope": "project",
+    "project_name": "ai-child",
+    "claim_type": "decision",
+    "source": "ai-child/CLAUDE.md",
+    "related": [
+      "有证据才能说完成"
+    ],
+    "search_queries": [
+      "只写文档",
+      "已优化 无代码",
+      "假装 感知",
+      "ai-child 禁止"
+    ]
+  },
+  {
+    "title": "ai-child 验收前读 ACCEPTANCE_CRITERIA",
+    "tags": [
+      "delivery-rule",
+      "ai-child",
+      "acceptance"
+    ],
+    "summary": "每次验收必须先读 ACCEPTANCE_CRITERIA.md，未满足当前阶段目标不得停止迭代",
+    "content": "ai-child/CLAUDE.md：'每次验收前必须读 ACCEPTANCE_CRITERIA.md。未满足当前阶段目标不得停止迭代'。阶段性硬性门禁。相关：[[有证据才能说完成]]。",
+    "scope": "project",
+    "project_name": "ai-child",
+    "claim_type": "procedure",
+    "source": "ai-child/CLAUDE.md",
+    "related": [
+      "有证据才能说完成"
+    ],
+    "search_queries": [
+      "ACCEPTANCE_CRITERIA",
+      "验收标准",
+      "阶段目标",
+      "ai-child 验收"
+    ]
+  },
+  {
+    "title": "E2E 必须用真实 Agent 补充不单独证明 UI",
+    "tags": [
+      "delivery-rule",
+      "testing",
+      "e2e",
+      "teams"
+    ],
+    "summary": "E2E 不允许只证 UI 骨架，必须把真实 Agent 补充进去形成真实链路",
+    "content": "Cursor bubble 38f41caf / 6e680b05 中用户原话：'不要单独证明 UIE2E，我没那么多时间和你耗，直接将真实 Agent 补充进去'。配合 teams 项目 E2E：先 dev 环境、再 packaged 包测试、先杀死正在跑的 E2E。相关：[[不 mock 测试]] [[真实验证优先]]。",
+    "scope": "project",
+    "project_name": "teams",
+    "claim_type": "decision",
+    "source": "Cursor bubble 38f41caf + 6e680b05 + Claude session f81833b9",
+    "related": [
+      "不 mock 测试",
+      "真实验证优先"
+    ],
+    "search_queries": [
+      "UI E2E",
+      "真实 Agent",
+      "E2E 真实",
+      "不单独证明 UI"
+    ]
+  },
+  {
+    "title": "单测不是通过而是发现问题",
+    "tags": [
+      "delivery-rule",
+      "testing"
+    ],
+    "summary": "单测目的是发现问题或证明没问题，不是过绿灯；单测失败时改功能不改测试",
+    "content": "Cursor bubble 7f38fcaa 原话：'单测的意义不是通过，而是发现问题或者证明没问题'、'记住不是单测本身的问题，不要改单测，改功能'（bubble aff791ad）。改了代码要 bun build 以后再测。相关：[[不 mock 测试]] [[新模块必须带单测]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "Cursor bubble 7f38fcaa + aff791ad",
+    "related": [
+      "不 mock 测试",
+      "新模块必须带单测"
+    ],
+    "search_queries": [
+      "单测 意义",
+      "不改单测",
+      "改功能",
+      "单测 通过"
+    ]
+  },
+  {
+    "title": "mnemo MVP 优先先能跑再优化",
+    "tags": [
+      "delivery-rule",
+      "mnemo"
+    ],
+    "summary": "mnemo 项目交付原则：MVP 优先，先能跑再优化",
+    "content": "mnemo/.claude/memory/DELIVERY_RULES.md 规定：不 mock 测试、新模块必须带单测、破坏性改动先确认、增量推进、MVP 优先先能跑再优化。适用于 mnemo 项目所有阶段。相关：。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "/Users/zhuqingyu/project/mnemo/.claude/memory/DELIVERY_RULES.md",
+    "related": [],
+    "search_queries": [
+      "MVP 优先",
+      "先能跑",
+      "mnemo 交付",
+      "优化时机"
+    ]
+  },
+  {
+    "title": "防止伪装多 Agent",
+    "tags": [
+      "delivery-rule",
+      "team"
+    ],
+    "summary": "主 Agent 禁止角色扮演多 agent；创建子 Agent 过程必须是真实推理不得'糊弄'",
+    "content": "Cursor bubble 348b0032：'检查一下当前多 Agent 协作模式的群组，是否和 claude code 的多 Agent 协作架构一致？为什么单测的创建子 Agent 那么快，感觉没经过 Agent 推理，是不是糊弄我？'。role-audit skill 要求记录本次任务实际调用了哪些角色、谁提出异议、谁确认通过。相关：。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "Cursor bubble 348b0032 + 0735e2de + role-audit skill",
+    "related": [],
+    "search_queries": [
+      "伪装 多 Agent",
+      "角色扮演",
+      "role-audit",
+      "真实推理"
+    ]
+  },
+  {
+    "title": "交付前必过 delivery-gate",
+    "tags": [
+      "delivery-rule",
+      "gate"
+    ],
+    "summary": "任何准备说'完成'/'交付'前，先执行 delivery-gate skill 检查",
+    "content": "delivery-gate skill 作为全局交付门禁。准备宣告完成前强制触发，验证证据、单测、真实验证是否到位。相关：[[有证据才能说完成]] [[真实验证优先]] [[新模块必须带单测]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "delivery-gate skill",
+    "related": [
+      "有证据才能说完成",
+      "真实验证优先",
+      "新模块必须带单测"
+    ],
+    "search_queries": [
+      "delivery-gate",
+      "交付门禁",
+      "完成检查",
+      "交付前"
+    ]
+  },
+  {
+    "title": "破坏性操作禁止绕过 hook",
+    "tags": [
+      "delivery-rule",
+      "git"
+    ],
+    "summary": "git 操作禁止 --no-verify/--no-gpg-sign 等绕过 hook 的标志，除非用户明确要求",
+    "content": "全局 harness 规则：Never skip hooks (--no-verify, --no-gpg-sign, etc.) unless user explicitly requests. pre-commit hook 失败时改问题本身，不要 --amend 之前的 commit。Git safety protocol 禁止 push --force、reset --hard 未经用户确认。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "Claude Code 默认规则 + 全局 safety protocol",
+    "related": [
+      "破坏性改动先确认"
+    ],
+    "search_queries": [
+      "no-verify",
+      "hook 绕过",
+      "git 安全",
+      "force push"
+    ]
+  },
+  {
+    "title": "nft-gmgn 多链感知禁硬编码链名",
+    "tags": [
+      "delivery-rule",
+      "architecture",
+      "nft-gmgn"
+    ],
+    "summary": "所有涉及链的组件和 hook 必须支持多链切换，不可硬编码链名",
+    "content": "nft-gmgn/CLAUDE.md 架构约束：Feature 模块化（src/features/[name]/）；多链感知：所有涉及链的组件和 hooks 必须支持多链切换，不可硬编码 'solana'/'bsc' 等。国际化覆盖：禁止硬编码中/英文字符串。",
+    "scope": "project",
+    "project_name": "nft-gmgn",
+    "claim_type": "decision",
+    "source": "nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "多链 硬编码",
+      "链名",
+      "chain 切换",
+      "nft-gmgn 架构"
+    ]
+  },
+  {
+    "title": "nft-gmgn 文档禁止硬编码数量",
+    "tags": [
+      "delivery-rule",
+      "docs",
+      "nft-gmgn"
+    ],
+    "summary": "docs 禁止写具体数量（50+ 模块、12 种语言等），用定性描述避免过时",
+    "content": "nft-gmgn/CLAUDE.md 文档规范：禁止硬编码数量（数量会随代码变动过时）；枚举类型只写用途和位置不逐一列举具体值；路径必须可验证；描述业务模块补充代码位置；交叉引用而非重复。",
+    "scope": "project",
+    "project_name": "nft-gmgn",
+    "claim_type": "decision",
+    "source": "nft-gmgn/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "硬编码数量",
+      "文档规范",
+      "枚举 用途",
+      "定性描述"
+    ]
+  },
+  {
+    "title": "过了的就别重复跑",
+    "tags": [
+      "delivery-rule",
+      "efficiency"
+    ],
+    "summary": "用户表达效率偏好：已通过的测试/命令不要反复跑，确认完立即停止",
+    "content": "Claude session ce32307a L322 用户原话：'你效率高一点，过了的就别重复跑了'、L373：'确认完不要再测试了，停下来'。对应工作习惯：不要无意义重复验证。相关：[[有证据才能说完成]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "Claude session ce32307a-9c67-4a09-949a-06e2b8fce494.jsonl",
+    "related": [
+      "有证据才能说完成"
+    ],
+    "search_queries": [
+      "重复跑",
+      "停下来",
+      "效率",
+      "确认完"
+    ]
+  },
+  {
+    "title": "修改代码先 bun build 再测试",
+    "tags": [
+      "delivery-rule",
+      "testing",
+      "aionui"
+    ],
+    "summary": "AionUi/teams 项目修改后端代码必须 bun build 再跑测试，否则白测",
+    "content": "Cursor bubble 7f38fcaa / 421ef49c 用户原话：'另外单测改代码记得 build，并使用 bun，否则白测'、'记得修改 bug 要 bun build 以后再测试'。teams 项目 E2E 同样约束。相关：[[E2E 必须用真实 Agent 补充不单独证明 UI]]。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "Cursor bubble 7f38fcaa + 421ef49c",
+    "related": [
+      "E2E 必须用真实 Agent 补充不单独证明 UI"
+    ],
+    "search_queries": [
+      "bun build",
+      "白测",
+      "build 再测",
+      "修改代码 build"
+    ]
+  },
+  {
+    "title": "双 Agent 交叉验证避免单点结论",
+    "tags": [
+      "delivery-rule",
+      "verification"
+    ],
+    "summary": "关键调研/结论不能只派一个 Agent，需另派一个双向验证",
+    "content": "Claude session e8c1e554 L735 用户原话：'不能只派一个，另外派一个进行双向验证，以免结论不准确'。适用于技术调研、代码审阅、架构评估等重结论任务。相关： [[真实验证优先]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "Claude session e8c1e554-ab37-4434-92ad-ee3502d45f45.jsonl L735",
+    "related": [
+      "真实验证优先"
+    ],
+    "search_queries": [
+      "双向验证",
+      "交叉验证",
+      "单点结论",
+      "另派一个"
+    ]
+  },
+  {
+    "title": "敏感信息必须脱敏",
+    "tags": [
+      "delivery-rule",
+      "security"
+    ],
+    "summary": "提交/存储/上传任何数据都必须过滤 sk-*/ghp_*/AKIA*/.env 内容",
+    "content": "DATA_SCHEMA.md 质量红线及 harness 默认行为：过滤 sk-*、ghp_*、AKIA*、.env。git 提交禁止加入 .env、credentials.json 等。staging 禁用 git add -A/.。相关：[[破坏性操作禁止绕过 hook]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "mnemo/tests/fixtures/DATA_SCHEMA.md + harness 默认",
+    "related": [
+      "破坏性操作禁止绕过 hook"
+    ],
+    "search_queries": [
+      "脱敏",
+      "sk-",
+      "ghp_",
+      ".env 敏感",
+      "credentials"
+    ]
+  }
+]

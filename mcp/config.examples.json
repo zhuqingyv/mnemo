@@ -1,0 +1,46 @@
+{
+  "_comment": "Drop the inner value under the top-level 'mcpServers' key of your MCP client config. Pick ONE template. All templates assume you installed from source: `git clone https://github.com/zhuqingyv/mnemo.git && cd mnemo && pip install -e .`",
+
+  "installed_entry_point": {
+    "_usage": "Simplest form. Works when `mnemo-mcp` is on PATH (true after `pip install -e .` in an activated environment).",
+    "mnemo": {
+      "type": "stdio",
+      "command": "mnemo-mcp"
+    }
+  },
+
+  "cursor_stdio": {
+    "_usage": "Put under mcpServers in ~/.cursor/mcp.json (or project-level .cursor/mcp.json). Restart Cursor after editing.",
+    "mnemo": {
+      "type": "stdio",
+      "command": "mnemo-mcp"
+    }
+  },
+
+  "claude_desktop_stdio": {
+    "_usage": "Put under mcpServers in ~/Library/Application Support/Claude/claude_desktop_config.json (macOS) or %APPDATA%\\Claude\\claude_desktop_config.json (Windows). Restart Claude Desktop.",
+    "mnemo": {
+      "type": "stdio",
+      "command": "mnemo-mcp"
+    }
+  },
+
+  "sse_shared_backend": {
+    "_usage": "Use when multiple clients need to share one mnemo backend. Start server first: `mnemo serve` (listens on 127.0.0.1:8787). See docs/ADVANCED.md.",
+    "mnemo": {
+      "type": "sse",
+      "url": "http://127.0.0.1:8787/mcp/sse"
+    }
+  },
+
+  "dev_local_venv": {
+    "_usage": "Recommended for development — runs directly from a local clone with an explicit interpreter, independent of PATH. Replace /ABS/PATH/mnemo with your checkout path.",
+    "mnemo": {
+      "type": "stdio",
+      "command": "/ABS/PATH/mnemo/.venv/bin/python",
+      "args": ["-m", "mnemo.mcp.server"],
+      "cwd": "/ABS/PATH/mnemo",
+      "env": {}
+    }
+  }
+}

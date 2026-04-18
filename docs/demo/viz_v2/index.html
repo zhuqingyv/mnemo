@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mnemo · 知识可视化 v2</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- Tailwind Play CDN (零构建) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            surface: {
+              0: '#080b16',
+              1: '#0f1225',
+              2: '#161a32',
+              3: '#1e2340',
+            },
+            border: {
+              DEFAULT: '#1a1f3a',
+              strong:  '#2a3060',
+              glow:    'rgba(124,58,237,0.3)',
+            },
+            brand: {
+              blue:   '#58a6ff',
+              purple: '#a371f7',
+              glow:   '#7c3aed',
+              pink:   '#ec4899',
+            },
+            text: {
+              0: '#e6edf3',
+              1: '#b0b8c8',
+              2: '#6b7394',
+              3: '#454d6a',
+            },
+            status: {
+              green:  '#3fb950',
+              yellow: '#d29922',
+              red:    '#f85149',
+              gray:   '#6e7681',
+            },
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Fira Code', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
+          },
+          boxShadow: {
+            'glow':        '0 0 20px rgba(88,166,255,0.15), 0 0 40px rgba(124,58,237,0.1)',
+            'glow-sm':     '0 0 8px rgba(88,166,255,0.15)',
+            'glow-lg':     '0 0 30px rgba(124,58,237,0.25), 0 0 60px rgba(88,166,255,0.1)',
+            'glow-purple': '0 0 20px rgba(163,113,247,0.3)',
+            'card':        '0 2px 8px rgba(0,0,0,0.3), 0 0 1px rgba(124,58,237,0.2)',
+          },
+          dropShadow: {
+            'glow': ['0 0 8px rgba(88,166,255,0.6)', '0 0 16px rgba(163,113,247,0.4)'],
+          },
+          backgroundImage: {
+            'gradient-brand':      'linear-gradient(90deg, #58a6ff 0%, #7c3aed 50%, #a371f7 100%)',
+            'gradient-brand-v':    'linear-gradient(180deg, #58a6ff 0%, #a371f7 100%)',
+            'gradient-brand-soft': 'linear-gradient(90deg, rgba(88,166,255,0.15), rgba(163,113,247,0.15))',
+          },
+          keyframes: {
+            'spin':         { to: { transform: 'rotate(360deg)' } },
+            'slide-in':     { from: { transform: 'translateX(20px)', opacity: '0' }, to: { transform: 'translateX(0)', opacity: '1' } },
+            'pulse-ring':   { '0%': { transform: 'scale(0.6)', opacity: '1' }, '100%': { transform: 'scale(1.8)', opacity: '0' } },
+          },
+          animation: {
+            'spin-slow':  'spin 0.9s linear infinite',
+            'slide-in':   'slide-in 220ms ease-out',
+            'pulse-ring': 'pulse-ring 900ms ease-out forwards',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Tailwind 无法覆盖的：全屏 canvas 定位 / label 层 / 旧类名状态切换 -->
+  <style>
+    html, body { background: #080b16; color: #e6edf3; font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace; }
+    * { box-sizing: border-box; }
+
+    /* Graph 2D/3D 全屏容器 —— .show class 由 JS 切；left:56px 给 sidebar 留位 */
+    #graph-view, #graph-3d-view {
+      position: fixed;
+      top: 52px; left: 56px; right: 0; bottom: 0;
+      background: #080b16;
+      display: none;
+    }
+    #graph-view.show, #graph-3d-view.show { display: block; }
+    #graph-3d-container { width: 100%; height: 100%; }
+    #graph-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    #graph-canvas.dragging { cursor: grabbing; }
+
+    /* 3D label 层 —— 位置由 JS transform 写入 */
+    #label-layer {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 35;
+    }
+    .n-label {
+      position: absolute;
+      left: 0; top: 0;
+      transform: translate3d(-9999px, -9999px, 0);
+      font-family: inherit;
+      font-size: 10.5px;
+      line-height: 1.1;
+      color: #e6edf3;
+      background: rgba(8,11,22,0.72);
+      border-radius: 2px;
+      padding: 1px 4px;
+      white-space: nowrap;
+      will-change: transform, opacity;
+      pointer-events: none;
+      user-select: none;
+    }
+    .n-label.hide { display: none; }
+
+    /* spinner（CSS animation） */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid #2a3060;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      vertical-align: middle; margin-right: 8px;
+    }
+
+    /* Detail panel 滑入 */
+    @keyframes slide-in-panel {
+      from { transform: translateX(20px); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+    .anim-slide-in { animation: slide-in-panel 220ms ease-out; }
+
+    /* 搜索命中脉冲环（viz_v1 已有，v2 同步） */
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    /* Graph panel collapsed 状态 —— JS 切 .collapsed */
+    .graph-panel.collapsed { width: 36px !important; padding: 8px !important; cursor: pointer; }
+    .graph-panel.collapsed .gp-body,
+    .graph-panel.collapsed .gp-head .gp-title { display: none; }
+    .graph-panel.collapsed .gp-toggle { transform: rotate(180deg); }
+    .graph-panel.collapsed .gp-collapsed-icon { display: block; }
+    .gp-collapsed-icon { display: none; }
+
+    /* 暗色滚动条 */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #080b16; }
+    ::-webkit-scrollbar-thumb { background: #1e2340; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2a3060; }
+  </style>
+</head>
+<body class="bg-surface-0 text-text-0 font-mono text-[13px] m-0 p-0">
+  <div id="app" class="flex min-h-screen"></div>
+
+  <!-- External libs -->
+  <script src="/viz/static/nova-dom.umd.min.js"></script>
+  <script>if(typeof NovaView==='undefined'){document.write('<script src="nova-dom.umd.min.js"><\/script>');}</script>
+  <!-- THREE + 3d-force-graph are injected lazily on first 3D activation (see graph3d/lifecycle.js) -->
+  <!-- Saves ~900KB JS + heavy parse cost when the user stays in 2D / list view -->
+
+
+  <!-- Tier 0: bootstrap + constants + shared state + utils -->
+  <script src="js/bootstrap.js"></script>
+  <script src="js/constants.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/utils.js"></script>
+
+  <!-- i18n (after bootstrap, before components) -->
+  <script src="js/i18n/zh-CN.js"></script>
+  <script src="js/i18n/zh-TW.js"></script>
+  <script src="js/i18n/en.js"></script>
+  <script src="js/i18n/index.js"></script>
+
+  <!-- Tier 1: pure helpers -->
+  <script src="js/graph2d/color.js"></script>
+  <script src="js/graph2d/sprite-cache.js"></script>
+  <script src="js/graph3d/style.js"></script>
+
+  <!-- Tier 2: data layer -->
+  <script src="js/data-loaders.js"></script>
+  <script src="js/detail-actions.js"></script>
+  <script src="js/search.js"></script>
+
+  <!-- Tier 3: 2D graph algorithms -->
+  <script src="js/graph2d/build.js"></script>
+  <script src="js/graph2d/physics.js"></script>
+  <script src="js/graph2d/render.js"></script>
+  <script src="js/graph2d/loop.js"></script>
+  <script src="js/graph2d/diff.js"></script>
+  <script src="js/graph2d/interactions.js"></script>
+  <script src="js/graph2d/pulses.js"></script>
+
+  <!-- Tier 3: 3D graph stack -->
+  <script src="js/graph3d/data.js"></script>
+  <script src="js/graph3d/labels.js"></script>
+  <script src="js/graph3d/engine.js"></script>
+  <script src="js/graph3d/lifecycle.js"></script>
+
+  <!-- Tier 4: polling -->
+  <script src="js/polling.js"></script>
+
+  <!-- Tier 5: components (App last = mounts) -->
+  <script src="js/components/sidebar.js"></script>
+  <script src="js/components/metric-card.js"></script>
+  <script src="js/components/dashboard.js"></script>
+  <script src="js/components/tool-chart.js"></script>
+  <script src="js/components/list.js"></script>
+  <script src="js/components/detail-panel.js"></script>
+  <script src="js/components/search-bar.js"></script>
+  <script src="js/components/topbar.js"></script>
+  <script src="js/components/graph-hud.js"></script>
+  <script src="js/components/graph-view.js"></script>
+  <script src="js/components/app.js"></script>
+</body>
+</html>

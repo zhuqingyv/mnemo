@@ -1,0 +1,432 @@
+[
+  {
+    "description": "新 Agent 想知道 mnemo 有哪些技术雷区",
+    "query": "mnemo 风险",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "sqlite-vec pre-v1 不稳定",
+      "FTS5 中文分词不完善",
+      "Scope creep 加 UI 的冲动",
+      "Embedding 模型更新导致重建索引"
+    ],
+    "expected_not_hits": [],
+    "notes": "mnemo 项目自带的主要技术风险清单"
+  },
+  {
+    "description": "Agent 要决定是否升级 sqlite-vec 版本",
+    "query": "sqlite-vec 版本",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "sqlite-vec pre-v1 不稳定"
+    ],
+    "expected_not_hits": [],
+    "notes": "提醒 pre-v1 锁版本，不跟 latest"
+  },
+  {
+    "description": "Agent 搜中文短语找不到结果时",
+    "query": "FTS5 中文",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "FTS5 中文分词不完善",
+      "中文搜索先用英文关键词兜底",
+      "trigram tokenizer 未必够用"
+    ],
+    "expected_not_hits": [],
+    "notes": "说明中文分词局限 + workaround"
+  },
+  {
+    "description": "Agent 想 fork basic-memory",
+    "query": "basic-memory License",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "basic-memory 是 AGPL-3.0 不能 fork",
+      "Fork basic-memory 改造量超预期"
+    ],
+    "expected_not_hits": [],
+    "notes": "AGPL 传染性风险阻止 fork"
+  },
+  {
+    "description": "Agent 想引入新开源依赖",
+    "query": "License 检查",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "引入依赖前先看 License",
+      "basic-memory 是 AGPL-3.0 不能 fork"
+    ],
+    "expected_not_hits": [],
+    "notes": "流程：亲自读 LICENSE 文件，不信一级报告"
+  },
+  {
+    "description": "Agent 想给 mnemo 加 Web UI",
+    "query": "加 UI 风险",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "Scope creep 加 UI 的冲动"
+    ],
+    "expected_not_hits": [],
+    "notes": "高风险项，必须拒绝"
+  },
+  {
+    "description": "Agent 要写测试",
+    "query": "mock 测试",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "mock 测试通过但生产 migration 失败"
+    ],
+    "expected_not_hits": [],
+    "notes": "交付红线关联"
+  },
+  {
+    "description": "Agent 跑完单测就想说完成",
+    "query": "tsc 通过",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "tsc 通过不等于功能正常",
+      "队员说通过不算数"
+    ],
+    "expected_not_hits": [],
+    "notes": "ai-store P4 教训，必须 dog-food"
+  },
+  {
+    "description": "新 Agent 进入 ai-child 看到 legacy_text 目录",
+    "query": "legacy_text",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "legacy_text 路线已归档禁止复活"
+    ],
+    "expected_not_hits": [],
+    "notes": "已归档不能复活"
+  },
+  {
+    "description": "ai-child 开发者想用 RAG 实现记忆",
+    "query": "外部检索 RAG",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "ai-child 禁止绕过 encoder 注入向量"
+    ],
+    "expected_not_hits": [],
+    "notes": "项目本质要求真实神经机制"
+  },
+  {
+    "description": "按标签检索所有高风险项",
+    "query": "high-risk",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "basic-memory 是 AGPL-3.0 不能 fork",
+      "Scope creep 加 UI 的冲动",
+      "mock 测试通过但生产 migration 失败",
+      "tsc 通过不等于功能正常",
+      "legacy_text 路线已归档禁止复活",
+      "ai-child 禁止绕过 encoder 注入向量",
+      "不要偏离 NORTH_STAR",
+      "不说完成除非四道验收全过",
+      "24h 长期运行 OOM 风险",
+      "Checkpoint 持久化缺失导致学习重置",
+      "产品先行开发后跟",
+      "种子 App 必须从用户场景倒推"
+    ],
+    "expected_not_hits": [],
+    "notes": "高风险项全集"
+  },
+  {
+    "description": "按标签列出 mnemo 所有风险",
+    "query": "risk",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": [
+      "sqlite-vec pre-v1 不稳定",
+      "FTS5 中文分词不完善",
+      "Embedding 模型更新导致重建索引",
+      "Fork basic-memory 改造量超预期",
+      "Scope creep 加 UI 的冲动",
+      "basic-memory 是 AGPL-3.0 不能 fork",
+      "中文搜索先用英文关键词兜底",
+      "重复标题报错信息要包装",
+      "schema 迁移风险预埋字段不走 Alembic",
+      "种子数据重复提取风险",
+      "种子数据时效衰减要打时间戳",
+      "zero-context 新 Agent 评估风险",
+      "trigram tokenizer 未必够用"
+    ],
+    "expected_not_hits": [],
+    "notes": "mnemo 项目风险全集"
+  },
+  {
+    "description": "Agent 想把内存状态留到下阶段落盘",
+    "query": "持久化",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "持久化要第一时间做",
+      "Checkpoint 持久化缺失导致学习重置"
+    ],
+    "expected_not_hits": [],
+    "notes": "ai-store P4 教训：内存数据重启清零"
+  },
+  {
+    "description": "Agent 把 UI 样式推到最后",
+    "query": "UI 样式补救",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "UI 样式不能留到最后"
+    ],
+    "expected_not_hits": [],
+    "notes": "ai-store P3-P4 教训"
+  },
+  {
+    "description": "Agent 想产品架构并行推进",
+    "query": "产品先行",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "产品先行开发后跟",
+      "种子 App 必须从用户场景倒推"
+    ],
+    "expected_not_hits": [],
+    "notes": "ai-store P5 教训"
+  },
+  {
+    "description": "验收标准是什么",
+    "query": "验收 dog-food",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "不说完成除非四道验收全过",
+      "tsc 通过不等于功能正常",
+      "队员说通过不算数"
+    ],
+    "expected_not_hits": [],
+    "notes": "四道验收全过"
+  },
+  {
+    "description": "Agent 遇到歧义想自己猜",
+    "query": "歧义先问",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "不确定 API 必须先查证"
+    ],
+    "expected_not_hits": [],
+    "notes": "禁止脑补"
+  },
+  {
+    "description": "关联风险：查看 FTS5 中文分词问题",
+    "query": "FTS5 中文分词不完善",
+    "query_type": "related",
+    "scope": null,
+    "expected_hits": [
+      "中文搜索先用英文关键词兜底",
+      "trigram tokenizer 未必够用"
+    ],
+    "expected_not_hits": [],
+    "notes": "中文分词相关 workaround 与备选方案"
+  },
+  {
+    "description": "中风险项盘点",
+    "query": "medium-risk",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "sqlite-vec pre-v1 不稳定",
+      "FTS5 中文分词不完善",
+      "Embedding 模型更新导致重建索引",
+      "Fork basic-memory 改造量超预期",
+      "引入依赖前先看 License",
+      "队员说通过不算数",
+      "UI 样式不能留到最后",
+      "不带技术债上线",
+      "inferOnce 是通用需求不要埋在协商模块里",
+      "schema 迁移风险预埋字段不走 Alembic",
+      "种子数据时效衰减要打时间戳",
+      "不确定 API 必须先查证",
+      "zero-context 新 Agent 评估风险",
+      "trigram tokenizer 未必够用"
+    ],
+    "expected_not_hits": [],
+    "notes": "中风险项"
+  },
+  {
+    "description": "按低风险标签查找",
+    "query": "low-risk",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "中文搜索先用英文关键词兜底",
+      "重复标题报错信息要包装",
+      "种子数据重复提取风险",
+      "NotesMD CLI 误判为官方 Obsidian CLI",
+      "nurture.py 音频依赖 sounddevice",
+      "M13 predictive coding drive 区分度不达标"
+    ],
+    "expected_not_hits": [],
+    "notes": "低风险项"
+  },
+  {
+    "description": "License 相关风险",
+    "query": "license",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "basic-memory 是 AGPL-3.0 不能 fork",
+      "引入依赖前先看 License"
+    ],
+    "expected_not_hits": [],
+    "notes": "协议风险"
+  },
+  {
+    "description": "测试类风险",
+    "query": "testing",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "mock 测试通过但生产 migration 失败",
+      "tsc 通过不等于功能正常"
+    ],
+    "expected_not_hits": [],
+    "notes": "测试相关红线"
+  },
+  {
+    "description": "提取种子数据时要注意什么",
+    "query": "种子数据提取",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "种子数据重复提取风险",
+      "种子数据时效衰减要打时间戳"
+    ],
+    "expected_not_hits": [],
+    "notes": "种子数据提取流程的三个风险"
+  },
+  {
+    "description": "mnemo 如何验收 Phase 1",
+    "query": "zero-context 评估",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "zero-context 新 Agent 评估风险"
+    ],
+    "expected_not_hits": [],
+    "notes": "端到端产品验收方法"
+  },
+  {
+    "description": "mnemo 遇到重复标题报错",
+    "query": "重复标题",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "重复标题报错信息要包装"
+    ],
+    "expected_not_hits": [],
+    "notes": "SQLAlchemy 异常需包装"
+  },
+  {
+    "description": "mnemo schema 升级方案",
+    "query": "Alembic migration",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "schema 迁移风险预埋字段不走 Alembic"
+    ],
+    "expected_not_hits": [],
+    "notes": "预埋字段策略"
+  },
+  {
+    "description": "ai-child 稳定性攻坚",
+    "query": "24h OOM",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "24h 长期运行 OOM 风险",
+      "Checkpoint 持久化缺失导致学习重置"
+    ],
+    "expected_not_hits": [],
+    "notes": "阶段5 攻坚项"
+  },
+  {
+    "description": "nurture.py 跑不起来",
+    "query": "sounddevice 音频",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "nurture.py 音频依赖 sounddevice"
+    ],
+    "expected_not_hits": [],
+    "notes": "音频设备权限 / headless 降级"
+  },
+  {
+    "description": "调研报告结论有问题",
+    "query": "调研交叉验证",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "NotesMD CLI 误判为官方 Obsidian CLI",
+      "引入依赖前先看 License"
+    ],
+    "expected_not_hits": [],
+    "notes": "单源调研不可信，关键结论必须交叉验证"
+  },
+  {
+    "description": "按架构标签查",
+    "query": "architecture",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": [
+      "Fork basic-memory 改造量超预期",
+      "inferOnce 是通用需求不要埋在协商模块里",
+      "持久化要第一时间做"
+    ],
+    "expected_not_hits": [],
+    "notes": "架构类风险"
+  },
+  {
+    "description": "按 ai-child 项目筛选风险",
+    "query": "ai-child",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": [
+      "legacy_text 路线已归档禁止复活",
+      "ai-child 禁止绕过 encoder 注入向量",
+      "nurture.py 音频依赖 sounddevice",
+      "24h 长期运行 OOM 风险",
+      "Checkpoint 持久化缺失导致学习重置",
+      "M13 predictive coding drive 区分度不达标"
+    ],
+    "expected_not_hits": [],
+    "notes": "ai-child 项目相关风险"
+  },
+  {
+    "description": "按 mnemo 项目筛选风险",
+    "query": "mnemo",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": [
+      "sqlite-vec pre-v1 不稳定",
+      "FTS5 中文分词不完善",
+      "Embedding 模型更新导致重建索引",
+      "Fork basic-memory 改造量超预期",
+      "Scope creep 加 UI 的冲动",
+      "basic-memory 是 AGPL-3.0 不能 fork",
+      "中文搜索先用英文关键词兜底",
+      "重复标题报错信息要包装",
+      "schema 迁移风险预埋字段不走 Alembic",
+      "种子数据重复提取风险",
+      "种子数据时效衰减要打时间戳",
+      "zero-context 新 Agent 评估风险",
+      "trigram tokenizer 未必够用"
+    ],
+    "expected_not_hits": [],
+    "notes": "mnemo 项目相关风险"
+  }
+]

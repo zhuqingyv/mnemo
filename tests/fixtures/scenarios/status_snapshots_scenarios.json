@@ -1,0 +1,461 @@
+[
+  {
+    "description": "新 Agent 想知道 mnemo 现在处于什么阶段",
+    "query": "mnemo 当前阶段",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 项目阶段 - 截至 2026-04-18", "mnemo Phase 1 路线图完成状态 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "项目阶段查询是高频场景，需要命中最新的快照"
+  },
+  {
+    "description": "新 Agent 接手 ai-store 想知道当前阻塞",
+    "query": "dog-food 验收",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 郭总 dog-food 验收未完成 - 截至 2026-04-13", "ai-store P6 四道验收未启动 - 截至 2026-04-13", "ai-store 待完成任务 - 截至 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "验收流程和阻塞状态是切换上下文时最需要了解的"
+  },
+  {
+    "description": "Agent 想确认 mnemo 的产品定位",
+    "query": "mnemo 定位",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 定位 Agent-first 知识库 - 截至 2026-04-18", "mnemo 产品定位决策 - 2026-04-18", "mnemo 核心理念 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "定位查询用于避免做出偏离方向的决策"
+  },
+  {
+    "description": "新 Agent 查 ai-child 现在在攻克什么",
+    "query": "ai-child 阶段 5 重点",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child 阶段 5 重点 - 2026-04-17", "ai-child 阶段 5 四大迭代目标 - 截至 2026-04-17", "ai-child 当前阶段 - 截至 2026-04-17"],
+    "expected_not_hits": [],
+    "notes": "阶段 5 是当前阶段，重点是应加载的上下文"
+  },
+  {
+    "description": "查看 workspace 有哪些项目已登记",
+    "query": "项目注册表",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["项目注册表状态 - 截至 2026-04-18", "workspace 登记时间线 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "跨项目 workspace 元信息"
+  },
+  {
+    "description": "按 tag 检索所有 2026-04-18 的状态快照",
+    "query": "2026-04-18",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["mnemo 项目阶段 - 截至 2026-04-18", "mnemo 调研团队 kb-research 成果 - 2026-04-18", "mnemo 登记时间 2026-04-18", "项目注册表状态 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "日期 tag 用于按时间点切片查询"
+  },
+  {
+    "description": "查 mnemo 为什么决定不 fork basic-memory",
+    "query": "basic-memory fork",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 不 fork basic-memory 自研决策", "mnemo 调研已审查 6 个 MCP 知识服务器 - 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "重要决策查询，AGPL 协议是关键原因"
+  },
+  {
+    "description": "查 ai-store P6 方案对抗具体谁提的方案",
+    "query": "P6 方案对抗",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store P6 方案对抗成果 - 2026-04-12", "ai-store P6 方案对抗提案文档 - 2026-04-12"],
+    "expected_not_hits": [],
+    "notes": "方案对抗历史，含产品方案和架构方案"
+  },
+  {
+    "description": "想知道 ai-store 团队怎么组成",
+    "query": "ai-store 团队",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 团队配置 - 截至 2026-04-13", "ai-store 三常驻角色 - 截至 2026-04-13", "ai-store 常用角色池 - 截至 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "团队结构是执行任务前必查的"
+  },
+  {
+    "description": "查 ai-child 有哪些功能已实现",
+    "query": "ai-child 已实现",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child 阶段 0-3 已实现 - 2026-04-17", "ai-child 阶段 4 已实现 - 2026-04-17"],
+    "expected_not_hits": [],
+    "notes": "避免重复实现已有功能"
+  },
+  {
+    "description": "查 mnemo 的路线图总体规划",
+    "query": "mnemo Phase",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Phase 1 路线图完成状态 - 截至 2026-04-18", "mnemo Phase 2 语义检索管道规划", "mnemo Phase 3 知识生命周期规划", "mnemo Phase 4 集成 mteam 规划"],
+    "expected_not_hits": [],
+    "notes": "路线图检索用于长期规划对齐"
+  },
+  {
+    "description": "Agent 想查 ai-store 有哪些历史教训",
+    "query": "ai-store 教训",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store P4 教训沉淀 - 截至 2026-04-12", "ai-store P5 方案对抗教训 - 截至 2026-04-12", "ai-store P4 沉淀 UI 不能留到最后 - 截至 2026-04-12"],
+    "expected_not_hits": [],
+    "notes": "避免重蹈覆辙"
+  },
+  {
+    "description": "Agent 查 mnemo Phase 1 还有哪些没做",
+    "query": "Phase 1 待办",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Phase 1 待办 6 项 - 截至 2026-04-18", "mnemo Phase 1 路线图完成状态 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "选下一个任务时查待办"
+  },
+  {
+    "description": "查 mnemo 的技术栈选了啥",
+    "query": "mnemo 技术栈",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 技术栈 Python 确认 - 截至 2026-04-18", "mnemo 登记时间 2026-04-18", "mnemo 关键技术决策表 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "技术栈确认用于写代码前对齐"
+  },
+  {
+    "description": "查 ai-child 禁止什么",
+    "query": "ai-child 禁止",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child 禁止事项清单 - 截至 2026-04-17"],
+    "expected_not_hits": [],
+    "notes": "红线查询，避免踩坑"
+  },
+  {
+    "description": "按 tag 查询所有 ai-store 项目的状态",
+    "query": "ai-store",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": ["ai-store 当前阶段 - 截至 2026-04-13", "ai-store P5 成果 - 2026-04-12", "ai-store P6 方案对抗成果 - 2026-04-12", "ai-store P6.1 已完成的 4 个 commit - 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "tag 分组用于查看项目全景"
+  },
+  {
+    "description": "Agent 想确认当前的 MCP Tools 接口",
+    "query": "mnemo MCP tools 接口",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo MCP Tools 接口清单 - 截至 2026-04-18", "mnemo Phase 1 MCP Server 已完成 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "接口查询用于写 MCP 调用代码"
+  },
+  {
+    "description": "查 ai-store 核心架构文件在哪",
+    "query": "ai-store 架构文件",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 架构关键文件 - 截至 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "文件定位用于快速导航代码"
+  },
+  {
+    "description": "查 mnemo 的竞品都有谁",
+    "query": "mnemo 竞品",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 竞品对标 - 截至 2026-04-18", "mnemo 市场空白判断 - 截至 2026-04-18", "mnemo 现有方案缺陷分析 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "竞品分析用于差异化决策"
+  },
+  {
+    "description": "查 workspace 记忆系统是怎么组织的",
+    "query": "记忆体系结构",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["全局记忆体系结构 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "元结构查询，用于自查或指导新人"
+  },
+  {
+    "description": "查 ai-store 红线不能破的",
+    "query": "ai-store 红线",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 项目红线清单 - 截至 2026-04-13", "ai-store P4 教训沉淀 - 截至 2026-04-12"],
+    "expected_not_hits": [],
+    "notes": "红线清单，定义不可违反的规则"
+  },
+  {
+    "description": "查 mnemo 的风险都有啥",
+    "query": "mnemo 风险",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 风险清单 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "风险识别用于提前应对"
+  },
+  {
+    "description": "查 mnemo License 现在是啥",
+    "query": "mnemo License",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo License 变更 - 2026-04-18", "mnemo Proprietary 闭源禁止事项 - 截至 2026-04-18", "mnemo 不 fork basic-memory 自研决策"],
+    "expected_not_hits": [],
+    "notes": "License 是商业使用前必查的"
+  },
+  {
+    "description": "通过 related 查 mnemo 阶段的相关条目",
+    "query": "mnemo 项目阶段 - 截至 2026-04-18",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": ["mnemo 调研团队 kb-research 成果 - 2026-04-18", "mnemo 不 fork basic-memory 自研决策"],
+    "expected_not_hits": [],
+    "notes": "related 链接走图谱遍历"
+  },
+  {
+    "description": "查 ai-store commit 历史",
+    "query": "ai-store commit",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store P6.1 已完成的 4 个 commit - 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "commit 记录用于追踪代码变更"
+  },
+  {
+    "description": "Agent 想知道 nft-gmgn 开发有什么强制流程",
+    "query": "nft-gmgn 强制流程",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["nft-gmgn 文档路由表驱动开发 - 截至 2026-04-18", "nft-gmgn 禁止事项 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "避免直接搜码，必须先读文档"
+  },
+  {
+    "description": "查 AionUi PR 自动化怎么工作的",
+    "query": "AionUi PR 自动化",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi PR 自动化流程 - 截至 2026-04-18", "AionUi 项目状态 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "PR 自动化流程用于理解 bot label 状态"
+  },
+  {
+    "description": "查 mnemo 命名空间怎么分",
+    "query": "mnemo 命名空间",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 命名空间设计 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "三级命名空间（global/project/session）"
+  },
+  {
+    "description": "查 mnemo 数据库表都有哪些",
+    "query": "mnemo 存储表",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 存储层表设计 - 截至 2026-04-18", "mnemo 存储格式决策 - 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "表设计是存储层基础"
+  },
+  {
+    "description": "查 mnemo 知识条目的元字段",
+    "query": "mnemo 元字段",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 存储指纹设计 - 截至 2026-04-18", "mnemo 存储层表设计 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "claim_type/status/content_hash/version"
+  },
+  {
+    "description": "查 ai-store 运营怎么循环",
+    "query": "ai-store 运营循环",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 运营循环 - 截至 2026-04-13", "ai-store 三常驻角色 - 截至 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "六步循环：目标→派发→执行→验收→评估→沉淀"
+  },
+  {
+    "description": "Agent 启动时查 ai-store 有没有未登记的项目",
+    "query": "未登记项目",
+    "query_type": "search",
+    "scope": "global",
+    "expected_hits": ["项目注册表状态 - 截至 2026-04-18", "其他 workspace 项目存在 - 截至 2026-04-18", "aion-agent-team 独立记忆存在 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "未登记项目需要 /project-register"
+  },
+  {
+    "description": "查 mnemo 调研团队谁做了啥",
+    "query": "kb-research 团队成果",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 调研团队 kb-research 成果 - 2026-04-18", "mnemo 团队（kb-research）成员 - 2026-04-18", "mnemo 调研工具链推荐 - 2026-04-18", "mnemo 调研已审查 6 个 MCP 知识服务器 - 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "调研成果分布在多条记录"
+  },
+  {
+    "description": "查 ai-store 源码授权协议",
+    "query": "BSL 1.1",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store GitHub 仓库状态 - 截至 2026-04-13", "ai-store 源码 BSL 1.1 授权详情 - 截至 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "License 决策的差异化展示"
+  },
+  {
+    "description": "按 tag 查所有风险类快照",
+    "query": "risk",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["mnemo 风险清单 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "risk tag 是专用风险分类"
+  },
+  {
+    "description": "查 ai-store P5 具体做了啥",
+    "query": "ai-store P5 成果",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store P5 成果 - 2026-04-12", "ai-store session store 持久化能力 - 2026-04-12"],
+    "expected_not_hits": [],
+    "notes": "P5 是 P6 的前置"
+  },
+  {
+    "description": "查 mnemo 团队协作笔记",
+    "query": "mnemo 团队",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 调研团队 kb-research 成果 - 2026-04-18", "mnemo 团队（kb-research）成员 - 2026-04-18"],
+    "expected_not_hits": ["ai-store 团队配置 - 截至 2026-04-13"],
+    "notes": "scope=project 过滤，只看 mnemo 团队"
+  },
+  {
+    "description": "查 ai-child eval 是否全 PASS",
+    "query": "ai-child eval PASS",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child 阶段 4 eval 全 PASS - 截至 2026-04-17", "ai-child 阶段 4 已实现 - 2026-04-17"],
+    "expected_not_hits": [],
+    "notes": "eval 状态影响下一步决策"
+  },
+  {
+    "description": "查 ai-child 终极目标",
+    "query": "ai-child 目标",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child 项目目标 - 截至 2026-04-17", "ai-child 终极架构定位 - 截至 2026-04-17"],
+    "expected_not_hits": [],
+    "notes": "目标是所有决策的指北针"
+  },
+  {
+    "description": "查 mnemo write-gate 怎么设计的",
+    "query": "write-gate",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Phase 3 write-gate 设计 - 截至 2026-04-18", "mnemo Phase 3 知识生命周期规划"],
+    "expected_not_hits": [],
+    "notes": "Phase 3 关键特性"
+  },
+  {
+    "description": "查 mnemo 关系类型有几种",
+    "query": "mnemo 关系类型",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 关系类型设计 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "7 种语义关系 Phase 2 实现"
+  },
+  {
+    "description": "查 ai-store Roguelike demo 包含什么",
+    "query": "Roguelike demo",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store Roguelike demo 5 个功能 App - 2026-04-13", "ai-store P6.1 核心能力 - 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "demo 用于展示 Agent 编排"
+  },
+  {
+    "description": "通过 related 查 ai-store 当前阶段的关联",
+    "query": "ai-store 当前阶段 - 截至 2026-04-13",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": ["ai-store P6.1 已完成的 4 个 commit - 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "从状态查到具体实现"
+  },
+  {
+    "description": "按 tag 查所有 team 类快照",
+    "query": "team",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["mnemo 调研团队 kb-research 成果 - 2026-04-18", "ai-store 团队配置 - 截至 2026-04-13", "ai-child 团队分工 - 截至 2026-04-17", "ai-store 三常驻角色 - 截至 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "team tag 聚合各项目团队"
+  },
+  {
+    "description": "查 mnemo 如何避免 Scope Creep",
+    "query": "scope creep",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 风险清单 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "严格 headless only 是应对方法"
+  },
+  {
+    "description": "Agent 想知道 ai-store 现在是谁在干",
+    "query": "常驻角色",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 三常驻角色 - 截至 2026-04-13", "ai-store 团队配置 - 截至 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "常驻和按需召唤区别"
+  },
+  {
+    "description": "查 Phase 1 MCP 已实现哪些 tools",
+    "query": "8 个核心 tools",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo Phase 1 MCP Server 已完成 - 截至 2026-04-18", "mnemo MCP Tools 接口清单 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "MCP tool 实现验证"
+  },
+  {
+    "description": "查 mnemo session store 类似设计",
+    "query": "session 持久化",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["ai-store session store 持久化能力 - 2026-04-12", "mnemo 命名空间设计 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "跨项目 session 概念对比"
+  },
+  {
+    "description": "查 2026-04-13 哪天发生了什么",
+    "query": "2026-04-13",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["ai-store 当前阶段 - 截至 2026-04-13", "ai-store P6.1 已完成的 4 个 commit - 2026-04-13", "ai-store P6.1 核心能力 - 2026-04-13", "ai-store Roguelike demo 5 个功能 App - 2026-04-13"],
+    "expected_not_hits": [],
+    "notes": "按日期切片，快速看某天发生的事"
+  },
+  {
+    "description": "查 mnemo CLI 具体命令",
+    "query": "mnemo CLI 命令",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo CLI 命令清单 - 截至 2026-04-18"],
+    "expected_not_hits": [],
+    "notes": "CLI 使用查询"
+  },
+  {
+    "description": "查 ai-child 阶段 0 到 3 的主要能力",
+    "query": "TransformerLatentBrain GWT",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child 阶段 0-3 已实现 - 2026-04-17", "ai-child 关联性指标 binding 0.71 - 截至 2026-04-17"],
+    "expected_not_hits": [],
+    "notes": "具体技术组件查询"
+  }
+]

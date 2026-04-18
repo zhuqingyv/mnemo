@@ -1,0 +1,1978 @@
+[
+  {
+    "title": "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "bug",
+      "multi-model"
+    ],
+    "summary": "refinement 生成新 refinedId 不在 agentPerTask 中，退回默认/active 模型",
+    "content": "位置：src/cli/agents/PersistentCoordinatorLoop.ts:218-232。refinement 任务 id 用 randomUUID().slice(0, 8) 新生成，subTaskId 来自 conversationId 最后一段 (orch_{runId}_{subTask.id})；新 id 在最初的 agentPerTask 映射里查不到，回退到 options.activeAgent ?? config.defaultAgent。结果：第一轮按角色多模型分配正确，进入 coordinator refine 后角色实际跑在默认模型上，与 help 里宣传的多模型 Team 卖点不一致，属隐性 bug/功能回退。同类问题：verification 失败后的 verifyTasks 使用 verify-* 新 id，同样不在 agentPerTask 中。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [
+      "team.qualityThreshold 配置未接线"
+    ],
+    "search_queries": [
+      "refine 模型映射",
+      "agentPerTask 丢失",
+      "PersistentCoordinatorLoop refinedId",
+      "多模型 Team refine"
+    ]
+  },
+  {
+    "title": "team.qualityThreshold 配置未接线",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "config",
+      "bug"
+    ],
+    "summary": "AionCliConfig.team.qualityThreshold 在 types/tests 出现但生产逻辑未使用，只有 maxIterations 在 team.ts 接线",
+    "content": "用户在 config.json 配置 team.qualityThreshold 会误以为生效，实际未进入任何 loop 判断。属文档/配置与实现不一致，需要么实现接线，要么从类型和文档中删除。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [
+      "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"
+    ],
+    "search_queries": [
+      "qualityThreshold 未生效",
+      "team 配置 无效",
+      "AionCliConfig team"
+    ]
+  },
+  {
+    "title": "直连 API 的 Agent 接入 bash 工具",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "security",
+      "behavior-change"
+    ],
+    "summary": "CliAgentManager/OpenAIAgentManager/GeminiAgentManager 均接入 toolExecutor 的 bash 工具",
+    "content": "src/cli/agents/toolExecutor.ts 使用 execSync 在 workspace 执行命令。行为升级：以前直连 API = 纯对话，现在模型可主动发起 shell，与自带工具的 claude/codex CLI 对齐。但对未预期可执行命令的用户构成安全边界变化，恶意提示或模型误操作都可能动磁盘/网络。建议在 release note、doctor 或 help 明示，并考虑加 '仅聊天' 开关。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [],
+    "search_queries": [
+      "bash 工具 直连 API",
+      "CliAgentManager execSync",
+      "aion 安全边界"
+    ]
+  },
+  {
+    "title": "signal card 标题次数来自 signal_times_by_type 求和",
+    "tags": [
+      "code-review",
+      "gmgn-speed",
+      "signal-v2",
+      "data-flow"
+    ],
+    "summary": "弹窗标题次数不是列表长度，而是 adaptSignalCountBaseFields 对 signal_times_by_type 里 allowSignalType 项求和得到的 count",
+    "content": "位置：src/features/signal-v2/components/signal-card/components/signal-count/model.ts:40-52。count 定义：Object.entries(signal_times_by_type).reduce 遍历，若 type ∈ allowSignalType 则累加 typeCount。主卡传给 SignalTimesPopoverPure 的变量名叫 signalTimes（实际是 count，容易误读为接口原始 signal_times 字段）。列表长度来自 /vas/api/v1/token-signal/bytoken 返回后经 SIGNAL_TYPE_TITLE_MAP/SIGNAL_TYPE_ICON_MAP 过滤的 renderList.length。两者口径不同，是否一致取决于后端。",
+    "scope": "project",
+    "project_name": "gmgn-speed",
+    "claim_type": "fact",
+    "source": "Cursor bubble b2d30938-a887-4c4f-884e-e1756a32c0f3",
+    "related": [
+      "signal-v2 聪明钱头像读 item.data.smart_degen_wallets"
+    ],
+    "search_queries": [
+      "signal_times_by_type 求和",
+      "signalTimes count",
+      "signal card 次数",
+      "allowSignalType"
+    ]
+  },
+  {
+    "title": "signal-v2 聪明钱头像读 item.data.smart_degen_wallets",
+    "tags": [
+      "code-review",
+      "gmgn-speed",
+      "signal-v2",
+      "data-flow"
+    ],
+    "summary": "SignalRecordRow 标题用 config(item.data)，头像和 hover 列表都读 item.data.smart_degen_wallets",
+    "content": "位置：src/features/signal-v2/components/signal-card/components/signal-count/components/SignalTimesPopoverPure.tsx。SignalRecordRow：标题约 104-108 行用 SIGNAL_TYPE_TITLE_MAP 对应项的 config(item.data)；头像叠放与 hover 列表约 73-86、110-118 行用 item.data.smart_degen_wallets。历史每行只拿 TokenSignalResData，标题只喂 item.data；若 bytoken 把 count（或 WS 短字段 sig_c）放顶层未塞 data，会出现主卡对、历史错。对比：主卡使用 signalListStore 已展平的 SignalListItem，toSignalListItems 通过 normalizeSignalFields 合并 item 顶层 + item.data。",
+    "scope": "project",
+    "project_name": "gmgn-speed",
+    "claim_type": "fact",
+    "source": "Cursor bubble 395c54f1-592b-44f3-9c42-bd193d850f63",
+    "related": [
+      "signal card 标题次数来自 signal_times_by_type 求和",
+      "toSignalListItems 展平 item 与 item.data"
+    ],
+    "search_queries": [
+      "smart_degen_wallets",
+      "SignalTimesPopoverPure SignalRecordRow",
+      "聪明钱 头像",
+      "bytoken 历史字段"
+    ]
+  },
+  {
+    "title": "toSignalListItems 展平 item 与 item.data",
+    "tags": [
+      "code-review",
+      "gmgn-speed",
+      "signal-v2",
+      "data-flow"
+    ],
+    "summary": "service/index.ts 的 toSignalListItems 对 item 顶层 + item.data 跑 normalizeSignalFields 合并",
+    "content": "位置：src/features/signal-v2/service/index.ts。因此主卡字段读取路径与历史弹窗不同：主卡拿的是合并后的扁平结构，历史行只拿到 item.data。修复方向：在 SignalRecordRow 对单行做同样的 merge/normalize（抽一个 tokenSignalRowToListShape 复用 toSignalListItems 规则），十几到三十行代码，不用改 SIGNAL_TYPE_TITLE_MAP 常量。",
+    "scope": "project",
+    "project_name": "gmgn-speed",
+    "claim_type": "fact",
+    "source": "Cursor bubble 395c54f1-592b-44f3-9c42-bd193d850f63",
+    "related": [
+      "signal-v2 聪明钱头像读 item.data.smart_degen_wallets"
+    ],
+    "search_queries": [
+      "toSignalListItems",
+      "normalizeSignalFields",
+      "SignalListItem 合并",
+      "历史弹窗 展平"
+    ]
+  },
+  {
+    "title": "signalHistoryHeaderCountPin 模块级 Map 锁定策略",
+    "tags": [
+      "code-review",
+      "gmgn-speed",
+      "signal-v2",
+      "pin"
+    ],
+    "summary": "新增 signalHistoryHeaderCountPin.ts，用 Map 按 chain+token 存锁定次数，仅不一致时写入",
+    "content": "文件：src/features/signal-v2/components/signal-card/components/signal-count/signalHistoryHeaderCountPin.ts。key 规范化与 SignalService 一致（仅 0x 转小写）。SignalTimesPopoverPure.tsx 抽出 getSignalHistoryRenderableRows 供列表与对比长度共用过滤+排序；规则：已锁定 → 始终用锁定值（含 loading/重新 hover）；未锁定且已加载且 length !== fallback → 用 length；加载中无锁定 → 仍用 fallbackCount。useEffect 完成后首次锁定写 Map 并 setPinRevision 触发重渲染；headerCount useMemo 依赖包含 pinRevision 以避免旧缓存。同币多卡共享一条锁定。刷新页面清空（仅 session memory）。",
+    "scope": "project",
+    "project_name": "gmgn-speed",
+    "claim_type": "fact",
+    "source": "Cursor bubble 618ad46b-8fc1-4752-ae8b-78ce38bca9be",
+    "related": [
+      "signal card 标题次数来自 signal_times_by_type 求和"
+    ],
+    "search_queries": [
+      "signalHistoryHeaderCountPin",
+      "pinRevision",
+      "SignalTimesPopoverPure 锁定",
+      "headerCount 锁"
+    ]
+  },
+  {
+    "title": "GroupRoomOrchestrator 漏接 AcpAgent finish 信号",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "bug",
+      "root-cause"
+    ],
+    "summary": "AcpAgent 结束走 onSignalEvent(finish)，编排器只听 onStreamEvent 导致等待永不 resolve",
+    "content": "位置：src/process/agent/acp/index.ts:1139-1147 handleEndTurn 调用 onSignalEvent 发 finish。src/process/services/groupRoom/GroupRoomOrchestrator.ts 原只监听 onStreamEvent，导致：主 Agent 看似不回复，不进入派发解析与结果回注，turnCompleted 不触发，房间长停在 running，输入框不解锁。修复：host/sub 同时接 onStreamEvent 和 onSignalEvent（98-170 行），finish 事件里 hostResolve 当前 hostAccumulated。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 9f4c10be-e48a-4795-98c9-e0dbef0850ac",
+    "related": [
+      "GroupRoomPage 历史覆盖实时消息",
+      "group-room 采用 dispatch_task XML 派发协议"
+    ],
+    "search_queries": [
+      "onSignalEvent finish",
+      "AcpAgent handleEndTurn",
+      "群聊编排器 不回复",
+      "GroupRoomOrchestrator finish"
+    ]
+  },
+  {
+    "title": "GroupRoomPage 历史覆盖实时消息",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "bug"
+    ],
+    "summary": "前端群聊页初始化异步拉历史用 setMessages(parsed) 直接赋值，实时流已到的消息会被整批覆盖",
+    "content": "位置：src/renderer/pages/group-room/GroupRoomPage.tsx。刚进群聊就发消息时，实时流里的思考/回复先显示，后到的历史加载把它们覆盖，表现为成员有了但主面板空白。修复：改成历史 + 实时消息合并，不再冲掉已有实时消息。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble a2d48300-783e-4cc9-9b83-edeacc68f492",
+    "related": [
+      "GroupRoomOrchestrator 漏接 AcpAgent finish 信号"
+    ],
+    "search_queries": [
+      "GroupRoomPage 历史覆盖",
+      "群聊主面板空白",
+      "setMessages parsed",
+      "历史实时合并"
+    ]
+  },
+  {
+    "title": "group-room 采用 dispatch_task XML 派发协议",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "architecture"
+    ],
+    "summary": "主 Agent 文本里含 <dispatch_task>...</dispatch_task>，dispatchParser 解析后创建/匹配成员并并行执行，结果再注入回 Host",
+    "content": "位置：src/process/services/groupRoom/dispatchParser.ts:43-51 匹配 /<dispatch_task>([\\s\\S]*?)</dispatch_task>/（先 strip ``` 代码块）。GroupRoomOrchestrator.ts:25-33 注释核心循环：user input -> host reasons -> parse dispatch -> 并行 exec -> inject result report back to host -> host reasons again。这是应用内的群聊式协作（非官方 Task 工具），有 DB 与 IPC 流式推送，循环受 MAX_ROUNDS 限制。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble a7c3e472-e37f-40de-8c3e-9db95c0f3be4 + b5f5a009-1ea0-41f8-b7df-037448e3116a",
+    "related": [
+      "E2E 模式走 E2EGroupRoomScenarioRunner 不走真实 Agent",
+      "GroupRoomOrchestrator 漏接 AcpAgent finish 信号"
+    ],
+    "search_queries": [
+      "dispatch_task XML",
+      "dispatchParser",
+      "GroupRoomOrchestrator 循环",
+      "主 Agent 派发"
+    ]
+  },
+  {
+    "title": "E2E 模式走 E2EGroupRoomScenarioRunner 不走真实 Agent",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "testing"
+    ],
+    "summary": "groupRoomBridge 根据 isGroupRoomE2ETestMode 切到 E2EGroupRoomScenarioRunner，是脚本化场景而非真实主 Agent 推理",
+    "content": "位置：src/process/bridge/groupRoomBridge.ts:179-183。orchestrator = isGroupRoomE2ETestMode ? new E2EGroupRoomScenarioRunner(...) : new GroupRoomOrchestrator(...)。含义：E2E 没有验证真实 LLM 理解并产出 <dispatch_task> 这层语义是否稳定；E2E 主要验编排逻辑。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble b5f5a009-1ea0-41f8-b7df-037448e3116a",
+    "related": [
+      "group-room 采用 dispatch_task XML 派发协议"
+    ],
+    "search_queries": [
+      "E2EGroupRoomScenarioRunner",
+      "isGroupRoomE2ETestMode",
+      "群聊 E2E 脚本化",
+      "假多 Agent"
+    ]
+  },
+  {
+    "title": "CoordinatorSession 是持久长会话不是一次性调用",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "architecture"
+    ],
+    "summary": "src/cli/agents/coordinator.ts 使用同一个 LLM manager 跑 plan 与 synthesis，保留协调者的规划意图上下文",
+    "content": "位置：src/cli/agents/coordinator.ts:7-17 文档注释。Phase 1 (plan) 发结构化 JSON prompt 并解析响应；Phase 3 (synthesize) 在同一 session 发综合 prompt 流式输出，协调者具备自身规划意图的完整上下文。这是对 Claude Operon 思路的对齐：协调者是长会话。team.ts 中 CoordinatorSession 构造用 createCliAgentFactory(..., undefined, true) 即 noAutoResume:true，避免 coordinator 会话错误续写。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2 + a7c3e472-e37f-40de-8c3e-9db95c0f3be4",
+    "related": [
+      "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"
+    ],
+    "search_queries": [
+      "CoordinatorSession 长会话",
+      "Claude Operon 协调者",
+      "plan synthesis 同 session",
+      "noAutoResume"
+    ]
+  },
+  {
+    "title": "aion team 卖点：同团队混合多厂商模型",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "architecture",
+      "differentiator"
+    ],
+    "summary": "src/cli/commands/team.ts 注释明示 Aion 差异化：每个 agent 可用不同模型（Claude/Gemini/Codex 混排）",
+    "content": "位置：src/cli/commands/team.ts:8-12 注释原文：'Team command — multi-agent parallel collaboration. Core Aion differentiator: each agent in the team can use a DIFFERENT model. Claude Code only supports one model. Aion supports mixing any configured models.' 这是第一方产品卖点，refine 时丢 agentPerTask 正是对此卖点的隐性回退。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble a7c3e472-e37f-40de-8c3e-9db95c0f3be4",
+    "related": [
+      "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"
+    ],
+    "search_queries": [
+      "aion team 多厂商",
+      "different model per agent",
+      "跨后端混排",
+      "Claude Code only one model"
+    ]
+  },
+  {
+    "title": "group-room 历史消息 senderRole 推断错误",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "bug"
+    ],
+    "summary": "前端用 msg.senderType === 'host'|'sub' 判断角色，但库里 sender_type 实际是 'user'|'agent'",
+    "content": "group-room.get 返回的历史消息里 senderRole 推断用 host/sub，但 DB 的 sender_type 字段是 user/agent，导致 hydration 时角色推断始终走不通。该 bug 未被单测覆盖（单测主要验编排 + IPC 字段契约，未覆盖 React 侧 hydration）。建议按 msgKind 或显式 role 字段区分 host/sub。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 5f4e8ec4-2961-4873-8eb8-9414f8f3ce6e + fc33964f-1ed1-4fea-ba0c-ff5c09c9fbff",
+    "related": [
+      "MAIN_PANEL_KINDS 控制主面板显示 msgKind"
+    ],
+    "search_queries": [
+      "senderType host sub",
+      "sender_type user agent",
+      "senderRole 推断",
+      "群聊 hydration 角色"
+    ]
+  },
+  {
+    "title": "MAIN_PANEL_KINDS 控制主面板显示 msgKind",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "ui"
+    ],
+    "summary": "GroupRoomPage 用 MAIN_PANEL_KINDS Set 过滤主面板显示哪些 msgKind，子 Tab 按 agentId 分组显示 sub_*",
+    "content": "主面板只渲染 user_message/host_response/host_thought 等属于主对话范畴的 msgKind；sub_thinking/sub_response 等走子 Agent Tab。Case 10 '主↔用户' 单测验的是 msg_kind 过滤契约，而非独立 WS 频道。改 Tab 过滤规则必须同步调整 MAIN_PANEL_KINDS 否则会串流。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble fc33964f-1ed1-4fea-ba0c-ff5c09c9fbff + 5f4e8ec4-2961-4873-8eb8-9414f8f3ce6e",
+    "related": [
+      "group-room 历史消息 senderRole 推断错误"
+    ],
+    "search_queries": [
+      "MAIN_PANEL_KINDS",
+      "主面板 msgKind 过滤",
+      "子 Agent Tab 分组",
+      "host_thought 主面板"
+    ]
+  },
+  {
+    "title": "Case 16/18 在只有主对话 Tab 时被 test.skip",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "testing",
+      "e2e"
+    ],
+    "summary": "group-room.e2e.ts 的 Case 16/18 在 tabs count < 2 时 test.skip，E2E 未造 sub 成员故多数情况不执行",
+    "content": "位置：tests/e2e/specs/group-room.e2e.ts。getOrCreateSeededRoom 只 createRoom 不注入 sub 成员；E2E 侧多个 case 用 createGroupRoomViaBridge 跳过了真 UI 创建流程（openCreateGroupRoomModal 是预留/未完成）。Case 12 无侧栏 List Item 断言，Case 16/18 常被 skip。单测里 sub Tab 覆盖较饱满（用 emit spy + MAIN_PANEL_KINDS 契约），但 E2E 与单测在 Tab/侧栏上覆盖不平衡。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 5f4e8ec4-2961-4873-8eb8-9414f8f3ce6e + fc33964f-1ed1-4fea-ba0c-ff5c09c9fbff",
+    "related": [
+      "group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态"
+    ],
+    "search_queries": [
+      "Case 16 skip",
+      "Case 18 skip",
+      "tabs count < 2",
+      "E2E 未造 sub"
+    ]
+  },
+  {
+    "title": "group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "testing"
+    ],
+    "summary": "initGroupRoomBridge 挂在 getDatabase().then(...)，bridge 注册滞后，E2E 用 invokeWithRetry 识别 timeout 字符串后重试",
+    "content": "位置：src/process/bridge/initBridge.ts（异步初始化）+ tests/e2e/specs/group-room.e2e.ts。这是测试在补实现的时序漏洞，非优雅做法但说明环境确实易超时。建议：保证 initGroupRoomBridge 在打开入口前完成，或 DB ready 后再展示入口；给 groupRoom.create.invoke 加客户端超时（30s）并 setLoading(false)。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1ec1aba7-6a92-44d2-9f2a-efdf10006dc2 + 6f858043-76d2-4184-a7eb-23db0ecb4d6b",
+    "related": [
+      "CreateGroupRoomModal 转圈是 invoke 永不 settle"
+    ],
+    "search_queries": [
+      "invokeWithRetry",
+      "bridge 注册竞态",
+      "initGroupRoomBridge DB ready",
+      "E2E timeout 重试"
+    ]
+  },
+  {
+    "title": "CreateGroupRoomModal 转圈是 invoke 永不 settle",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "bug"
+    ],
+    "summary": "ipcBridge.groupRoom.create.invoke() 既不 resolve 也不 reject，finally 的 setLoading 不执行",
+    "content": "位置：src/renderer/pages/conversation/components/CreateGroupRoomModal.tsx:68-93。主进程 group-room.create 流程：await conversationService.createConversation（Claude Code 走 acp 类型，createAcpAgent 建临时目录、mkdir、setupAssistantWorkspace symlink）→ service.createRoom（写 group_rooms/group_agents）→ await conversationService.updateConversation 合 extra。任一磁盘操作挂住都会导致前端无限转圈。常见原因优先级：IPC/WebSocket 无回应 > GroupRoomBridge 注册偏晚 > 主进程事件循环卡住 > 文件系统异常。建议客户端超时保护。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 6f858043-76d2-4184-a7eb-23db0ecb4d6b",
+    "related": [
+      "group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态"
+    ],
+    "search_queries": [
+      "CreateGroupRoomModal 转圈",
+      "ipcBridge.groupRoom.create pending",
+      "群聊创建 无响应",
+      "setLoading finally"
+    ]
+  },
+  {
+    "title": "TeamCreateTool 队长模型来源优先级",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "model"
+    ],
+    "summary": "TeamCreateTool leadModel 优先级 mainLoopModelForSession > mainLoopModel > getDefaultMainLoopModel",
+    "content": "位置：Claude Code 包 src/tools/TeamCreateTool/TeamCreateTool.ts:145-173。leadAgentId 由 formatAgentId(TEAM_LEAD_NAME, finalTeamName) 生成；leadModel 来源链：appState.mainLoopModelForSession ?? appState.mainLoopModel ?? getDefaultMainLoopModel()。含义：队长吃当前主线程模型。团队 members 写入 ~/.claude/teams/<team>/config.json。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1ab76891-16c9-4041-a488-7d7d2e2bdd79 (Claude Code 源码分析)",
+    "related": [
+      "spawnMultiAgent 成员默认模型不继承 leader",
+      "teammate fallback 在 Bedrock 硬编码 us.anthropic.claude-opus-4-6-v1"
+    ],
+    "search_queries": [
+      "TeamCreateTool leadModel",
+      "mainLoopModelForSession",
+      "队长模型来源",
+      "Claude Code team config"
+    ]
+  },
+  {
+    "title": "spawnMultiAgent 成员默认模型不继承 leader",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "model",
+      "bug"
+    ],
+    "summary": "spawnMultiAgent 走 resolveTeammateModel；teammateDefaultModel=null 跟随 leader，未配走硬编码",
+    "content": "位置：Claude Code 包 src/tools/shared/spawnMultiAgent.ts。成员选模型逻辑：若 teammateDefaultModel === null 跟随 leader；若有值解析该值；若根本没配走硬编码 fallback。这意味着默认情况下成员并不自动继承队长模型，而是走 fallback 分支。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1ab76891-16c9-4041-a488-7d7d2e2bdd79",
+    "related": [
+      "teammate fallback 在 Bedrock 硬编码 us.anthropic.claude-opus-4-6-v1",
+      "TeamCreateTool 队长模型来源优先级"
+    ],
+    "search_queries": [
+      "spawnMultiAgent 模型",
+      "resolveTeammateModel",
+      "teammateDefaultModel null 跟随 leader",
+      "Team 成员 继承"
+    ]
+  },
+  {
+    "title": "teammate fallback 在 Bedrock 硬编码 us.anthropic.claude-opus-4-6-v1",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "bedrock",
+      "bug"
+    ],
+    "summary": "teammateModel fallback = CLAUDE_OPUS_4_6_CONFIG[getAPIProvider()]，Bedrock 写死 us.anthropic 前缀",
+    "content": "位置：Claude Code 包 src/utils/swarm/teammateModel.ts + src/utils/model/configs.ts。Bedrock 场景：若未显式设置 teammateDefaultModel，team 成员默认拿到 us.anthropic.claude-opus-4-6-v1；但许多 Bedrock 账户该 ID 不可用。队长则可能被写成 global.anthropic.claude-opus-4-6-v1[1m]（见 ~/.claude/teams/<team>/config.json 真实落盘）。两条来源链不同，导致成员启动失败后 mailbox 消息无人消费，表象为 'team 一开成员收不到消息'。2.1.88、2.1.89 二进制均如此。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1ab76891-16c9-4041-a488-7d7d2e2bdd79",
+    "related": [
+      "spawnMultiAgent 成员默认模型不继承 leader",
+      "[1m] 是 1M context 标记非脏字符"
+    ],
+    "search_queries": [
+      "CLAUDE_OPUS_4_6_CONFIG",
+      "us.anthropic.claude-opus-4-6-v1",
+      "Bedrock teammate fallback 硬编码",
+      "team 成员 400"
+    ]
+  },
+  {
+    "title": "[1m] 是 1M context 标记非脏字符",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "model"
+    ],
+    "summary": "Claude Code 源码里有意定义 [1m] 表示 1M context，不是 ANSI 残留或终端转义",
+    "content": "如 global.anthropic.claude-opus-4-6-v1[1m] 的 [1m] 是 1M context 能力标记，Claude Code 源码中定义。此前误判为脏字符需更正。team 模式 bug 的真正根因是成员 fallback 写死 us.anthropic 前缀，不是 [1m] 污染。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1ab76891-16c9-4041-a488-7d7d2e2bdd79",
+    "related": [
+      "teammate fallback 在 Bedrock 硬编码 us.anthropic.claude-opus-4-6-v1"
+    ],
+    "search_queries": [
+      "[1m] 1M context",
+      "claude-opus-4-6-v1[1m]",
+      "模型 ID 脏字符",
+      "ANSI 残留 误判"
+    ]
+  },
+  {
+    "title": "useInboxPoller 每 1s 轮询，waitForNextPromptOrShutdown 每 500ms",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "mechanism"
+    ],
+    "summary": "Team mode 底层轮询：teammate 用 useInboxPoller 1s，in-process 用 waitForNextPromptOrShutdown 500ms",
+    "content": "位置：src/hooks/useInboxPoller.ts:107-125 INBOX_POLL_INTERVAL_MS=1000；src/utils/swarm/inProcessRunner.ts:689-697 POLL_INTERVAL_MS=500。模型提示词虽然说 '消息自动送达'，但底层实现明确是轮询。若一份架构报告把此描述为 '推送模型' 是实现层理解偏差。idle 时直接作为新 turn 提交；busy 时排队在 AppState.inbox，turn 结束时交付。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [
+      "teammate 通信统一走文件 mailbox"
+    ],
+    "search_queries": [
+      "useInboxPoller 1000",
+      "INBOX_POLL_INTERVAL_MS",
+      "waitForNextPromptOrShutdown 500",
+      "teammate 轮询"
+    ]
+  },
+  {
+    "title": "teammate 通信统一走文件 mailbox",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "mechanism"
+    ],
+    "summary": "源码明确 teammate 全走 file mailbox；SendMessage 内存队列路径主要命中 async subagent",
+    "content": "位置：Claude Code SendMessageTool。queuePendingMessage / resumeAgentBackground 的 '内存队列直达' 路径主要用于 agentNameRegistry 登记的 async subagent，不是 teammate。teammate 体系源码注释明确 'all teammates use file-based mailboxes'。即使 in-process teammate，teammate→leader 也走文件 mailbox。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [
+      "useInboxPoller 每 1s 轮询，waitForNextPromptOrShutdown 每 500ms",
+      "writeToMailbox lock-reread-append-release"
+    ],
+    "search_queries": [
+      "file-based mailbox",
+      "teammate SendMessage",
+      "queuePendingMessage subagent",
+      "内存队列 直达"
+    ]
+  },
+  {
+    "title": "writeToMailbox lock-reread-append-release",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "mechanism"
+    ],
+    "summary": "Claude Code writeToMailbox 按 lock → re-read → append → write → release 顺序写；clearMailbox 不加锁存在低概率并发缺陷",
+    "content": "邮箱路径：~/.claude/teams/.../inboxes/*.json。writeToMailbox 带文件锁保证并发安全，clearMailbox 未加锁是已知低概率缺陷。isAgentSwarmsEnabled 门槛：env CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS 或 CLI flag --agent-teams 二选一（OR，不是 AND），再叠加 GrowthBook tengu_amber_flint killswitch。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [
+      "teammate 通信统一走文件 mailbox",
+      "isAgentSwarmsEnabled 三层门槛"
+    ],
+    "search_queries": [
+      "writeToMailbox 锁",
+      "clearMailbox 并发",
+      "inboxes json",
+      "mailbox append"
+    ]
+  },
+  {
+    "title": "isAgentSwarmsEnabled 三层门槛",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "feature-flag"
+    ],
+    "summary": "Claude Code team mode 激活条件 = env/CLI flag (OR) + 非 killswitch；外部激活不需要同时开 env 和 flag",
+    "content": "条件：CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS env 或 --agent-teams CLI flag（OR），叠加 GrowthBook tengu_amber_flint killswitch（若 kill 则全局关）。报告中用 '两者同时开启示例' 属表述偏差，实际是二选一。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [
+      "writeToMailbox lock-reread-append-release"
+    ],
+    "search_queries": [
+      "isAgentSwarmsEnabled",
+      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS",
+      "--agent-teams",
+      "tengu_amber_flint"
+    ]
+  },
+  {
+    "title": "TeammateMessage.timestamp 是 ISO 字符串",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "api-spec"
+    ],
+    "summary": "TeammateMessage.timestamp 是字符串，不是 Unix 毫秒 number；只有 createdAt 等字段是 number",
+    "content": "位置：src/utils/teammateMailbox.ts:43-50。TeammateMessage = { from, text, timestamp:string, read, color?, summary? }。邮箱 envelope 用字符串时间；少数协议字段如 createdAt 才是 number。将 timestamp 强行统一为 number 属于报告错误。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [
+      "teammate 通信统一走文件 mailbox"
+    ],
+    "search_queries": [
+      "TeammateMessage timestamp",
+      "ISO 字符串",
+      "teammateMailbox envelope",
+      "timestamp number 误判"
+    ]
+  },
+  {
+    "title": "Team 是 leader-centric 非纯扁平",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "architecture"
+    ],
+    "summary": "Claude Code Team 有固定 team-lead/leadAgentId，计划审批、权限处理、成员移除由 leader 主导；支持 peer-to-peer 发消息不等于扁平",
+    "content": "位置：src/tools/TeamCreateTool/TeamCreateTool.ts:145-173。leader 主导控制权；members 由 TeamCreateTool 写入时 team-lead 是首成员。'peer-to-peer 发消息' 只是通信能力，控制权并不平等。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [
+      "TeamCreateTool 队长模型来源优先级"
+    ],
+    "search_queries": [
+      "leader-centric",
+      "leadAgentId 控制权",
+      "team-lead 主导",
+      "plan approval leader"
+    ]
+  },
+  {
+    "title": "ExitPlanModeV2Tool 发 plan_approval_request 协议消息",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "protocol"
+    ],
+    "summary": "planModeRequired teammate 调 ExitPlanModeV2Tool 真发 plan_approval_request，进入 awaitingLeaderApproval",
+    "content": "Claude Code plan 审批有协议消息和状态机，不只是 prompt 约束。当前 leader 侧默认 auto-approve，表面上看起来没那么硬。响应格式：{ type: 'plan_approval_response', request_id, approve, feedback }。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [
+      "Team 是 leader-centric 非纯扁平"
+    ],
+    "search_queries": [
+      "ExitPlanModeV2Tool",
+      "plan_approval_request",
+      "awaitingLeaderApproval",
+      "plan 审批 协议"
+    ]
+  },
+  {
+    "title": "Claude Code 嵌套限制是具体 guard 非全面禁止",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode"
+    ],
+    "summary": "仅 fork 不能再 fork、teammate 不能再 spawn teammate；USER_TYPE=ant 时 Agent 可用，可 spawn subagent",
+    "content": "将几条具体 guard 泛化成 '一切 agent 嵌套禁止' 是错的。in-process 并发严格来说是 '同一 JS 进程 + AsyncLocalStorage 隔离上下文'，注释写的是 same Node.js process，不是 Bun 专属。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [],
+    "search_queries": [
+      "嵌套 禁止 guard",
+      "fork in fork",
+      "USER_TYPE ant",
+      "AsyncLocalStorage 隔离"
+    ]
+  },
+  {
+    "title": "TEAMMATE_MESSAGES_UI_CAP=50 保护 292 agents 事故",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "performance"
+    ],
+    "summary": "Claude Code 有 TEAMMATE_MESSAGES_UI_CAP=50 的 UI 消息上限；注释记录 125MB / 292 agents / 36.8GB 的生产事故",
+    "content": "历史生产事故：UI 无上限时 292 agents × 大消息累积到 125MB/单项 × 约 36.8GB 整体，导致 OOM/UI 卡死。当前 cap=50 属直接修复。并发上限与 UI 显示上限不等同。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 1899c3cb-e258-4dc0-b5a7-cecc192bd9c0",
+    "related": [],
+    "search_queries": [
+      "TEAMMATE_MESSAGES_UI_CAP",
+      "292 agents 事故",
+      "36.8GB OOM",
+      "UI 消息 上限"
+    ]
+  },
+  {
+    "title": "~/.claude/settings.json model 字段可被 /model 写脏",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "config",
+      "bug"
+    ],
+    "summary": "Claude Code /model 会反复回写 settings.json 的 model 字段；历史见 us.anthropic...4-6-v1[1m] 坏值",
+    "content": "线索：~/.claude/history.jsonl 里 /model 触发时间与 settings.json 改写时间一致，说明非隐藏配置源后台定时回写。根因在主配置 + 残留旧 claude / claude-agent-acp 进程（lsof 看仍持有 settings.json）。清理路径：1) 删除 settings.json 里 model 字段或改正确值；2) kill 残留 claude/claude-agent-acp 进程；3) 删除或重建持久化 team 配置。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "Cursor bubble f772cef8-8fb5-49e4-82bf-0b6038f9e05c + ecfbcee1-68a3-4477-9f18-8a554ff56d9e",
+    "related": [
+      "teammate fallback 在 Bedrock 硬编码 us.anthropic.claude-opus-4-6-v1"
+    ],
+    "search_queries": [
+      "settings.json model 写脏",
+      "/model 回写",
+      "残留 claude-agent-acp 进程",
+      "模型配置 污染"
+    ]
+  },
+  {
+    "title": "Bedrock 400 invalid model identifier 根因",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "bedrock",
+      "root-cause"
+    ],
+    "summary": "ACP 报 '400 provided model identifier is invalid' 属本地 Bedrock 配置问题，非 Team 编排 bug",
+    "content": "关键信息：1) session/prompt 返回 400 Invalid model identifier；2) ~/.claude/settings.json 里 CLAUDE_CODE_USE_BEDROCK=1、AWS_REGION=ap-southeast-1、model=global.anthropic.claude-opus-4-6-v1[1m]、teammateDefaultModel=global.anthropic.claude-sonnet-4-6。判断：Team 修复影响 Gemini/Qwen 不生成该 Claude 模型 ID；根因在底层 Bedrock/Claude 配置。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 3b66ab1e-9fa7-4e16-a267-690eaea486b7",
+    "related": [
+      "~/.claude/settings.json model 字段可被 /model 写脏"
+    ],
+    "search_queries": [
+      "400 invalid model identifier",
+      "us.anthropic.claude-opus-4-1-20250805-v1:0",
+      "AionUI Bedrock 报错",
+      "Claude ACP session/prompt 400"
+    ]
+  },
+  {
+    "title": "TeamSessionService 修复 Team agent 模型元信息丢失",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "team",
+      "fix"
+    ],
+    "summary": "commit 71b5db09 补齐 Team 模式丢失的模型/agent 元信息：Gemini 复用 OAuth，ACP 补 preferredModelId",
+    "content": "改动要点：1) TeamSessionService 为 Team agent 解析真实默认模型配置，Gemini 优先复用 Google OAuth / 已配 provider 不再传空 model；2) ACP 路径补 acp.config.preferredModelId，Qwen 这类 backend 创建时带正确 currentModelId；3) Team 保留所选 agent 的 customAgentId，preset assistant 创建时传 presetAssistantId；4) workerTaskManagerSingleton 只让 gemini ACP 会话从 conversation.model.useModel 回退，避免把无关 provider 模型错套到 Qwen/其他 ACP backend。验证：bun run lint:fix、bun run format、bunx tsc --noEmit、相关回归测试通过（teamSessionService.test.ts、workerTaskManagerSingleton.test.ts）。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 41db8d4c-785d-440b-988e-f8da130667c5",
+    "related": [
+      "workerTaskManagerSingleton 只允许 Gemini 回退 useModel"
+    ],
+    "search_queries": [
+      "TeamSessionService 修复",
+      "71b5db09",
+      "preferredModelId",
+      "customAgentId presetAssistantId"
+    ]
+  },
+  {
+    "title": "workerTaskManagerSingleton 只允许 Gemini 回退 useModel",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "team",
+      "model"
+    ],
+    "summary": "workerTaskManagerSingleton 仅当 backend=gemini 时从 conversation.model.useModel 回退，避免 Qwen 误套",
+    "content": "背景：此前回退逻辑无 backend 判断，导致 Qwen 或其他 ACP backend 在初始化时误用 Gemini 的 useModel。修复后仅 gemini 分支允许 fallback。getOrBuildTask 可传 skipCache:true 绕过缓存。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 41db8d4c-785d-440b-988e-f8da130667c5",
+    "related": [
+      "TeamSessionService 修复 Team agent 模型元信息丢失"
+    ],
+    "search_queries": [
+      "workerTaskManagerSingleton",
+      "conversation.model.useModel 回退",
+      "Qwen 误套 Gemini",
+      "getOrBuildTask skipCache"
+    ]
+  },
+  {
+    "title": "GitHub Actions checkout 失败真实原因定位方法",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "ci",
+      "debug"
+    ],
+    "summary": "Manual Build 挂在 Checkout code（git exit 1）；Notify on macOS failure 是 failure() 触发的提示",
+    "content": "build-manual.yml:74-80 把用户填 branch 作 inputs.branch 传递；_build-reusable.yml:86-90 用 actions/checkout@v6 with ref:inputs.ref。最常见原因优先级：1) branch 在远端不存在（拼写/已删/不是默认分支/fork 分支名）；2) 自托管 macOS Runner 遇工作区未清、HTTPS 认证弹交互、凭据冲突；3) 分支名带特殊字符。定位路径：展开 Checkout 步骤完整日志看 git fetch/git checkout 第一行 stderr。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "Cursor bubble 4c8984fc-71ea-4783-9eeb-fb14d5466568",
+    "related": [],
+    "search_queries": [
+      "Actions checkout 失败",
+      "Notify on macOS build failure",
+      "/opt/homebrew/bin/git exit 1",
+      "actions/checkout ref 不存在"
+    ]
+  },
+  {
+    "title": "Claude 保真复刻指令：禁止脑补补全",
+    "tags": [
+      "code-review",
+      "team-rule",
+      "prompt"
+    ],
+    "summary": "对 Claude 多 Agent 行为做最严格保真复刻的硬性规则提示词：只用参考文件原文，任何未确认内容视为未知不得补写",
+    "content": "位置：docs/feature/group-room-claude-multi-agent-reference.md 为唯一权威参考。硬性规则：1) 只用原文；2) 未确认的一律视未知；3) 不得为体验/结构/通用性改编；4) 不得把 '理解中的 Claude' 替换成文件原文；5) 不得重命名概念/改写语义/合并规则；6) Aion 不一致时优先 Aion 向参考靠拢；7) 无法 1:1 复刻时明确标注原文、当前原因、是暂未实现还是架构不该强行复刻；8) 禁自主发挥/合理化补全/按意图等价改写。输出分 '已确认可直接照搬' 与 '当前未对齐' 两列，每结论绑定原文。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "Cursor bubble 31ef3f2d-d02c-4115-b0c5-dfe427900fdf",
+    "related": [
+      "group-room 采用 dispatch_task XML 派发协议"
+    ],
+    "search_queries": [
+      "保真复刻 禁止脑补",
+      "Claude 多 Agent 参考",
+      "group-room-claude-multi-agent-reference.md",
+      "不合理化补全"
+    ]
+  },
+  {
+    "title": "~/.claude/teams/<team>/config.json 持久化成员模型",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "config"
+    ],
+    "summary": "Claude Code 每建一个 team 就把成员配置写入 ~/.claude/teams/<team>/config.json，旧 team 会复用其中写死的旧模型",
+    "content": "团队配置持久化结构：~/.claude/teams/<team-name>/config.json 存 leadAgentId、members[].model 等。旧 team 在创建时落盘后不会随全局默认刷新。若历史有坏 model 值（如 us.anthropic.claude-opus-4-6-v1）会永久绑定到该团队。根治：清除或重建旧 team 配置，不能仅靠改全局 settings.json。同时 inbox 文件在 ~/.claude/teams/<team>/inboxes/<member>.json。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble d666af41-ef07-4316-b666-bef012e53de7 + 1ab76891-16c9-4041-a488-7d7d2e2bdd79",
+    "related": [
+      "teammate 通信统一走文件 mailbox",
+      "teammate fallback 在 Bedrock 硬编码 us.anthropic.claude-opus-4-6-v1"
+    ],
+    "search_queries": [
+      "~/.claude/teams config.json",
+      "持久化 成员模型",
+      "旧 team 复用坏配置",
+      "inbox 目录路径"
+    ]
+  },
+  {
+    "title": "中文 teammate 名 inbox 文件名被压成横杠",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "bug"
+    ],
+    "summary": "Claude Code 本地 team '老锤'/'老锤-代码风格' 等中文成员，inbox 文件名被写成 -------.json 或 --.json",
+    "content": "实例：supercell-component-review/inboxes/-------.json（老锤-代码风格）、supercell-code-quality/inboxes/--.json（老锤）、buzzing-humming-mango/inboxes/-----.json（开发-老锤）。对比：laochui.json 正常。含义：成员配置里名字正常，但落 inbox 时中文/特殊字符被压成一串 `-`。若 team 列表或成员显示依赖 inbox 名，会出现成员实际存在但界面不显示。属命名 bug。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 59a28f0c-4c71-48b8-86af-cbdaeb1c5094",
+    "related": [
+      "~/.claude/teams/<team>/config.json 持久化成员模型"
+    ],
+    "search_queries": [
+      "中文 teammate 名",
+      "inbox 文件名 横杠",
+      "成员显示异常",
+      "老锤 inbox"
+    ]
+  },
+  {
+    "title": "Vitest 全局 testTimeout=10000",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing",
+      "config"
+    ],
+    "summary": "AionUi vitest.config.ts 全局 testTimeout:10000（10s），个别异步用例、假定时器没用对或未 mock 的异步挂住会 Test timeout",
+    "content": "teamE2E.test.ts (Vitest) 全是 mock 通常几毫秒；afterEach(()=>vi.restoreAllMocks()) 范围偏大，和 vi.mock/spy 叠加可能有隔离性问题但不一定超时。产品里 acpTimeout.test.ts、healthCheckTimeout.test.ts 测 timeout 行为本身，日志出现 'timeout' 是预期场景不是测试坏。真正的超时困境在 E2E + IPC/bridge 竞态 + 固定超时。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1ec1aba7-6a92-44d2-9f2a-efdf10006dc2",
+    "related": [
+      "group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态",
+      "bridge invoke 默认 8-10s 超时"
+    ],
+    "search_queries": [
+      "vitest testTimeout 10000",
+      "afterEach restoreAllMocks 隔离",
+      "Vitest 超时",
+      "acpTimeout 预期 timeout"
+    ]
+  },
+  {
+    "title": "bridge invoke 默认 8-10s 超时",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing",
+      "config"
+    ],
+    "summary": "AionUi Playwright/Electron E2E 中 invokeBridge 默认约 8-10s 超时，超时抛错",
+    "content": "Playwright 等 UI/应用启动 + bridge 一次调用约 8-10s。group-room E2E 特有 GroupRoomBridge 挂 getDatabase() 异步之后，和页面就绪存在竞态，早期易 bridge invoke timeout；现用 invokeWithRetry 捕获 'timeout' 字符串后重试。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1ec1aba7-6a92-44d2-9f2a-efdf10006dc2",
+    "related": [
+      "Vitest 全局 testTimeout=10000",
+      "group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态"
+    ],
+    "search_queries": [
+      "invokeBridge 超时",
+      "bridge timeout 8s",
+      "Playwright E2E timeout",
+      "GroupRoomBridge 竞态"
+    ]
+  },
+  {
+    "title": "tests/unit/cli/teamE2E.test.ts 命名误导",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing"
+    ],
+    "summary": "tests/unit/cli/teamE2E.test.ts 全是 mock 非真实端到端，命名里 E2E 易与 Playwright E2E 混淆，应重命名或加前缀说明",
+    "content": "该文件在 tests/unit 下但名字带 E2E，内部全靠 vi.mock；跟 tests/e2e/specs/* 的真实 Playwright E2E 是两个物种。建议 rename 避免维护者误判覆盖范围。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1ec1aba7-6a92-44d2-9f2a-efdf10006dc2",
+    "related": [
+      "Vitest 全局 testTimeout=10000"
+    ],
+    "search_queries": [
+      "teamE2E.test.ts 命名",
+      "unit 下 E2E 误导",
+      "mock 测试 命名",
+      "tests/unit/cli teamE2E"
+    ]
+  },
+  {
+    "title": "GroupRoomOrchestrator.test.ts 用内存 SQLite + mock 桥稳定通过",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing"
+    ],
+    "summary": "tests/unit/groupRoom/GroupRoomOrchestrator.test.ts 用内存 SQLite + mock 桥，按 Case 1-19 组织",
+    "content": "用例不依赖本机 Claude/网络，10s 全局 timeout 下稳定。文件头注释仍写 'Case 7-19 TODO'，与实际覆盖不一致，易让维护者误判范围；建议同步更新。uuid mock 或 emitterSpy 若加全局污染才可能影响并行（当前结构无此风险）。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble fc33964f-1ed1-4fea-ba0c-ff5c09c9fbff",
+    "related": [
+      "Case 16/18 在只有主对话 Tab 时被 test.skip"
+    ],
+    "search_queries": [
+      "GroupRoomOrchestrator.test.ts",
+      "内存 SQLite 单测",
+      "Case 1-19 单测",
+      "mock AcpAgent"
+    ]
+  },
+  {
+    "title": "Case 7-10 是 IPC payload 契约测试非真 WS 端到端",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing",
+      "group-room"
+    ],
+    "summary": "Case 7-10 单测仅验 emit 字段契约（roomId/streaming/agentId/msgKind），未启真实 webserver 或 WS 握手",
+    "content": "含义：'给 WS 适配用的 payload 契约' 不是 '真实 Server/WS 端到端'。需求 Case 9/10 '单独查询' 若指独立订阅/接口，单测未验。需求完整回归应定义为 '编排 + DB + IPC 字段 + 与页面常量对齐的契约测试' 已过；WS 专链、真 UI、真 LLM、hydration 仍需单列验收。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble fc33964f-1ed1-4fea-ba0c-ff5c09c9fbff",
+    "related": [
+      "GroupRoomOrchestrator.test.ts 用内存 SQLite + mock 桥稳定通过"
+    ],
+    "search_queries": [
+      "Case 7 emit roomId",
+      "Case 9 单独查询",
+      "IPC 契约 vs 真 WS",
+      "WS 端到端 未覆盖"
+    ]
+  },
+  {
+    "title": "Case 2 子与主能力一致断言偏弱",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing",
+      "group-room"
+    ],
+    "summary": "单测 Case 2 只验 AcpAgent 实例、流回调、backend 解析，未逐项对比 host 的 extra/session/model 等",
+    "content": "需求字面 '完整' 在单测里是弱断言。Case 4 '两子方案沟通' 依赖 mock host 输出是否带第二轮 dispatch，未单独建模 '两子互辩'；Case 17 '模型真懂并建子' 单测偏弱或未覆盖，因为不真调 LLM。需补 E2E 或在线回归单列验收。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble fc33964f-1ed1-4fea-ba0c-ff5c09c9fbff",
+    "related": [
+      "Case 7-10 是 IPC payload 契约测试非真 WS 端到端"
+    ],
+    "search_queries": [
+      "Case 2 能力一致",
+      "Case 4 两子互辩",
+      "Case 17 真 LLM 建子",
+      "需求完整 弱断言"
+    ]
+  },
+  {
+    "title": "aion index.ts --with/--agents 向后兼容",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "cli",
+      "compat"
+    ],
+    "summary": "aion CLI index.ts 通过 values.with ?? values.agents 保留 --agents 参数，默认无子命令仍进 runSolo，doctor/config 路径保留",
+    "content": "新增 aion run 独立子命令不占用原关键字；aion run 任务文本也可用 --goal（与全局 parse 共享）。整体为加法兼容，不破坏老用法。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [
+      "aion team 卖点：同团队混合多厂商模型"
+    ],
+    "search_queries": [
+      "--with --agents 兼容",
+      "aion run 子命令",
+      "runSolo 默认",
+      "aion CLI 兼容"
+    ]
+  },
+  {
+    "title": "group-room.get 历史消息 hydration 未被单测覆盖",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "testing"
+    ],
+    "summary": "React 侧 group-room.get 返回历史消息的 senderRole 推断逻辑在单测中没钉死，属实现欠账",
+    "content": "当前单测主要验 GroupRoomOrchestrator 编排 + IPC 字段契约，未覆盖 React 侧 hydration（历史消息如何映射到 message state）。具体欠账：senderType 期望 'host'|'sub' 与 DB 'user'|'agent' 不符。单测若未来直接测前端 hydration 会暴露此 bug。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble fc33964f-1ed1-4fea-ba0c-ff5c09c9fbff",
+    "related": [
+      "group-room 历史消息 senderRole 推断错误"
+    ],
+    "search_queries": [
+      "group-room.get hydration",
+      "React 侧 单测 缺口",
+      "senderRole 欠账",
+      "前端 历史消息 单测"
+    ]
+  },
+  {
+    "title": "group-room Bridge API 面",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "api-spec"
+    ],
+    "summary": "group-room IPC bridge 仅 create/get/send-message/stop + responseStream/memberChanged/turnCompleted",
+    "content": "位置：src/process/bridge/groupRoomBridge.ts。没有独立 WS topic 订阅接口（如 '仅订主对话'）。前端通过 responseStream.on 过滤 MAIN_PANEL_KINDS 实现主面板 vs 子 Tab 分流。turnCompleted 事件载 canSendMessage 控制输入框解锁。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 5f4e8ec4-2961-4873-8eb8-9414f8f3ce6e + 9f4c10be-e48a-4795-98c9-e0dbef0850ac",
+    "related": [
+      "MAIN_PANEL_KINDS 控制主面板显示 msgKind"
+    ],
+    "search_queries": [
+      "groupRoomBridge API",
+      "responseStream memberChanged turnCompleted",
+      "IPC 订阅",
+      "canSendMessage 解锁"
+    ]
+  },
+  {
+    "title": "Playwright 连 Electron 可模拟点击验证群组创建",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing",
+      "e2e"
+    ],
+    "summary": "Playwright + Electron 具备 '点侧边栏→打开创建弹窗→填名→确认→断言侧栏有项' 能力，当前 group-room.e2e.ts 多用 bridge 跳过 UI",
+    "content": "createGroupRoomViaBridge 跳过 UI 是省事写法；文件里 openCreateGroupRoomModal 是预留/未完成接入。要按 Case 11 '前端能成功创建群组' 真实回归需专门写一条从点击开始的用例（断言群名称出现、侧栏 List Item 出现）。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 8b801fdb-8b92-4172-88bd-ed02461b7c72",
+    "related": [
+      "Case 16/18 在只有主对话 Tab 时被 test.skip",
+      "group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态"
+    ],
+    "search_queries": [
+      "Playwright Electron 模拟点击",
+      "createGroupRoomViaBridge 跳过 UI",
+      "openCreateGroupRoomModal 预留",
+      "Case 11 真 UI"
+    ]
+  },
+  {
+    "title": "mnemo 数据源位置清单",
+    "tags": [
+      "code-review",
+      "mnemo",
+      "data-source"
+    ],
+    "summary": "mnemo 提取数据源：Claude 全局/项目记忆 .md、Claude 会话 JSONL、Cursor SQLite cursorDiskKV、项目 CLAUDE.md/AGENTS.md",
+    "content": "位置：tests/fixtures/DATA_SCHEMA.md。Cursor 对话源路径：~/Library/Application Support/Cursor/User/globalStorage/state.vscdb，SQLite，key 模式 bubbleId:<workspace>:<bubble>（不是 cursorDiskKV.bubbleId:）。value 是 JSON，text 字段为消息正文，type=2 为 AI 答复。Claude JSONL：~/.claude/projects/*/*.jsonl，message.content 可以是字符串或 [{type:text|tool_result}] 数组。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89 + mnemo DATA_SCHEMA.md",
+    "related": [],
+    "search_queries": [
+      "Cursor SQLite 位置",
+      "cursorDiskKV 结构",
+      "Claude JSONL 结构",
+      "mnemo 数据源"
+    ]
+  },
+  {
+    "title": "JSONL message.content 多形态需展开",
+    "tags": [
+      "code-review",
+      "mnemo",
+      "claude",
+      "api-spec"
+    ],
+    "summary": "Claude Code 会话 JSONL 的 message.content 可能是 string 也可能是 [{type:'text'|'tool_result', ...}] 数组",
+    "content": "实践建议：扫描时需判断类型；提取正文只取 type='text' 的 text 字段拼接，避免把 tool_result 的 base64/长输出混入。超长 JSONL 行需流式读，不能一次性加载。Grep 对超长行有 omit 限制。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "fact",
+    "source": "mnemo 提取脚本经验",
+    "related": [
+      "mnemo 数据源位置清单"
+    ],
+    "search_queries": [
+      "JSONL content 字符串 数组",
+      "tool_result 混入",
+      "Grep 长行 omit",
+      "流式读 JSONL"
+    ]
+  },
+  {
+    "title": "aion CLI Electron 不触及 Orchestrator",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "architecture"
+    ],
+    "summary": "仓库内检索生产代码只有 src/cli/commands/team.ts 和 src/cli/agents/PersistentCoordinatorLoop.ts 直接依赖 Orchestrator",
+    "content": "SubTask 类型扩展主要为可选字段，对现有 Orchestrator/StateManager 实现是加法兼容。含义：Electron 主界面/渲染进程基本不受 team 分支改动影响（除非构建产物把 CLI 与主进程绑在同一入口）。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [
+      "aion index.ts --with/--agents 向后兼容"
+    ],
+    "search_queries": [
+      "Orchestrator 引用范围",
+      "Electron 主进程 不受影响",
+      "SubTask 可选字段 加法兼容",
+      "aion 桌面端"
+    ]
+  },
+  {
+    "title": "aion team 面板阶段与事件模型未完全对齐",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "tech-debt"
+    ],
+    "summary": "LiveCoordinatorAgent verification 分支存在但 team.ts 只 new CoordinatorSession，verifying 不走专有逻辑",
+    "content": "team.ts 对 verifying 等 phase 有 fallback 到 reviewing 的注释，属面板阶段与事件模型未完全对齐的技术债，但一般不会破坏运行。修清洗方向：明确 verifying 归属或让 CoordinatorSession 同时走 verify 分支。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [
+      "CoordinatorSession 是持久长会话不是一次性调用"
+    ],
+    "search_queries": [
+      "LiveCoordinatorAgent verifying",
+      "CoordinatorSession verify",
+      "phase 对齐 tech debt",
+      "reviewing fallback"
+    ]
+  },
+  {
+    "title": "不指定模型≠无限制 会继承坏默认",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "gotcha"
+    ],
+    "summary": "Claude Code team 成员 '不指定模型' 不代表没有限制，会继承全局默认或会话模型；默认本身坏则继续踩坑",
+    "content": "'不指定' 的真实行为：若 settings.json model='opus' 且 ANTHROPIC_DEFAULT_OPUS_MODEL 指向坏值，成员仍会拿到坏值。真正 '无限制' 需：1) settings.json 删除顶层 model；2) 删除 ANTHROPIC_DEFAULT_OPUS_MODEL 与 ANTHROPIC_MODEL；3) 清理 ~/.claude/teams/*/config.json 里 members[].model；4) 重建已坏 team（快照持久）。仍受限于 Bedrock 账号 region/可用模型/killswitch。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble f71747c5-1db1-48a4-9110-2cf198e6891b + 2661e7e5-066b-4206-9ad6-d1a679969762",
+    "related": [
+      "~/.claude/teams/<team>/config.json 持久化成员模型",
+      "~/.claude/settings.json model 字段可被 /model 写脏"
+    ],
+    "search_queries": [
+      "不指定模型 继承",
+      "无限制 误解",
+      "默认模型 坏值 继承",
+      "清理 model 字段"
+    ]
+  },
+  {
+    "title": "aion CLI team 单测覆盖范围",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "testing"
+    ],
+    "summary": "aion CLI 有 team.test.ts / teamE2E.test.ts / persistentCoordinatorLoop.test.ts 对 Team/Loop 有覆盖",
+    "content": "单测主要验编排逻辑与 mock 层，未验真实跨模型协作的模型 ID 派发正确性（refine/verify 的 agentPerTask 回退 bug 未被钉死）。建议增加按 refinedId 验证模型映射回退路径的用例。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [
+      "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"
+    ],
+    "search_queries": [
+      "aion team 单测",
+      "persistentCoordinatorLoop.test.ts",
+      "bun run test 验证",
+      "refine 模型 测试"
+    ]
+  },
+  {
+    "title": "group-room 主面板流式正文多在 finish 时落库",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "data-flow"
+    ],
+    "summary": "group_messages 落库粒度以实现为准，host/sub 正文多在 finish 事件时整体写入，流式阶段只走 emit 推前端",
+    "content": "Case 6 '落库 + 按群隔离' 单测验 group_messages 与多房间隔离，但流式正文的落库粒度此前讨论过：以 finish 时整体落库为主，避免每个 chunk 都写一次 DB。前端通过 responseStream 拿 streaming:true 的 chunks 做增量渲染；finish 后从 DB 拿到最终定版。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble fc33964f-1ed1-4fea-ba0c-ff5c09c9fbff",
+    "related": [
+      "GroupRoomOrchestrator 漏接 AcpAgent finish 信号",
+      "group-room Bridge API 面"
+    ],
+    "search_queries": [
+      "group_messages 落库 粒度",
+      "流式 finish 落库",
+      "host_response DB",
+      "streaming 增量 渲染"
+    ]
+  },
+  {
+    "title": "aion CLI PersistentCoordinatorLoop 停止条件",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "architecture"
+    ],
+    "summary": "PersistentCoordinatorLoop 多轮 decide→refine→再跑 Orchestrator 的停止条件：轮次上限、重复 target 收敛、单角色重试上限",
+    "content": "位置：src/cli/agents/PersistentCoordinatorLoop.ts。产品意义为有意的升级，但会带来更长运行时间、更多 API 调用、终端输出更复杂。buildPeerContextBlock 为每个 refine 任务拼同伴上下文，prompt 里注入 '**Coordinator Feedback (Round N):**' 块。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [
+      "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"
+    ],
+    "search_queries": [
+      "PersistentCoordinatorLoop 停止",
+      "决策 refine 循环",
+      "Coordinator Feedback Round",
+      "buildPeerContextBlock"
+    ]
+  },
+  {
+    "title": "group-room host/sub 显示状态依赖 turnCompleted",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "ui"
+    ],
+    "summary": "GroupRoomPage 用 ipcBridge.groupRoom.turnCompleted.on 把 running -> idle/error，canSendMessage 决定输入框解锁",
+    "content": "位置：src/renderer/pages/group-room/GroupRoomPage.tsx:91-145。setRoomStatus(event.status === 'finished' ? 'idle' : 'error')；setRunning(!event.canSendMessage)。若 turnCompleted 不触发（例如 AcpAgent finish 信号丢失），房间长停 running 输入框不解锁。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 9f4c10be-e48a-4795-98c9-e0dbef0850ac",
+    "related": [
+      "GroupRoomOrchestrator 漏接 AcpAgent finish 信号",
+      "group-room Bridge API 面"
+    ],
+    "search_queries": [
+      "turnCompleted 事件",
+      "canSendMessage",
+      "running idle 切换",
+      "GroupRoomPage 状态 订阅"
+    ]
+  },
+  {
+    "title": "feat-signal-feature rebase Pump platform 冲突",
+    "tags": [
+      "code-review",
+      "gmgn",
+      "rebase",
+      "conflict"
+    ],
+    "summary": "rebase 到 172b81ef63 时 src/features/launchCoin/platform.ts 的 PUMP 段两侧不一致",
+    "content": "冲突位置约 105-117 行。HEAD 侧（上游）：bundle.maxWallets:12、带 sniper、feeSplitBundleReduction:FEE_SPLIT_BUNDLE_REDUCTION、cashback:true、limits 有 tickerMax:PUMP_TICKER_MAX 与 useByteLength:true。theirs 侧（ec02a2c33e feat: up max bundle length）：bundle.maxWallets:4 + realBuy:true；无 sniper/feeSplitBundleReduction；limits 为 tickerMax:DEFAULT_TICKER_MAX 无 useByteLength。注意：realBuy 在现有 interface 里不存在，整段照抄 theirs 会 TS 报错。",
+    "scope": "project",
+    "project_name": "gmgn-speed",
+    "claim_type": "fact",
+    "source": "Cursor bubble 45f46841-deb2-489d-8ff8-1f511bfbeb00",
+    "related": [
+      "Pump 配置最终选上游完整版"
+    ],
+    "search_queries": [
+      "Pump platform 冲突",
+      "LAUNCH_COIN_PLATFORM_CONFIGS",
+      "realBuy maxWallets 4",
+      "feat-signal-feature rebase"
+    ]
+  },
+  {
+    "title": "Pump 配置最终选上游完整版",
+    "tags": [
+      "code-review",
+      "gmgn",
+      "rebase",
+      "decision"
+    ],
+    "summary": "platform.ts 选上游（sniper/feeSplitBundleReduction/useByteLength/maxWallets:12）未保留 realBuy",
+    "content": "风险点：若产品仍依赖 realBuy 行为，会出现逻辑与预期不一致；realBuy 在 interface 外本身就是类型风险。Rewards hooks 多段冲突用 checkout --ours 以主线为准，可能盖掉分支上 '多钱包领取' 的边界逻辑；UI index.tsx 保留多钱包展示布局贴近分支意图。信号相关第二次冲突多用 --theirs 以分支为主，package.json/yarn.lock 人为选较新 @gmgn/icons 并 yarn install。",
+    "scope": "project",
+    "project_name": "gmgn-speed",
+    "claim_type": "decision",
+    "source": "Cursor bubble e54de230-0b68-44f0-866e-8a6df3a91238",
+    "related": [
+      "feat-signal-feature rebase Pump platform 冲突"
+    ],
+    "search_queries": [
+      "Pump 上游 完整",
+      "rewards ours 合并",
+      "signal theirs 合并",
+      "@gmgn/icons 新版"
+    ]
+  },
+  {
+    "title": "E2E fixtures 默认模式强依赖 out/ 打包产物",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing",
+      "infrastructure"
+    ],
+    "summary": "tests/e2e/fixtures.ts 默认模式 out/ 打包产物依赖严格；E2E_DEV=1 下 Electron bad option --remote-debugging-port=0",
+    "content": "直接跑 bun run test:e2e tests/e2e/specs/group-room.e2e.ts 19 条全挂。强制 E2E_DEV=1 后 Electron 报 bad option --remote-debugging-port=0，Electron 真实 UI 拉不起来。当前 '真实 UI 回归' 实际上是空的。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1f74956a-1a22-4920-a5f7-85352f262704",
+    "related": [
+      "group-room E2E 多处绕过 UI 直接 bridge 造数据"
+    ],
+    "search_queries": [
+      "tests/e2e/fixtures.ts",
+      "E2E_DEV=1 remote-debugging-port",
+      "Electron bad option",
+      "out/ 打包依赖"
+    ]
+  },
+  {
+    "title": "group-room E2E 多处绕过 UI 直接 bridge 造数据",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing",
+      "e2e",
+      "gotcha"
+    ],
+    "summary": "tests/e2e/specs/group-room.e2e.ts 里 createRoom/查询/发消息绕过真实 UI，直接 invokeWithRetry 调 bridge",
+    "content": "位置：tests/e2e/specs/group-room.e2e.ts:45-56。用 'group-room.create' 方法 + hostBackend:'claude'，返回 {id, name, hostConversationId}。意味着 Case 11/12/17 '点侧边栏 → 打开 CreateGroupRoomModal → 选主 Agent → 确认 → 侧栏出现 item → 进入详情' 的真实链路未被验证。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1f74956a-1a22-4920-a5f7-85352f262704",
+    "related": [
+      "E2E fixtures 默认模式强依赖 out/ 打包产物",
+      "Playwright 连 Electron 可模拟点击验证群组创建"
+    ],
+    "search_queries": [
+      "createGroupRoomViaBridge",
+      "invokeWithRetry group-room.create",
+      "E2E 绕过 UI",
+      "真实链路 未验证"
+    ]
+  },
+  {
+    "title": "GroupMessageItem 吃掉 host_thought/result_injection",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "bug"
+    ],
+    "summary": "MAIN_PANEL_KINDS 声明展示 host_thought/result_injection，GroupMessageItem.switch 无对应分支被 default 吞",
+    "content": "位置：src/renderer/pages/group-room/components/GroupMessageItem.tsx:34-97。switch 分支仅处理 user_input/host_response/host_dispatch/sub_thinking/sub_output/system/sub_status/agent_join，没 host_thought/result_injection 分支。需求 '主 Agent 与子 Agent 的思考过程、返工过程、协调过程可见' 实际未实现。现有单测还把该错误行为当作 '通过条件'。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1f74956a-1a22-4920-a5f7-85352f262704",
+    "related": [
+      "MAIN_PANEL_KINDS 控制主面板显示 msgKind"
+    ],
+    "search_queries": [
+      "GroupMessageItem host_thought 渲染",
+      "result_injection 消失",
+      "GroupMessageItem switch default",
+      "思考 不显示"
+    ]
+  },
+  {
+    "title": "WebSocketManager.broadcast 无差别广播",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "webserver",
+      "api-spec"
+    ],
+    "summary": "WebSocketManager.broadcast 对 this.clients 无差别遍历发同样 {name,data}，不按 roomId 过滤",
+    "content": "位置：282-294 行。没有按 roomId/用户/会话过滤，需求 Case 9 '单独查询主Agent-子Agent对话'、Case 10 '单独查询主Agent-用户对话' 的 WS API 未落地。group-room.get 目前是整房间全量查询，没有增量订阅。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1f74956a-1a22-4920-a5f7-85352f262704",
+    "related": [
+      "group-room Bridge API 面",
+      "Case 7-10 是 IPC payload 契约测试非真 WS 端到端"
+    ],
+    "search_queries": [
+      "WebSocketManager broadcast",
+      "无差别广播",
+      "WS 订阅 缺失",
+      "Case 9 10 未落地"
+    ]
+  },
+  {
+    "title": "group_messages 只存 sender 不存 target",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "db",
+      "tech-debt"
+    ],
+    "summary": "数据层 group_messages 只有 sender，没清晰 target/会话边；host_dispatch 仍整段 JSON 文本",
+    "content": "位置：src/process/services/database/migrations.ts + GroupRoomOrchestrator.ts。按 '某个子 Agent 与主 Agent 的往返对话' 做精准查询、回放、增量更新会别扭，和 Case 3/4/9/16 的目标不一致。建议后续 schema 里加 conversation_edge 或 target_agent_id。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1f74956a-1a22-4920-a5f7-85352f262704",
+    "related": [
+      "WebSocketManager.broadcast 无差别广播"
+    ],
+    "search_queries": [
+      "group_messages schema",
+      "sender target 缺少",
+      "host_dispatch JSON 文本",
+      "会话边 回放"
+    ]
+  },
+  {
+    "title": "group-room 主 Agent thought/reply 只攒到 finish 才落库",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "bug",
+      "data-loss"
+    ],
+    "summary": "host thought/reply 流式期间只 emit 不 addMessage；finish 后整段入库，end_turn 被当 finish 可能丢数据",
+    "content": "位置：src/process/services/groupRoom/GroupRoomOrchestrator.ts:140-177（content/thought 分支）+ 202-229（finish 分支）。hostAccumulated/hostThoughtAccumulated 是进程内累积，finish 后整体 addMessage 并清空。AcpAgent.handleEndTurn 只发裸 finish 无正文（acp/index.ts:1143-1152），onSignalEvent/onStreamEvent 都路由到同一 handleHostEvent，end_turn 先到会提前收口。错误分支不会把已累积内容落库，只 emit error stream，导致异常时 thought/reply 全丢。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 763ab571-2796-49d2-b730-1408c9bdc13f",
+    "related": [
+      "GroupRoomOrchestrator 漏接 AcpAgent finish 信号"
+    ],
+    "search_queries": [
+      "hostAccumulated finish 落库",
+      "end_turn 当 finish",
+      "流式 内容 丢失",
+      "error 分支 不落库"
+    ]
+  },
+  {
+    "title": "Claude Code Agent tool 有完整 runtime 能力",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "architecture",
+      "capability"
+    ],
+    "summary": "Claude Code 内建 Agent/Subagent 机制：按任务动态派生、并行、run_in_background、worktree isolation、fork-self 继承完整上下文",
+    "content": "位置：claude-code-cli-extracted/app-bundle.formatted.js:329128-329163。能力：不写 subagent_type 时 fork myself 继承完整对话上下文；指定 subagent_type 用 specialized agent（fresh context）；run_in_background 后台运行；isolation:'worktree' 临时 git worktree；agent 文件可带 tools/disallowedTools/permissionMode/maxTurns/initialPrompt/memory/mcpServers。AionUi group-room 目前只有 backend/type 映射 + 复用 host cliPath/currentModelId/sessionMode，没有每子 agent 独立工具权限/memory/worktree 隔离层。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 8d3aa298-7642-4c53-9377-f404a5ffa3f0",
+    "related": [
+      "AionUi group-room 定位是协作可视化非通用 runtime"
+    ],
+    "search_queries": [
+      "Claude Code Agent tool 能力",
+      "fork myself 继承上下文",
+      "run_in_background 后台",
+      "isolation worktree"
+    ]
+  },
+  {
+    "title": "AionUi group-room 定位是协作可视化非通用 runtime",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "architecture"
+    ],
+    "summary": "GroupRoomOrchestrator 声明 mirrors Claude Code Agent tool 1:1，经 MCP GroupDispatch 侧重协作可视化",
+    "content": "位置：src/process/services/groupRoom/GroupRoomOrchestrator.ts:28-38 架构说明：启 HTTP MCP server 暴露 GroupDispatch → 注入 host AcpAgent session → host 通过 tool_use 调用 → MCP handler 创建 sub-AcpAgent 执行任务返回 tool_result → host 自然决策下一步（无手动循环/XML 解析）。MAIN_PANEL_KINDS 含 host_thought/host_dispatch/result_injection 表明强调 '协作过程可视化'。run_in_background 是占位（dispatchMcpServer.ts:43-51 注释 'currently treated as foreground'）。result_injection 当前未真持久化，handleDispatchCall 直接 return result.content 给 host。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 8d3aa298-7642-4c53-9377-f404a5ffa3f0",
+    "related": [
+      "Claude Code Agent tool 有完整 runtime 能力",
+      "group-room 采用 dispatch_task XML 派发协议"
+    ],
+    "search_queries": [
+      "GroupRoomOrchestrator mirrors Claude Code",
+      "MCP GroupDispatch 注入",
+      "run_in_background 占位",
+      "result_injection 未落地"
+    ]
+  },
+  {
+    "title": "TeammateManager.wake 用 skipCache:true 破坏权限回传",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "team",
+      "bug",
+      "permission"
+    ],
+    "summary": "team 唤醒新建未缓存 task 发起 MCP 权限请求；conversationBridge.confirm 只查缓存 task，点 allow 后权限走丢 70s 超时",
+    "content": "位置：src/process/team/TeammateManager.ts:128-138 getOrBuildTask(conversationId, {skipCache:true})。conversationBridge.ts:487-493 ipcBridge.conversation.confirmation.confirm.provider 只用 workerTaskManager.getTask(conversation_id)；skipCache:true 不存入缓存（WorkerTaskManager.test.ts:177-191 单测证实）。链路：team 唤醒建未缓存 AcpAgentManager → 发 aionui-team-* MCP 权限请求 → UI 弹 allow → 点击后 confirm 只能拿到 undefined（返 conversation not found）或旧缓存 task（无 callId pending） → 真正 live task 永远收不到确认 → 70s ACP 内部 'Permission request timed out'。放大：前端 void invoke(...) 不检查返回值，看起来 '点了没反应'。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1c6a3870-10a8-4371-925c-f9230e98d111",
+    "related": [
+      "TeamSessionService 修复 Team agent 模型元信息丢失",
+      "workerTaskManagerSingleton 只允许 Gemini 回退 useModel"
+    ],
+    "search_queries": [
+      "skipCache 权限回传",
+      "conversationBridge confirm 缓存",
+      "aionui-team MCP 权限",
+      "Permission request timed out 70s"
+    ]
+  },
+  {
+    "title": "ConversationChatConfirm invoke 不检查返回值",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "ui",
+      "bug"
+    ],
+    "summary": "ConversationChatConfirm.tsx:127-132 用 void invoke 不检查返回值，confirm 失败 UI 无提示",
+    "content": "即使主进程返回 'conversation not found'，UI 也不提示，只是看起来 '点了没反应'。这会放大 TeammateManager.wake skipCache bug 的症状。建议：检查 success/msg 并在失败时显示 toast。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1c6a3870-10a8-4371-925c-f9230e98d111",
+    "related": [
+      "TeammateManager.wake 用 skipCache:true 破坏权限回传"
+    ],
+    "search_queries": [
+      "ConversationChatConfirm void invoke",
+      "confirm 返回值 未检查",
+      "点了没反应",
+      "UI 确认 吞错"
+    ]
+  },
+  {
+    "title": "E2E 真实编排 runner 仍是确定性桩",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "testing",
+      "gotcha"
+    ],
+    "summary": "AIONUI_E2E_TEST 下补的可控编排 runner 能证明 UI 点击+前后端链路，但背后不是真模型推理，仍是预设回包",
+    "content": "位置：tests/unit/groupRoom/GroupRoomOrchestrator.test.ts:63-90 + helpers.ts:158-200 executeAgentBehavior（onStreamEvent 按脚本发 thought/content/finish）。1-10 用例仍是 mock/预设回包，证明不了真实 Agent 能力。现状准确描述：group-room UI 链路和编排展示被验证；真实多 Agent 协作未被完整证明。建议：额外做 '真实 Agent E2E/smoke' 拉真实 CLI/模型覆盖 Case 1/3/4/5/17/19。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 075052e0-ac03-4f25-87e4-24bebf08ff8d",
+    "related": [
+      "E2E 模式走 E2EGroupRoomScenarioRunner 不走真实 Agent",
+      "GroupRoomOrchestrator.test.ts 用内存 SQLite + mock 桥稳定通过"
+    ],
+    "search_queries": [
+      "AIONUI_E2E_TEST runner",
+      "executeAgentBehavior 脚本化",
+      "确定性桩 非真实模型",
+      "真实 Agent E2E smoke"
+    ]
+  },
+  {
+    "title": "Claude Team 消息投递路径是轮询+队列+attachment",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "mechanism"
+    ],
+    "summary": "Claude Code teammate 投递不总是直接变 user turn：idle 时提交新 turn，busy 时入 inbox 队列，turn 进行中作 attachment 注入",
+    "content": "位置：src/hooks/useInboxPoller.ts:843-864 若 isLoading=false 且无 focusedInputDialog → 作为新 turn 提交；否则 queueMessages。src/utils/messages.ts:3453-3465 normalizeAttachmentForAPI 把 teammate_mailbox attachment 转成 isMeta:true 的 UserMessage，via getTeammateMailbox().formatTeammateMessages。所以准确说法：模型侧感知是 '自动送达'，运行时底层是轮询+队列+两种投递路径。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 292e373b-bdb0-4653-aaf7-a6f428977759",
+    "related": [
+      "useInboxPoller 每 1s 轮询，waitForNextPromptOrShutdown 每 500ms"
+    ],
+    "search_queries": [
+      "idle 新 turn",
+      "busy 入队",
+      "teammate_mailbox attachment",
+      "isMeta UserMessage 注入"
+    ]
+  },
+  {
+    "title": "isStructuredProtocolMessage 只识别 10 类协议消息",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "api-spec"
+    ],
+    "summary": "src/utils/teammateMailbox.ts:1073-1091 isStructuredProtocolMessage 仅识别 10 类协议消息",
+    "content": "13 种消息类型定义在 TeammateMessage 层，但协议路由层只认 10 类。shutdown_rejected 有定义但不在路由集；task_assignment 走普通展示路径；idle_notification 被隐藏/折叠。把 '消息类型定义' 和 '协议路由' 混为一谈是常见误读。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 292e373b-bdb0-4653-aaf7-a6f428977759",
+    "related": [
+      "TeammateMessage.timestamp 是 ISO 字符串",
+      "ExitPlanModeV2Tool 发 plan_approval_request 协议消息"
+    ],
+    "search_queries": [
+      "isStructuredProtocolMessage",
+      "协议消息 10 类",
+      "shutdown_rejected 非协议",
+      "task_assignment 普通展示"
+    ]
+  },
+  {
+    "title": "SendMessage 快速路径只对 string message 生效",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "mechanism"
+    ],
+    "summary": "SendMessage 内存队列快速路径仅对 string message 启用；停止的 agent 会 resumeAgentBackground",
+    "content": "非 string（如结构化 JSON 协议）走不同路径；检查范围不限于 Team teammate 还包括 local agent task。常见误读：'查注册表存在就走内存，否则走文件' 方向正确但省略了 string-only 限制、agent resume 行为、checked registries 范围。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 292e373b-bdb0-4653-aaf7-a6f428977759",
+    "related": [
+      "teammate 通信统一走文件 mailbox"
+    ],
+    "search_queries": [
+      "SendMessage 快速路径",
+      "string message only",
+      "resumeAgentBackground",
+      "agentNameRegistry"
+    ]
+  },
+  {
+    "title": "Team 与 task list 1:1 对应 sanitized team name",
+    "tags": [
+      "code-review",
+      "claude-code",
+      "team-mode",
+      "storage"
+    ],
+    "summary": "Team 对应 ~/.claude/tasks/{sanitized-team-name}/；文件锁 proper-lockfile，lock→re-read→write→release",
+    "content": "团队存储：~/.claude/teams/{team}/inboxes/{agent}.json + ~/.claude/tasks/{sanitized-team-name}/。in-process teammate 有持续运行的 while-loop。shutdown 是 request/approved|rejected 握手协议，非 leader 直接强杀模型决策。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "Cursor bubble 292e373b-bdb0-4653-aaf7-a6f428977759",
+    "related": [
+      "~/.claude/teams/<team>/config.json 持久化成员模型",
+      "writeToMailbox lock-reread-append-release"
+    ],
+    "search_queries": [
+      "~/.claude/tasks sanitized team",
+      "proper-lockfile",
+      "in-process while-loop",
+      "shutdown request approved"
+    ]
+  },
+  {
+    "title": "TeamSessionService preset/remote 入口参数未对齐单 Agent",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "team",
+      "bug"
+    ],
+    "summary": "TeamSessionService 未复用单 Agent 的 presetContext/presetRules/enabledSkills；未给 remote 传 remoteAgentId",
+    "content": "位置：src/process/team/TeamSessionService.ts:158-173 只设 customAgentId→presetAssistantId/cliPath/sessionMode/preferredModelId。对比：单 Agent createConversationParams.ts:144-169 通过 loadPresetAssistantResources 额外加载 presetContext/presetRules/enabledSkills；initAgent.ts:322-345 createRemoteAgent 强依赖 extra.remoteAgentId。含义：单 Agent preset Gemini/Qwen 能聊 ≠ Team preset Gemini/Qwen 完全等价；单 Agent remote 能聊 ≠ Team remote 能聊。splitConversationDropdownAgents 还会过滤 backend==='custom' 非 preset，Team 下拉选不到。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 5b3da6a0-5e13-402d-bb31-f27caf50bf0d",
+    "related": [
+      "TeamSessionService 修复 Team agent 模型元信息丢失"
+    ],
+    "search_queries": [
+      "TeamSessionService preset",
+      "remoteAgentId 未传",
+      "loadPresetAssistantResources",
+      "splitConversationDropdownAgents custom"
+    ]
+  },
+  {
+    "title": "Team 下拉过滤掉 custom 非 preset agent",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "team",
+      "ui"
+    ],
+    "summary": "splitConversationDropdownAgents 过滤 backend!=='custom' && !isPreset，custom 非 preset 不可选",
+    "content": "位置：src/renderer/utils/model/availableAgents.ts:15-22。presetAssistants 过滤 isPreset===true。结果：某些单 Agent 可聊的 custom ACP agent，Team 里连选都选不到。修复方向：统一 builder 合并单 Agent 入口参数。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 5b3da6a0-5e13-402d-bb31-f27caf50bf0d",
+    "related": [
+      "TeamSessionService preset/remote 入口参数未对齐单 Agent"
+    ],
+    "search_queries": [
+      "splitConversationDropdownAgents",
+      "availableAgents custom 过滤",
+      "Team 下拉 不可选",
+      "cliAgents presetAssistants"
+    ]
+  },
+  {
+    "title": "bubbleId key 模式是 bubbleId:<workspace>:<bubble>",
+    "tags": [
+      "code-review",
+      "mnemo",
+      "cursor",
+      "api-spec"
+    ],
+    "summary": "Cursor cursorDiskKV 实际 key 是 'bubbleId:<workspaceId>:<bubbleId>'，非 'cursorDiskKV.bubbleId:*'",
+    "content": "DATA_SCHEMA.md 里 'cursorDiskKV.bubbleId:*' 是概念描述不是真实 LIKE 模式。提取脚本正确写法：SELECT key, value FROM cursorDiskKV WHERE key LIKE 'bubbleId:%'。value 是 JSON，text 字段为内容，type=2 为 AI 回答，type=1 为用户输入。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "fact",
+    "source": "mnemo 抽取脚本经验",
+    "related": [
+      "mnemo 数据源位置清单",
+      "JSONL message.content 多形态需展开"
+    ],
+    "search_queries": [
+      "bubbleId key 模式",
+      "cursorDiskKV LIKE",
+      "type=2 AI 答复",
+      "Cursor SQLite 查询"
+    ]
+  },
+  {
+    "title": "aion CLI PersistentCoordinatorLoop 生成 verify-* id",
+    "tags": [
+      "code-review",
+      "aion-agent-team",
+      "bug"
+    ],
+    "summary": "verification 失败后的 verifyTasks 使用 verify-* 新 id，同样不在 agentPerTask 中，与 refine bug 同源",
+    "content": "verification 阶段的 verify-* task id 不在 agentPerTask 映射；与 refinedId 问题同属 per-task 模型映射回退。修复时应一并覆盖 verify 路径，而不仅是 refine 路径。",
+    "scope": "project",
+    "project_name": "aion-agent-team",
+    "claim_type": "fact",
+    "source": "Cursor bubble 74aef565-fc89-4cc2-94fa-f1d98ab4cbb2",
+    "related": [
+      "PersistentCoordinatorLoop refine 轮次丢失 per-task 模型映射"
+    ],
+    "search_queries": [
+      "verify-* task id",
+      "verification agentPerTask",
+      "verify 路径 回退",
+      "verification 模型 默认"
+    ]
+  },
+  {
+    "title": "initGroupRoomBridge 是 fire-and-forget 异步注册",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "architecture"
+    ],
+    "summary": "initBridge.ts:36-43 GroupRoomBridge 挂 getDatabase().then(...) 是 fire-and-forget，首屏存在竞态",
+    "content": "原文注释 'IMPORTANT: must await so the provider is registered before the renderer can call it' 并不生效（上层未 await）。测试 retry 包装 invokeWithRetry 就是为了扛这个竞态。根治方向：实际 await 或在 DB ready 之前禁用入口。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1f74956a-1a22-4920-a5f7-85352f262704",
+    "related": [
+      "group-room E2E 用 invokeWithRetry 扛 bridge 注册竞态",
+      "CreateGroupRoomModal 转圈是 invoke 永不 settle"
+    ],
+    "search_queries": [
+      "initGroupRoomBridge fire-and-forget",
+      "getDatabase().then",
+      "provider 注册 竞态",
+      "首屏 race"
+    ]
+  },
+  {
+    "title": "group-room sub_status 是动态状态事件",
+    "tags": [
+      "code-review",
+      "AionUi",
+      "group-room",
+      "api-spec"
+    ],
+    "summary": "msgKind 'sub_status' 表示子 Agent 状态变更事件；memberChanged emit 推子 Tab UI 状态",
+    "content": "GroupMessageItem 对 sub_status 有 switch 分支。组件级状态变更走 memberChanged emit（非 responseStream），前端 GroupRoomPage.memberChanged.on 更新成员。与 sub_thinking/sub_output 属于不同流；sub_thinking 是中间思考 token，sub_output 是正式输出。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "Cursor bubble 1f74956a-1a22-4920-a5f7-85352f262704",
+    "related": [
+      "group-room Bridge API 面",
+      "MAIN_PANEL_KINDS 控制主面板显示 msgKind"
+    ],
+    "search_queries": [
+      "sub_status 事件",
+      "memberChanged emit",
+      "sub_thinking sub_output",
+      "子 Agent 状态 推送"
+    ]
+  },
+  {
+    "title": "Skeleton borderRadius 改到 style.borderRadius",
+    "tags": [
+      "code-review",
+      "gmgn",
+      "ui",
+      "refactor"
+    ],
+    "summary": "rebase 中 Skeleton 单独修一处类型：borderRadius → style.borderRadius；回归风险低但取决于 Skeleton 内部 style 合并",
+    "content": "行为上仍是圆角。若 Skeleton 组件内部对 style prop 合并有坑（如覆盖优先级变化），理论上会有细微样式差异但概率不大。可回归路径：手测 Rewards 一键领取、X Sniper 同步 banner/下载按钮、信号卡片快速买/浮层布局。",
+    "scope": "project",
+    "project_name": "gmgn-speed",
+    "claim_type": "fact",
+    "source": "Cursor bubble e54de230-0b68-44f0-866e-8a6df3a91238",
+    "related": [
+      "Pump 配置最终选上游完整版"
+    ],
+    "search_queries": [
+      "Skeleton borderRadius",
+      "style.borderRadius 类型",
+      "rebase Skeleton",
+      "样式 回归"
+    ]
+  }
+]

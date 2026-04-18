@@ -1,0 +1,81 @@
+[project]
+name = "m-nemo"
+version = "0.1.0"
+description = "Agent-first knowledge base — structured memory for AI agents via MCP & CLI"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "zhuqingyv" }
+]
+keywords = ["mcp", "agent", "knowledge-base", "memory", "sqlite", "ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.20.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "pyyaml>=6.0.1",
+    "fastmcp>=3.0.1,<4",
+    "markdown-it-py>=3.0.0",
+    "python-frontmatter>=1.1.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "loguru>=0.7.0",
+    "aiofiles>=24.1.0",
+    "greenlet>=3.4.0",
+    "jieba>=0.42.1",
+    "requests>=2.33.1",
+    "sqlite-vec>=0.1.9",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/zhuqingyv/mnemo"
+Repository = "https://github.com/zhuqingyv/mnemo"
+Issues = "https://github.com/zhuqingyv/mnemo/issues"
+
+[project.scripts]
+mnemo = "mnemo.cli.main:app"
+mnemo-mcp = "mnemo.mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mnemo"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "integration: 真实依赖（如 Ollama）的集成测试；CI 可用 -m 'not integration' 跳过",
+    "phase3: Phase 3 功能测试（freshness / state machine / write-gate / feedback / context）；功能未落地前用 -m 'not phase3' 跳过",
+    "phase3_eval: Phase 3 EVAL 召回门禁测试；本地默认 skip、CI 强制开启（场景 4 硬 ≥ 40%）",
+    "phase3_fixture: Phase 3 494 fixture 级消融测试；phase3_regression_gate.py 集成",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+]

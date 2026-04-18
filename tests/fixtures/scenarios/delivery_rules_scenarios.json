@@ -1,0 +1,333 @@
+[
+  {
+    "description": "新 Agent 想知道测试有什么规矩",
+    "query": "mock 测试",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "不 mock 测试",
+      "单测不是通过而是发现问题"
+    ],
+    "expected_not_hits": [],
+    "notes": "用户最高优先级红线，Cursor 中多次训斥'虚假 mock 糊弄我'"
+  },
+  {
+    "description": "Agent 准备说'完成'前查有没有门禁要求",
+    "query": "交付 完成 证据",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "有证据才能说完成",
+      "交付前必过 delivery-gate",
+      "真实验证优先"
+    ],
+    "expected_not_hits": [],
+    "notes": "完成声明必须附证据是全局硬红线"
+  },
+  {
+    "description": "Agent 打算改 schema / 删文件前查规则",
+    "query": "破坏性 改动",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "破坏性改动先确认",
+      "破坏性操作禁止绕过 hook"
+    ],
+    "expected_not_hits": [],
+    "notes": "破坏性改动必须先问用户"
+  },
+  {
+    "description": "写 AionUi 组件前查 UI 规范",
+    "query": "arco-design 原生 HTML",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "AionUi 禁止 raw HTML 交互元素"
+    ],
+    "expected_not_hits": [
+      "nft-gmgn 禁止 Chakra UI 新代码"
+    ],
+    "notes": "AionUi 项目专属规则，不应命中 nft-gmgn 的 Chakra 规则"
+  },
+  {
+    "description": "在 nft-gmgn 写新组件前查 UI 库选择",
+    "query": "Chakra UI 组件",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "nft-gmgn 禁止 Chakra UI 新代码"
+    ],
+    "expected_not_hits": [
+      "AionUi 禁止 raw HTML 交互元素"
+    ],
+    "notes": "nft-gmgn 项目专属"
+  },
+  {
+    "description": "开 PR 前查本地 CI 检查流程",
+    "query": "prek PR 前检查",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "AionUi PR 前跑 prek 本地复刻 CI"
+    ],
+    "expected_not_hits": [],
+    "notes": "只在 AionUi 项目适用"
+  },
+  {
+    "description": "Agent 想知道单测怎么写才算合格",
+    "query": "新模块 单测",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "新模块必须带单测",
+      "AionUi 测试框架 Vitest 覆盖率 80%",
+      "单测不是通过而是发现问题"
+    ],
+    "expected_not_hits": [],
+    "notes": "全局规则+项目具体门禁"
+  },
+  {
+    "description": "Agent 遇到模糊需求查是否能自己猜",
+    "query": "歧义 先问",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "破坏性改动先确认"
+    ],
+    "expected_not_hits": [],
+    "notes": "全局规则：不确定必须问用户"
+  },
+  {
+    "description": "按 tag 查所有全局硬红线",
+    "query": "global",
+    "query_type": "tag-search",
+    "scope": "global",
+    "expected_hits": [
+      "不 mock 测试",
+      "新模块必须带单测",
+      "有证据才能说完成",
+      "破坏性改动先确认",
+      "真实验证优先",
+      "单测不是通过而是发现问题",
+      "防止伪装多 Agent",
+      "交付前必过 delivery-gate",
+      "破坏性操作禁止绕过 hook",
+      "过了的就别重复跑",
+      "双 Agent 交叉验证避免单点结论",
+      "敏感信息必须脱敏"
+    ],
+    "expected_not_hits": [],
+    "notes": "scope=global 的全集，未来新 Agent 入职必读"
+  },
+  {
+    "description": "按 tag 查 AionUi 项目专属规则",
+    "query": "aionui",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": [
+      "commit 使用英文 type scope subject 格式",
+      "AionUi 单目录子项不得超过 10",
+      "AionUi 禁止 raw HTML 交互元素",
+      "AionUi TypeScript 严格禁止 any",
+      "AionUi 三进程 API 不得混用",
+      "AionUi 测试框架 Vitest 覆盖率 80%",
+      "AionUi PR 前跑 prek 本地复刻 CI",
+      "AionUi i18n 禁止硬编码文案",
+      "修改代码先 bun build 再测试"
+    ],
+    "expected_not_hits": [
+      "nft-gmgn 禁止 Chakra UI 新代码",
+      "nft-gmgn Tailwind 禁止 p-16 类名"
+    ],
+    "notes": "project_name=AionUi 过滤验证"
+  },
+  {
+    "description": "按 tag 查 nft-gmgn 项目专属规则",
+    "query": "nft-gmgn",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": [
+      "nft-gmgn 禁止 Chakra UI 新代码",
+      "nft-gmgn 禁止 useState+fetch 组合",
+      "nft-gmgn Tailwind 禁止 p-16 类名",
+      "nft-gmgn 任务前必读文档路由表",
+      "nft-gmgn 临时文件必须放 tmp 目录",
+      "nft-gmgn 多链感知禁硬编码链名",
+      "nft-gmgn 文档禁止硬编码数量"
+    ],
+    "expected_not_hits": [
+      "AionUi 禁止 raw HTML 交互元素"
+    ],
+    "notes": "nft-gmgn 项目全集"
+  },
+  {
+    "description": "关联查询：从'不 mock 测试'出发找关联规则",
+    "query": "不 mock 测试",
+    "query_type": "related",
+    "scope": null,
+    "expected_hits": [
+      "新模块必须带单测",
+      "有证据才能说完成",
+      "E2E 必须用真实 Agent 补充不单独证明 UI"
+    ],
+    "expected_not_hits": [],
+    "notes": "related 字段应打通相关交付红线"
+  },
+  {
+    "description": "团队模式下新 Agent 查主 Agent 职责",
+    "query": "主 Agent 监督",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "防止伪装多 Agent"
+    ],
+    "expected_not_hits": [],
+    "notes": "用户明确要求主 Agent 不动手，Cursor bubble 多次核对"
+  },
+  {
+    "description": "ai-child 项目 Agent 查明确禁止行为",
+    "query": "只写文档 无代码",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "ai-child 禁止只写文档不写代码"
+    ],
+    "expected_not_hits": [],
+    "notes": "ai-child 项目专属防空转规则"
+  },
+  {
+    "description": "Agent 做技术调研前查需不需要找人复核",
+    "query": "交叉验证 双向",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "双 Agent 交叉验证避免单点结论"
+    ],
+    "expected_not_hits": [],
+    "notes": "用户原话：不能只派一个，另外派一个双向验证"
+  },
+  {
+    "description": "E2E 测试 Agent 查是否允许只测 UI",
+    "query": "E2E 真实 Agent",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "E2E 必须用真实 Agent 补充不单独证明 UI",
+      "真实验证优先"
+    ],
+    "expected_not_hits": [],
+    "notes": "Cursor bubble 38f41caf 明确反对只证 UI E2E"
+  },
+  {
+    "description": "Agent 修改 AionUi 后端代码后查是否要 build",
+    "query": "bun build 再测试",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "修改代码先 bun build 再测试"
+    ],
+    "expected_not_hits": [],
+    "notes": "用户 Cursor 中强调：改了不 build 白测"
+  },
+  {
+    "description": "Agent 想给 i18n 文案时查是否能直接硬编码",
+    "query": "i18n 硬编码 文案",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "AionUi i18n 禁止硬编码文案"
+    ],
+    "expected_not_hits": [],
+    "notes": "AionUi 和 nft-gmgn 都禁止，AionUi 有明确工具链"
+  },
+  {
+    "description": "Agent 写完任务想直接宣告完成",
+    "query": "delivery-gate 交付门禁",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "交付前必过 delivery-gate",
+      "有证据才能说完成"
+    ],
+    "expected_not_hits": [],
+    "notes": "delivery-gate skill 是交付前强制门禁"
+  },
+  {
+    "description": "Agent 在 nft-gmgn 写 Tailwind 类名时查规范",
+    "query": "Tailwind p-16 rem",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "nft-gmgn Tailwind 禁止 p-16 类名"
+    ],
+    "expected_not_hits": [],
+    "notes": "p-16 会生成 rem，被禁止"
+  },
+  {
+    "description": "Agent 在 mnemo 项目查优化优先级",
+    "query": "MVP 先能跑",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "mnemo MVP 优先先能跑再优化"
+    ],
+    "expected_not_hits": [],
+    "notes": "mnemo 交付原则"
+  },
+  {
+    "description": "Agent 想验证 TS 通过后可否直接交付",
+    "query": "真实验证 走 UI",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "真实验证优先",
+      "有证据才能说完成"
+    ],
+    "expected_not_hits": [],
+    "notes": "真实验证 skill 禁止'TS 通过即完成'"
+  },
+  {
+    "description": "Agent 准备回复时查用户对 AI 腔的态度",
+    "query": "AI 腔 啰嗦",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "过了的就别重复跑"
+    ],
+    "expected_not_hits": [],
+    "notes": "用户 Cursor 中多次命令'不要啰嗦'"
+  },
+  {
+    "description": "Agent 开始整理提交时查 git safety",
+    "query": "no-verify force push",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "破坏性操作禁止绕过 hook"
+    ],
+    "expected_not_hits": [],
+    "notes": "禁止绕 hook / force push 未授权"
+  },
+  {
+    "description": "Agent 准备把 .env 里内容拷贝到代码时查脱敏",
+    "query": "脱敏 敏感信息",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": [
+      "敏感信息必须脱敏"
+    ],
+    "expected_not_hits": [],
+    "notes": "全局安全红线"
+  },
+  {
+    "description": "Agent 在 ai-child 验收前查是否有硬门禁",
+    "query": "ACCEPTANCE_CRITERIA 验收",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": [
+      "ai-child 验收前读 ACCEPTANCE_CRITERIA"
+    ],
+    "expected_not_hits": [],
+    "notes": "ai-child 明确规定每次验收前必读"
+  }
+]

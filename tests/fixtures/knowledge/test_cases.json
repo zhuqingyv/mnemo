@@ -1,0 +1,1367 @@
+[
+  {
+    "title": "AionUi Hub L1 集成测试：完整安装链路",
+    "tags": [
+      "e2e-scenario",
+      "aionui",
+      "hub",
+      "integration-test"
+    ],
+    "summary": "验证 HubIndexManager→Installer→onInstall→hotReload→AcpDetector→Connection 一条完整安装链",
+    "content": "输入：fake-extension（含 acpAdapters 声明）+ fake-acp-cli。操作：`bun run test:integration` 或 `bunx vitest run tests/integration/hub-install-flow.test.ts`。期望：Extension manifest 正确解析，onInstall 钩子把 fake CLI 放到 PATH，hotReload 识别新 extension，AcpDetector 检测到新 Backend，ACP handshake 完整，sendPrompt 收到 response。这是 L1 验证核心链路的唯一集成用例。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/AionUi/docs/HUB_TEST_GUIDE.md",
+    "related": [
+      "AionUi Hub L2 E2E：UI 安装流程",
+      "AionUi Hub L3 Smoke：ACP 协议兼容性"
+    ],
+    "search_queries": [
+      "hub 安装链路测试",
+      "L1 integration test",
+      "onInstall hotReload"
+    ]
+  },
+  {
+    "title": "AionUi Hub L2 E2E：UI 安装流程",
+    "tags": [
+      "e2e-scenario",
+      "aionui",
+      "hub",
+      "playwright"
+    ],
+    "summary": "Playwright 驱动 Electron，验证从设置页到 Hub 弹窗、card 状态流转、Install 安装、列表自动刷新的完整 UI 路径",
+    "content": "输入：已构建 Electron。操作：`bun run test:e2e` 或 `bunx playwright test tests/e2e/specs/hub-backend-install.e2e.ts`。期望：设置页 → Agent 页 → 本地 Agent Tab → 点『从市场安装』→ Hub 弹窗打开 → card 状态（Install/Installed/Retry）正确 → 点 Install 状态流转 Installing→Installed → 关闭弹窗新 Backend 出现在列表 → 选中新 Backend 可发起会话。Electron 未安装需先 `node node_modules/electron/install.js`。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/AionUi/docs/HUB_TEST_GUIDE.md",
+    "related": [
+      "AionUi Hub L1 集成测试：完整安装链路"
+    ],
+    "search_queries": [
+      "hub UI E2E 测试",
+      "playwright electron",
+      "安装流程 UI"
+    ]
+  },
+  {
+    "title": "AionUi Hub L3 Smoke：ACP 协议兼容性",
+    "tags": [
+      "e2e-scenario",
+      "aionui",
+      "hub",
+      "smoke-test"
+    ],
+    "summary": "冒烟测试真实 Backend CLI 的 ACP 协议，PATH 上无 CLI 则 skip 不 fail",
+    "content": "输入：可选的真实 Backend CLI（claude/codex/goose）。操作：默认 `bunx vitest run tests/integration/acp-smoke.test.ts` 只跑 fake CLI；`ACP_SMOKE_REAL=1 bunx vitest run ...` 跑真实 Backend。期望：spawn CLI → initialize → session/new → session/prompt → 收到 response chunk → disconnect → 进程正常退出无残留。仅本地跑不上 CI。新增 Backend 需在 realBackends 数组加 `{name, cmd, args}`。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/AionUi/docs/HUB_TEST_GUIDE.md",
+    "related": [
+      "AionUi Hub L1 集成测试：完整安装链路"
+    ],
+    "search_queries": [
+      "ACP smoke test",
+      "真实 backend 冒烟",
+      "ACP_SMOKE_REAL"
+    ]
+  },
+  {
+    "title": "mcp-team-hub check_in 正常签到",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock"
+    ],
+    "summary": "对空闲成员调用 check_in 应创建包含随机 nonce 的 lock.json",
+    "content": "前置：`~/.claude/team-hub/members/laochui/profile.json` 存在，无 lock.json。操作：调用 `check_in member=\"laochui\" project=\"proj-a\" task=\"修复登录bug\"`。期望：生成 `lock.json`，字段包含非空随机 nonce、当前 PID 作为 session_pid、session_start、project=proj-a、task=修复登录bug、locked_at ISO 时间；返回成功消息。红线：nonce 必须每次随机，不能固定值。（TC-001）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-001",
+    "related": [
+      "mcp-team-hub check_in 成员已占用",
+      "mcp-team-hub session 正常退出清理"
+    ],
+    "search_queries": [
+      "check_in 签到",
+      "lock.json 创建",
+      "nonce 随机"
+    ]
+  },
+  {
+    "title": "mcp-team-hub check_in 成员已占用",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock"
+    ],
+    "summary": "成员已有存活 session 的 lock 时再次 check_in 必须拒绝，不能静默覆盖",
+    "content": "前置：laochui 已有 lock.json，持锁 session PID 仍存活。操作：另一 session 调用 `check_in member=\"laochui\"`。期望：返回错误明确说明『成员被占用』，原 lock.json 内容不变。这是必须覆盖的 P0 边界，验证是否有静默覆盖 bug。（TC-002）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-002",
+    "related": [
+      "mcp-team-hub check_in 正常签到"
+    ],
+    "search_queries": [
+      "check_in 已占用",
+      "lock 冲突",
+      "静默覆盖"
+    ]
+  },
+  {
+    "title": "mcp-team-hub force_release 死锁回收",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock"
+    ],
+    "summary": "force_release 应验证 PID 是否真的死，死才删锁",
+    "content": "前置：laochui 持有锁，但对应进程已死。操作：`force_release member=\"laochui\"`。期望：lock.json 被删除，返回成功并附释放原因（进程不存在）。红线：force_release 必须检查进程是否真的死，不能无条件删锁。（TC-006）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-006",
+    "related": [
+      "mcp-team-hub PID 复用 lstart 双验"
+    ],
+    "search_queries": [
+      "force_release 死锁",
+      "进程检测",
+      "无条件删锁"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 双进程并发清理同一锁（double-free）",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock",
+      "concurrency",
+      "P0"
+    ],
+    "summary": "面板 inspectSessions 和 MCP force_release 同时删同一把锁，必须只删一次、第二次跳过不报错",
+    "content": "前置：laochui 持有 lock.json nonce=abc123，session PID 已死。操作：同时触发面板 5s 轮询 inspectSessions 和 MCP force_release。期望：lock.json 只被删一次，第二次因 nonce 不匹配（文件已删）而跳过不报错。面板代码路径：index.ts:212-218（二次读 nonce 比对）。当前面板有『记住 nonce 再读一次确认』保护，测试需验证这条路径真的有效。（TC-101）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-101",
+    "related": [
+      "mcp-team-hub nonce 二次校验"
+    ],
+    "search_queries": [
+      "double-free",
+      "并发清理锁",
+      "nonce 二次校验"
+    ]
+  },
+  {
+    "title": "mcp-team-hub nonce 二次校验",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock",
+      "P0"
+    ],
+    "summary": "两次读 lock 期间 nonce 被改则放弃删除",
+    "content": "前置：lock.json 存在，nonce=abc123。操作：第一次读 nonce=abc123；读后第二次读前，另一进程把 nonce 改成 xyz789；执行第二次读。期望：二次读发现 nonce 不匹配，放弃删除操作，原 lock.json（nonce=xyz789）保留。极端并发窗口期必须覆盖。（TC-102）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-102",
+    "related": [
+      "mcp-team-hub 双进程并发清理同一锁（double-free）"
+    ],
+    "search_queries": [
+      "nonce 二次校验",
+      "TOCTOU",
+      "读两次比对"
+    ]
+  },
+  {
+    "title": "mcp-team-hub check_out 盲删别人锁的 session 隔离",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock",
+      "concurrency",
+      "P0"
+    ],
+    "summary": "Session A 删除过程中 Session B 抢占同一成员，A 删除应因 session_pid/nonce 不匹配而放弃",
+    "content": "前置：Session A(PID=1234)持有 laochui 锁。操作：Session A 执行 check_out，在读取后删除前；Session B(PID=5678)调用 check_in 抢占 laochui，写入新 lock.json session_pid=5678；Session A 的删除操作继续执行。期望：Session A 删除因 session_pid/nonce 不匹配放弃，Session B 的 lock.json 保留完整。（TC-103）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-103",
+    "related": [
+      "mcp-team-hub check_in 接管 TOCTOU"
+    ],
+    "search_queries": [
+      "盲删别人锁",
+      "session 隔离",
+      "session_pid 校验"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 半截 JSON 容错",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock",
+      "robustness",
+      "P0"
+    ],
+    "summary": "lock.json 为损坏 JSON 时 readJson 返回 null，面板显示 idle，MCP Server 不崩",
+    "content": "前置：laochui 的 lock.json 内容为 `{\"nonce\":\"abc123\",\"ses` 这种损坏 JSON。操作：面板调用 `readJson(lockPath)`；MCP Server 调用任何读 lock 的工具。期望：readJson 返回 null 不抛异常（index.ts:65-72），面板显示成员为 idle，MCP Server 不崩溃，上报锁损坏并跳过或清理。（TC-105）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-105",
+    "related": [
+      "mcp-team-hub 锁写入原子性"
+    ],
+    "search_queries": [
+      "半截 JSON",
+      "lock 损坏",
+      "readJson 容错"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 锁写入原子性",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock",
+      "P0"
+    ],
+    "summary": "lock.json 写入必须通过临时文件+rename 保证原子",
+    "content": "操作：检查 lock 写入实现是否先写临时文件再 rename；若直接 writeFileSync，模拟写入时进程被 kill。期望：原子写入下文件要么完整要么不存在，无半截 JSON；非原子写入需记为已知风险并改为 rename 方式。（TC-106）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-106",
+    "related": [
+      "mcp-team-hub 半截 JSON 容错"
+    ],
+    "search_queries": [
+      "写入原子性",
+      "rename 原子写",
+      "文件写入中断"
+    ]
+  },
+  {
+    "title": "mcp-team-hub check_in 接管 TOCTOU",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock",
+      "concurrency",
+      "P0"
+    ],
+    "summary": "两 session 同时接管死锁，只能一个成功",
+    "content": "前置：laochui 锁持有者 PID 已死（死锁状态）。操作：Session A 和 B 同时 `check_in member=\"laochui\"`；两者都检查到锁存在但持有者已死，准备接管；两者同时写入新 lock.json。期望：只有一个 session 成功接管，另一个收到『接管失败』或『成员被占用』错误。需要 rename 原子写入保证正确性。（TC-107）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-107",
+    "related": [
+      "mcp-team-hub 锁写入原子性",
+      "mcp-team-hub check_out 盲删别人锁的 session 隔离"
+    ],
+    "search_queries": [
+      "接管死锁",
+      "TOCTOU 竞争",
+      "抢占死锁"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 清理顺序：先锁后 session",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "session",
+      "P0"
+    ],
+    "summary": "gracefulShutdown 必须先删 lock.json 再删 session.json",
+    "content": "前置：session 正常运行并持有 laochui 锁。操作：触发 gracefulShutdown（stdin 关闭或 SIGTERM）。期望：删除顺序为『先 lock.json（释放员工）→再 session.json（注销 session）』，不可反序。反序会导致面板短暂看到成员 busy 但无对应 session 的异常中间态。（TC-108）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-108",
+    "related": [
+      "mcp-team-hub session 正常退出清理"
+    ],
+    "search_queries": [
+      "清理顺序",
+      "gracefulShutdown",
+      "先锁后 session"
+    ]
+  },
+  {
+    "title": "mcp-team-hub PID 复用 lstart 双验",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock",
+      "P0"
+    ],
+    "summary": "仅 PID 存活不足以判同一进程，lstart 不匹配必须清理孤儿锁",
+    "content": "前置：lock.json session_pid=1234、nonce=old_nonce；原 PID 1234 已死但 OS 把 1234 分给新进程；session.json 记录了 lstart。操作：面板 inspectSessions 检测 PID=1234 存活；读 session.json 的 lstart 与新进程 lstart 比较。期望：lstart 不匹配→判为不同进程→清理孤儿锁和 session。代码路径：index.ts:182-185。lstart 是 PID 复用的唯一防线。（TC-109）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-109",
+    "related": [
+      "mcp-team-hub force_release 死锁回收"
+    ],
+    "search_queries": [
+      "PID 复用",
+      "lstart 双验",
+      "孤儿锁清理"
+    ]
+  },
+  {
+    "title": "mcp-team-hub kill -9 强杀面板巡检清理",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "session",
+      "P0"
+    ],
+    "summary": "强杀 Claude 后面板应在 5 秒内清理孤儿 session 和锁",
+    "content": "前置：session 运行中持锁，面板运行。操作：`kill -9 [Claude_PID]`，等下一次 5s 轮询。期望：inspectSessions 发现 PID 不存在 → lstart 验证 → 清理孤儿 session.json 和对应 lock.json → 最多 5 秒后清理完毕，面板 UI 更新。（TC-204）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-204",
+    "related": [
+      "mcp-team-hub PID 复用 lstart 双验"
+    ],
+    "search_queries": [
+      "kill -9 强杀",
+      "孤儿清理",
+      "面板巡检"
+    ]
+  },
+  {
+    "title": "mcp-team-hub session 正常退出清理",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "session"
+    ],
+    "summary": "Ctrl+D 或 exit 应删锁再删 session.json",
+    "content": "前置：session 已启动并持 laochui 锁。操作：正常退出 Claude Code（Ctrl+D 或 exit）。期望：lock.json 被删，session.json 被删；顺序先锁后 session（见 [[mcp-team-hub 清理顺序：先锁后 session]]）。（TC-202）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-202",
+    "related": [
+      "mcp-team-hub 清理顺序：先锁后 session"
+    ],
+    "search_queries": [
+      "正常退出",
+      "session 清理",
+      "Ctrl+D"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 面板单实例保护",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "panel"
+    ],
+    "summary": "重复启动面板第二实例应立即退出，原窗口恢复 focus",
+    "content": "前置：面板已运行。操作：再启第二个面板实例。期望：第二实例立即 app.quit()，原窗口若最小化则恢复并 focus（index.ts:376-380），进程列表只有一个面板进程。（TC-301）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-301",
+    "related": [
+      "mcp-team-hub 面板自关 0 session 15 秒"
+    ],
+    "search_queries": [
+      "面板单实例",
+      "second instance",
+      "app.quit"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 面板自关 0 session 15 秒",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "panel"
+    ],
+    "summary": "0 session 时启动 15s 计时器，期满仍为 0 则自动退出",
+    "content": "前置：面板运行，当前 1 个 session。操作：关闭唯一 session（删 session.json），等 15 秒。期望：sessions.length===0 启动 15s 计时器 → 15s 后再次扫描仍为 0 → 面板自动 app.quit()。代码路径：index.ts:271-290。（TC-304）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-304",
+    "related": [
+      "mcp-team-hub 面板自关中断：新 session 出现"
+    ],
+    "search_queries": [
+      "面板自关",
+      "15s 自动退出",
+      "autoQuitTimer"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 面板自关中断：新 session 出现",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "panel"
+    ],
+    "summary": "自关计时器启动后若有新 session 出现，必须 clearTimeout 不退出",
+    "content": "前置：0 session，15s 自关计时器已启动（约 10s 时）。操作：计时器触发前（第 10s）创建新 session.json，文件监听或轮询触发 pushStatus。期望：检测到 sessions.length>0 → clearTimeout(autoQuitTimer) → 面板不退出继续运行。代码路径：index.ts:285-290。（TC-305）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-305",
+    "related": [
+      "mcp-team-hub 面板自关 0 session 15 秒"
+    ],
+    "search_queries": [
+      "自关中断",
+      "clearTimeout",
+      "新 session 出现"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 面板休眠唤醒恢复",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "panel"
+    ],
+    "summary": "系统 suspend 时停 watcher 和轮询，resume 后 10 秒重启",
+    "content": "前置：面板运行中。操作：powerMonitor suspend 触发，验证 watcher/pollTimer 停止；powerMonitor resume 触发，等 10 秒。期望：suspend 时 chokidar watcher 关闭、轮询停止；resume+10s 后执行全量 inspectSessions、重启 watcher 和轮询。代码路径：index.ts:336-352。（TC-306）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-306",
+    "related": [
+      "mcp-team-hub 面板文件监听实时更新"
+    ],
+    "search_queries": [
+      "powerMonitor 休眠",
+      "suspend resume",
+      "面板唤醒"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 面板文件监听实时更新",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "panel"
+    ],
+    "summary": "chokidar 触发后 UI 应在 1 秒内更新",
+    "content": "前置：面板运行，chokidar 监听 `~/.claude/team-hub/`。操作：手动修改某成员 lock.json（或创建/删除）。期望：UI 在文件变化后 1 秒内更新，不需要等 5s 轮询。代码路径：index.ts:304（chokidar all 事件触发 pushStatus）。（TC-302）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-302",
+    "related": [
+      "mcp-team-hub 面板 5s 轮询兜底"
+    ],
+    "search_queries": [
+      "chokidar 监听",
+      "实时更新",
+      "文件监听"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 面板 5s 轮询兜底",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "panel"
+    ],
+    "summary": "chokidar 失效时 5 秒轮询作兜底",
+    "content": "前置：假设 chokidar 未触发（模拟失效）。操作：通过 rename 等绕 chokidar 修改 lock.json，等最多 5 秒。期望：5 秒内面板 UI 反映最新状态。代码路径：index.ts:318（setInterval 5000ms）。（TC-303）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-303",
+    "related": [
+      "mcp-team-hub 面板文件监听实时更新"
+    ],
+    "search_queries": [
+      "5s 轮询",
+      "chokidar 失效",
+      "兜底轮询"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 并发抢占同一成员",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "concurrency",
+      "P0"
+    ],
+    "summary": "两 session 同时 check_in 同一成员只能一个成功",
+    "content": "前置：laochui 空闲。操作：Session A 和 Session B 同时 `check_in member=\"laochui\"`。期望：只有一个 session 成功（lock.json session_pid 唯一），另一个收到『成员已被占用』错误，lock.json 的 session_pid 与成功 session 一致。（TC-402）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-402",
+    "related": [
+      "mcp-team-hub check_in 接管 TOCTOU"
+    ],
+    "search_queries": [
+      "并发 check_in",
+      "抢占成员",
+      "竞争条件"
+    ]
+  },
+  {
+    "title": "mcp-team-hub handoff 任务交接",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "lock"
+    ],
+    "summary": "A 的锁被释放，B 的锁被创建并继承 task",
+    "content": "前置：成员 A 持锁，需交接给 B。操作：`handoff from=\"laochui\" to=\"xiaokuai\" note=\"接着做登录模块\"`。期望：A 的锁被释放，B 的锁被创建，task 继承 A 的并附 note。（TC-021）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-021",
+    "related": [
+      "mcp-team-hub check_in 正常签到"
+    ],
+    "search_queries": [
+      "handoff 交接",
+      "task 继承",
+      "交接任务"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 卡住扫描 stuck_scan",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "diagnosis"
+    ],
+    "summary": "locked_at 超 2 小时应在 stuck 列表中返回",
+    "content": "前置：某成员 locked_at 超过 2 小时。操作：`stuck_scan` 阈值设为 120 分钟。期望：返回疑似卡住成员列表并含卡住时长。（TC-020）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-020",
+    "related": [],
+    "search_queries": [
+      "stuck_scan",
+      "卡住扫描",
+      "locked_at 超时"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 经验搜索去重",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "memory"
+    ],
+    "summary": "重复经验应基于内容相似度或 hash 去重，不止按 ID",
+    "content": "前置：经验库 3 条含 lock 关键词，其中 2 条内容几乎相同。操作：`search_experience query=\"lock\"`。期望：返回匹配结果重复被去重（返回 2 条而非 3 条）。去重逻辑应基于内容相似度或 hash 而非仅仅 ID。（TC-504）",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-504",
+    "related": [],
+    "search_queries": [
+      "经验搜索去重",
+      "search_experience",
+      "内容相似度"
+    ]
+  },
+  {
+    "title": "mcp-team-hub 临时成员辞退目录清理",
+    "tags": [
+      "e2e-scenario",
+      "mcp-team-hub",
+      "temp-member"
+    ],
+    "summary": "dismiss 应完整删除成员目录不影响其他成员",
+    "content": "前置：有临时成员且当前无锁。操作：`evaluate_temp member=[临时ID] decision=\"dismiss\"`。期望：临时成员目录（含 profile、memory、lock 等）完整删除，其他成员目录不受影响。（TC-603）持锁时应拒绝或先强制释放再删（TC-604）。",
+    "scope": "project",
+    "project_name": "mcp-team-hub",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mcp-team-hub/docs/test-cases.md#TC-603",
+    "related": [],
+    "search_queries": [
+      "临时成员辞退",
+      "evaluate_temp dismiss",
+      "目录清理"
+    ]
+  },
+  {
+    "title": "ai-store 冷启动 5 秒内窗口出现",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "electron",
+      "performance"
+    ],
+    "summary": "Playwright 驱动 Electron，从 launch 到 firstWindow 小于 5000ms",
+    "content": "操作：`launchApp('cold-start')` → 记录 startTime，等 `app.firstWindow()`，计算 elapsed。期望：`elapsed < 5000ms`，`page.title()` 非空，截图 `window-appeared`。用例路径：e2e/sprint1/cold-start.e2e.ts。数据目录注入 `AI_STORE_DATA_DIR` 临时目录，测后 `fs.rmSync` 清理。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#3.1",
+    "related": [
+      "ai-store CLI 扫描 3 秒完成",
+      "ai-store IPC tools.list 返回数组"
+    ],
+    "search_queries": [
+      "冷启动 5 秒",
+      "Electron launchApp",
+      "firstWindow"
+    ]
+  },
+  {
+    "title": "ai-store CLI 扫描 3 秒完成",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "electron"
+    ],
+    "summary": "启动后 3 秒内工具卡片出现，且至少发现 git",
+    "content": "操作：启动 app → `page.waitForFunction` 等 `[data-testid=\"tool-card\"]` 数量>0（timeout=3000）→ 读所有 `[data-testid=\"tool-name\"]`。期望：工具列表 3s 内非空；至少包含 git（macOS 默认）。IPC 层断言：`tools.scan()` 返回 `total>0` 且 `durationMs<3000`，wall time<3500ms（含 IPC 往返 500ms）；discovered/missing 都是数组。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#3.2",
+    "related": [
+      "ai-store 冷启动 5 秒内窗口出现"
+    ],
+    "search_queries": [
+      "CLI 扫描 3 秒",
+      "tools.scan durationMs",
+      "git 发现"
+    ]
+  },
+  {
+    "title": "ai-store IPC tools.list 返回数组",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "ipc"
+    ],
+    "summary": "preload 注入 window.aiStore.tools.list 返回 LocalTool 数组",
+    "content": "操作：`waitForFunction` 等 `window.aiStore.tools` 可用 → `page.evaluate(async () => window.aiStore.tools.list())`。期望：返回数组且 length>0；每项含 `name` `executablePath` `enabled` `category` `permissionLevel` 字段。另一用例：传 `{enabled:true}` filter，返回项每个 `enabled` 必须为 true（验证 filter 正确透传到 Main Process）。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#3.3",
+    "related": [
+      "ai-store 启用禁用工具持久化"
+    ],
+    "search_queries": [
+      "tools.list IPC",
+      "LocalTool 结构",
+      "window.aiStore"
+    ]
+  },
+  {
+    "title": "ai-store 分类过滤列表收敛",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "ui"
+    ],
+    "summary": "点 vcs 分类后所有可见卡片 data-category 必须都是 vcs",
+    "content": "操作：等卡片出现 → 记总数 totalBefore → 点 `[data-testid=\"category-filter-vcs\"]` → `waitForFunction` 等所有 `tool-card` 的 `data-category===\"vcs\"`（timeout=3000）→ 统计过滤后数量。期望：filteredCount<=totalBefore；evaluateAll 取所有 data-category 必须全部是 vcs。不用固定等待时间，而是等列表稳定。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#4.2",
+    "related": [
+      "ai-store IPC tools.list 返回数组"
+    ],
+    "search_queries": [
+      "分类过滤 vcs",
+      "category-filter",
+      "waitForFunction 稳定"
+    ]
+  },
+  {
+    "title": "ai-store 启用禁用工具持久化",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "ui",
+      "persistence"
+    ],
+    "summary": "点开关后 UI 状态翻转，且 IPC 读回的 enabled 同步变化",
+    "content": "操作：拿第一张 tool-card 的 toggle → 读 initialChecked 和 toolName → 点 toggle。期望：toggle.isChecked()===!initialChecked；再 `tools.list()` 找同名 tool，`targetTool.enabled===!initialChecked`。证明 UI 开关与 Main Process 状态一致。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#4.3",
+    "related": [
+      "ai-store IPC tools.list 返回数组"
+    ],
+    "search_queries": [
+      "启用禁用 toggle",
+      "UI 与状态一致",
+      "tool-enable-toggle"
+    ]
+  },
+  {
+    "title": "ai-store 扫描按钮 loading 状态流转",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "ui"
+    ],
+    "summary": "点扫描按钮：loading=true 2s 内出现，10s 内消失，列表更新",
+    "content": "操作：点 `[data-testid=\"scan-button\"]` → `toHaveAttribute('data-loading','true', {timeout:2000})` → `not.toHaveAttribute('data-loading','true', {timeout:10000})`。期望：loading 状态 2s 内出现并在 10s 内消失；扫描后 `tool-card` 数量>=扫描前。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#4.4",
+    "related": [
+      "ai-store CLI 扫描 3 秒完成"
+    ],
+    "search_queries": [
+      "扫描按钮 loading",
+      "data-loading",
+      "scan-button"
+    ]
+  },
+  {
+    "title": "ai-store App 安装无效 manifest 拒绝",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "app-install"
+    ],
+    "summary": "manifest 缺 name 等必填字段时 install 必须抛错",
+    "content": "操作：`window.aiStore.apps.install(INVALID_APP_PATH)` 包在 try/catch。期望：`result.success===false`，`result.error` 非空。有效 mock-app 安装则应返回 `appMeta.status==='installed'` 且 `manifest.name==='mock-test-app'`。fixtures：`e2e/fixtures/mock-app/` 合规 manifest；`invalid-app/` 缺 name 字段。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#5.1",
+    "related": [
+      "ai-store App 生命周期 install→start→stop"
+    ],
+    "search_queries": [
+      "App 安装拒绝",
+      "无效 manifest",
+      "invalid-app fixture"
+    ]
+  },
+  {
+    "title": "ai-store App 生命周期 install→start→stop",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "app-lifecycle"
+    ],
+    "summary": "install→start 后 status=running，stop 后 status=stopped",
+    "content": "操作：install → start → waitForFunction 等 `apps.get(id).status==='running'`（5s 超时）→ stop → waitForFunction 等 status==='stopped'。期望：两次状态断言都符合；Bun 子进程在 stop 后必须真正退出。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#5.2",
+    "related": [
+      "ai-store App 安装无效 manifest 拒绝"
+    ],
+    "search_queries": [
+      "App 生命周期",
+      "apps.start stop",
+      "status running"
+    ]
+  },
+  {
+    "title": "ai-store 信箱并发发送 index.json 合法",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "mailbox",
+      "concurrency"
+    ],
+    "summary": "Promise.all 并发两条 mailbox.send，两条必须都能 getUnread",
+    "content": "操作：`Promise.all([mailbox.send('concurrent-receiver',{seq:1}), mailbox.send(...,{seq:2})])` → `getUnread('concurrent-receiver')`。期望：两条 msgId 都是非空字符串且不相同；unread 列表包含两个 id；msg1.payload==={seq:1}、msg2.payload==={seq:2}（无覆盖丢失）。验证 FileStore 写队列并发保护。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#5.3",
+    "related": [
+      "ai-store 信箱 markRead 生效"
+    ],
+    "search_queries": [
+      "mailbox 并发 send",
+      "FileStore 写队列",
+      "index.json 合法"
+    ]
+  },
+  {
+    "title": "ai-store 信箱 markRead 生效",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "mailbox"
+    ],
+    "summary": "markRead 后同一 id 不再出现在 getUnread",
+    "content": "操作：`mailbox.send('receiver-mark',...)` → 拿 msgId → `mailbox.markRead([msgId])` → 再 `getUnread`。期望：unreadAfter 中找不到 msgId。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#5.3",
+    "related": [
+      "ai-store 信箱并发发送 index.json 合法"
+    ],
+    "search_queries": [
+      "markRead",
+      "getUnread 排除",
+      "已读过滤"
+    ]
+  },
+  {
+    "title": "ai-store 两 App 信箱通信",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "mailbox",
+      "app-lifecycle"
+    ],
+    "summary": "sender-app 启动后自动给 receiver-app 发消息，receiver 可读到",
+    "content": "操作：install sender-app 和 receiver-app → 都 start → waitForFunction 等两者都 running → waitForFunction 等 `mailbox.getUnread(receiverId).length>0`（10s 超时）。期望：receiver 能读到来自 sender 的消息；messages.length>0。fixtures：`sender-app/src/main.ts` 启动后自动 send，`receiver-app` 负责接收记录。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#5.4",
+    "related": [
+      "ai-store 信箱并发发送 index.json 合法"
+    ],
+    "search_queries": [
+      "App 间通信",
+      "sender receiver App",
+      "跨 App 信箱"
+    ]
+  },
+  {
+    "title": "ai-store P1 场景 A：git 查看最近改动",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "cli-agent"
+    ],
+    "summary": "输入『帮我看看最近改了什么』应触发 Bash status=done",
+    "content": "输入：`\"帮我看看最近改了什么\"`。期望：tool-call-bubble 出现且工具 Bash status=done；assistant 有文字回复。文件：p1-scenario-git.e2e.ts，耗时约 20.8s。验证 CLIAgentEngine 端到端能把自然语言转成 Bash 调用。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-reports/p1-scenarios.md",
+    "related": [
+      "ai-store P1 场景 D：package.json 多工具链路"
+    ],
+    "search_queries": [
+      "git 最近改动",
+      "CLIAgentEngine Bash",
+      "tool-call-bubble"
+    ]
+  },
+  {
+    "title": "ai-store P1 场景 D：package.json 多工具链路",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "cli-agent"
+    ],
+    "summary": "查看 package.json 并提取项目名与版本，需至少触发 1 个工具",
+    "content": "输入：`\"查看 package.json 的内容，告诉我项目名称和版本号\"`。期望：tool-call-bubble 出现，至少 1 个工具触发；assistant 回复包含版本信息。文件：p1-scenario-multi-tool.e2e.ts，耗时约 15.8s。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-reports/p1-scenarios.md",
+    "related": [
+      "ai-store P1 场景 A：git 查看最近改动"
+    ],
+    "search_queries": [
+      "多工具链路",
+      "package.json",
+      "项目名 版本"
+    ]
+  },
+  {
+    "title": "ai-store P1 场景 E：多轮问答不崩",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "cli-agent"
+    ],
+    "summary": "两轮纯问答输入，两条回复都必须非空且无崩溃关键词",
+    "content": "输入：`\"你好，请用一句话介绍自己\"` + `\"谢谢，再见\"`（多轮）。期望：assistant 两条回复均非空，无崩溃关键词。文件：p1-scenario-error-recovery.e2e.ts，耗时约 19.0s。验证多轮对话会话状态保持。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-reports/p1-scenarios.md",
+    "related": [
+      "ai-store P1 场景 A：git 查看最近改动"
+    ],
+    "search_queries": [
+      "多轮对话",
+      "纯问答",
+      "不崩关键词"
+    ]
+  },
+  {
+    "title": "supercell 流式聊天集成：分片拼接",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "streaming"
+    ],
+    "summary": "msw mock SSE 3 chunk，assistant message 逐步从空到 Hello World",
+    "content": "msw 拦截返回 `['Hello', ' ', 'World']`。调用 chat 发送逻辑。期望：user message 立即出现；assistant message 从 '' → 'Hello' → 'Hello ' → 'Hello World'；isLoading 从 true → false。验证 SSE 分片拼接无丢字。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.3.1",
+    "related": [
+      "supercell 流式中途断开保留已收到内容",
+      "supercell 切换聊天不污染新会话"
+    ],
+    "search_queries": [
+      "SSE 分片拼接",
+      "流式聊天 msw",
+      "逐字渲染"
+    ]
+  },
+  {
+    "title": "supercell 流式中途断开保留已收到内容",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "streaming"
+    ],
+    "summary": "msw 返回部分数据后断开，已收到内容必须保留",
+    "content": "msw 返回部分 chunk 后断开连接。期望：已收到的内容保留在 store 中，UI 有错误提示。不可因中断清空 partial assistant message。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.3.1",
+    "related": [
+      "supercell 流式聊天集成：分片拼接"
+    ],
+    "search_queries": [
+      "流式中断",
+      "partial 保留",
+      "连接断开"
+    ]
+  },
+  {
+    "title": "supercell 切换聊天不污染新会话",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "streaming"
+    ],
+    "summary": "chat-1 流式响应进行中切到 chat-2，旧数据不能追加到 chat-2",
+    "content": "步骤：在 chat-1 发送消息，流式响应进行中；切换到 chat-2。期望：chat-1 的流式数据不会追加到 chat-2 的 messages。需要 AbortController 机制或 chat id 校验。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.3.1",
+    "related": [
+      "supercell 流式聊天集成：分片拼接",
+      "supercell 用户点停止 AbortController"
+    ],
+    "search_queries": [
+      "切换聊天污染",
+      "AbortController",
+      "跨会话流式"
+    ]
+  },
+  {
+    "title": "supercell 用户点停止 AbortController",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "streaming"
+    ],
+    "summary": "停止按钮应 abort 请求，已收到内容保留，isLoading 变 false",
+    "content": "步骤：发送消息 → 流式响应进行中 → 点『停止』。期望：fetch 请求被 abort；store 中已收到内容保留；isLoading 变回 false，不可再卡 loading。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.3.1",
+    "related": [
+      "supercell 切换聊天不污染新会话"
+    ],
+    "search_queries": [
+      "AbortController 停止",
+      "isLoading 卡住",
+      "中止请求"
+    ]
+  },
+  {
+    "title": "supercell Orchestrator 同名 agent 重复执行拒绝",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "orchestrator",
+      "concurrency"
+    ],
+    "summary": "同一 agent 正在 run 时再次调用应抛 'already running'",
+    "content": "让第一个 agent 永远 pending；同时调用第二个 `runAgent(同名)`。期望：抛『already running』错误。验证 orchestrator.ts:68 的 Set 防重入机制。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.1.2",
+    "related": [
+      "supercell Orchestrator 并发部分失败不影响其他"
+    ],
+    "search_queries": [
+      "agent 重复执行",
+      "already running",
+      "Set 防重入"
+    ]
+  },
+  {
+    "title": "supercell Orchestrator 并发部分失败不影响其他",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "orchestrator"
+    ],
+    "summary": "developer 成功 tester 失败时应返回 1 个结果并打印错误",
+    "content": "mock developer 成功、tester 失败，调用 `runAgents(['developer','tester'])`。期望：返回 1 个结果（developer）；控制台有 tester 错误日志；若全部失败则抛『All selected agents failed』聚合错误，含所有失败原因。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.1.2",
+    "related": [
+      "supercell Orchestrator 同名 agent 重复执行拒绝"
+    ],
+    "search_queries": [
+      "runAgents 部分失败",
+      "聚合错误",
+      "All selected agents failed"
+    ]
+  },
+  {
+    "title": "supercell Cron 调度覆盖旧任务",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "orchestrator"
+    ],
+    "summary": "重复 scheduleCron 只保留一个活跃任务",
+    "content": "调用 scheduleCron 两次（不同表达式）。期望：只有一个活跃的 cron 任务存在（旧任务被 stop）。无效表达式应抛『Invalid cron expression』错误。stopCron 后 getStatus 返回 cronActive=false、cronSchedule=null。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.1.2",
+    "related": [],
+    "search_queries": [
+      "scheduleCron 覆盖",
+      "stopCron",
+      "Invalid cron expression"
+    ]
+  },
+  {
+    "title": "supercell API /api/agents/run duplicate 拒绝",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "api"
+    ],
+    "summary": "body 中 agents 数组含重复名返回 400 含 duplicate 字段",
+    "content": "POST `/api/agents/run` body=`{\"agents\":[\"developer\",\"developer\"]}`。期望：status 400；json.error 含 'duplicate' 关键词。安全性附加：超大 body（1 万个 agent）不能崩服务；Content-Type text/plain 不能崩；OPTIONS 预检返回 204 且 access-control-allow-origin=*。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.1.3",
+    "related": [
+      "supercell API /api/agents/:name/run agent 正在运行返回 409"
+    ],
+    "search_queries": [
+      "agents/run duplicate",
+      "超大 body 不崩",
+      "CORS 预检 204"
+    ]
+  },
+  {
+    "title": "supercell API /api/agents/:name/run agent 正在运行返回 409",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "api"
+    ],
+    "summary": "agent 运行中再触发应 409 Conflict，不可 200 排队",
+    "content": "让 agent 持续运行中；再次 POST `/api/agents/developer/run`。期望：status 409。另：无效 agent 名返回 400；别名解析 `dev→developer` `qa→tester` 生效。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.1.3",
+    "related": [
+      "supercell Orchestrator 同名 agent 重复执行拒绝"
+    ],
+    "search_queries": [
+      "agent 运行中 409",
+      "别名 dev qa",
+      "Conflict 响应"
+    ]
+  },
+  {
+    "title": "supercell 迭代循环 is_stunning 终止",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "loop"
+    ],
+    "summary": "PM 评估 score>=9 且无 critical gaps 时 stop_reason='stunning'",
+    "content": "mock 各阶段 LLM，PM 评估返回 score=9 无 critical gaps。期望：iteration.is_stunning=true；loop.stop_reason==='stunning' 循环终止。另：达到 max_iterations → stop_reason='max_iterations'；某阶段 LLM 失败 → iteration.error 记录，stop_reason='error' 含具体信息。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.2.2",
+    "related": [
+      "supercell Orchestrator 并发部分失败不影响其他"
+    ],
+    "search_queries": [
+      "is_stunning 终止",
+      "stop_reason",
+      "max_iterations"
+    ]
+  },
+  {
+    "title": "supercell updateModelList 竞态只生效最后一次",
+    "tags": [
+      "e2e-scenario",
+      "supercell",
+      "store"
+    ],
+    "summary": "requestId 机制保证连续 3 次调用只有最后一次结果生效",
+    "content": "连续调用 updateModelList 3 次，mock 返回不同列表。期望：只有第 3 次的结果最终更新 store.modelList。另：当前 model 不在新列表时自动切换到列表第一个；请求 10s 超时后中止不影响 modelList。",
+    "scope": "project",
+    "project_name": "supercell",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#10.3.2",
+    "related": [
+      "supercell 流式聊天集成：分片拼接"
+    ],
+    "search_queries": [
+      "updateModelList 竞态",
+      "requestId 机制",
+      "只生效最后一次"
+    ]
+  },
+  {
+    "title": "ai-store FileStore 并发 10 次写同一文件",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "filestore",
+      "concurrency"
+    ],
+    "summary": "10 次并发 atomicWrite 不同内容，最终状态=最后一次，文件永远合法 JSON",
+    "content": "操作：并发调用 atomicWrite 10 次写同一文件每次不同内容。期望：全部 resolve 后 `read()` 等于最后一次写入值；文件内容任意时刻都是合法 JSON。不留 `.tmp.*` 文件，写入目录不存在要抛错且不留残余。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/sprint1-unit-test-plan.md#1.3",
+    "related": [
+      "ai-store 信箱并发发送 index.json 合法"
+    ],
+    "search_queries": [
+      "FileStore 并发写",
+      "atomicWrite 10 次",
+      "合法 JSON"
+    ]
+  },
+  {
+    "title": "ai-store FileStore 损坏 JSON 返回默认值",
+    "tags": [
+      "e2e-scenario",
+      "ai-store",
+      "filestore",
+      "robustness"
+    ],
+    "summary": "文件内容非法 JSON 时 read() 返回 defaultValue 不抛异常",
+    "content": "操作：先写入 `not-json` 字符串；调用 `read()` 传 defaultValue。期望：返回 defaultValue，不抛异常。另：文件不存在时也应返回 defaultValue。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/sprint1-unit-test-plan.md#1.5",
+    "related": [
+      "mcp-team-hub 半截 JSON 容错"
+    ],
+    "search_queries": [
+      "损坏 JSON 默认值",
+      "FileStore read",
+      "非法 JSON 容错"
+    ]
+  },
+  {
+    "title": "cross-project 测试数据目录隔离",
+    "tags": [
+      "e2e-scenario",
+      "cross-project",
+      "test-env"
+    ],
+    "summary": "E2E 测试每个用例独立 tmpdir，测后 rmSync 清理，避免状态污染",
+    "content": "约定：测试用 `os.tmpdir()` + 随机子目录 + 进程 PID/timestamp，`afterEach` / `closeApp` 清理。ai-store 通过 `AI_STORE_DATA_DIR` 环境变量注入；mcp-team-hub 通过 `~/.claude/team-hub/` 但测试里应用子目录。红线：不允许跨 test case 共享状态。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#1.3 + sprint1-unit-test-plan.md#1",
+    "related": [
+      "ai-store 冷启动 5 秒内窗口出现"
+    ],
+    "search_queries": [
+      "测试数据隔离",
+      "tmpdir 清理",
+      "AI_STORE_DATA_DIR"
+    ]
+  },
+  {
+    "title": "cross-project 不 mock 测试红线",
+    "tags": [
+      "e2e-scenario",
+      "cross-project",
+      "delivery-rule"
+    ],
+    "summary": "ToolExecutor 至少 30% 用例真实执行 CLI；CLIScanner.scan() 必须有一个真实环境用例",
+    "content": "用户红线：不 mock 测试。ai-store sprint1 明确：ToolExecutor 测试至少 30% 用例真实执行 CLI 命令；CLIScanner.scan() 必须有一个真实环境用例验证能发现本机已安装工具。Mock 策略必须明确标注，不允许『可能 mock』模糊表述。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/CLAUDE.md + /Users/zhuqingyu/project/ai-store/docs/test-plans/sprint1-unit-test-plan.md",
+    "related": [
+      "ai-store CLI 扫描 3 秒完成"
+    ],
+    "search_queries": [
+      "不 mock 测试",
+      "真实 CLI 执行",
+      "mock 策略红线"
+    ]
+  },
+  {
+    "title": "cross-project Playwright 截图归档约定",
+    "tags": [
+      "e2e-scenario",
+      "cross-project",
+      "playwright"
+    ],
+    "summary": "正常步骤 takeScreenshot 存 test-results/screenshots/，失败自动截图；test-results 入 .gitignore",
+    "content": "约定：文件名 `{test-name}-{step}-{timestamp}.png`，非法字符替换为 `-`；`fullPage:true`。失败时 Playwright 自动截图+录像（`screenshot: 'only-on-failure'`、`video: 'retain-on-failure'`）。目录 `test-results/` 加入 .gitignore，CI 作 artifact 上传。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#1.4+8.2",
+    "related": [
+      "ai-store 冷启动 5 秒内窗口出现"
+    ],
+    "search_queries": [
+      "Playwright 截图",
+      "test-results gitignore",
+      "失败自动录像"
+    ]
+  },
+  {
+    "title": "cross-project data-testid 约定",
+    "tags": [
+      "e2e-scenario",
+      "cross-project",
+      "playwright"
+    ],
+    "summary": "UI E2E 定位依赖稳定 data-testid，不依赖 className 或文本",
+    "content": "约定：UI 组件需加 data-testid 属性供 E2E 定位。ai-store 已定义：`tools-page` `tool-card`（带 data-category）`tool-name` `tool-version`（空字符串不隐藏）`tool-permission` `tool-enable-toggle` `category-filter-{category}` `scan-button`（带 data-loading） `apps-page` `app-card` `mailbox-page`。无版本时 version 元素不隐藏而是空字符串，保证 `toBeAttached()` 成立。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md#7",
+    "related": [
+      "ai-store 分类过滤列表收敛"
+    ],
+    "search_queries": [
+      "data-testid 约定",
+      "E2E 选择器",
+      "UI 定位"
+    ]
+  },
+  {
+    "title": "cross-project E2E 用 waitForFunction 避免固定等待",
+    "tags": [
+      "e2e-scenario",
+      "cross-project",
+      "playwright"
+    ],
+    "summary": "不用 sleep/setTimeout，用 waitForFunction 等列表稳定条件",
+    "content": "最佳实践：不用 `page.waitForTimeout` 或 sleep。用 `page.waitForFunction(() => 条件, {timeout})`。例如分类过滤等到所有可见 card 的 data-category 都变为目标值；app 生命周期等 `apps.get(id).status==='running'`；信箱通信等 `getUnread(id).length>0`。避免慢测且减少 flaky。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/ai-store/docs/test-plans/e2e-test-plan.md",
+    "related": [
+      "ai-store 分类过滤列表收敛",
+      "ai-store App 生命周期 install→start→stop"
+    ],
+    "search_queries": [
+      "waitForFunction",
+      "避免 sleep",
+      "flaky 测试"
+    ]
+  },
+  {
+    "title": "cross-project SQLite 测试用 :memory:",
+    "tags": [
+      "e2e-scenario",
+      "cross-project",
+      "database"
+    ],
+    "summary": "集成测试用 :memory: SQLite，每 suite 独立实例避免并行干扰",
+    "content": "约定：integration test 用 SQLite `:memory:` 模式；每个 test suite 独立 DB 实例；测试前 `initSchema`。supercell 的 `server/db/db.integration.test.ts` 覆盖 agent_runs 生命周期、findings CRUD、iterations CRUD、外键级联删除、并发写入（Promise.all 同时写 3 个 agent 数据）。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#9.5+10.1.4",
+    "related": [
+      "cross-project 测试数据目录隔离"
+    ],
+    "search_queries": [
+      ":memory: SQLite",
+      "集成测试 DB",
+      "WAL 并发写入"
+    ]
+  },
+  {
+    "title": "cross-project msw 拦截 OpenAI SDK",
+    "tags": [
+      "e2e-scenario",
+      "cross-project",
+      "mock"
+    ],
+    "summary": "前端和服务端 LLM 集成测试统一用 msw 拦截 HTTP",
+    "content": "比 vi.mock 更贴近真实：msw 拦截 OpenAI SDK 的 HTTP 请求，前后端通用。可 mock 流式响应（构造 ReadableStream 发 SSE chunk）、超时（delay 15s）、错误码。supercell 的 `llm.integration.test.ts` 覆盖：正常返回、第一次失败第二次成功（retry 生效）、连续 3 次失败抛最后错误、TimeoutError 不重试、退避间隔 2s/4s。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/supercell/docs/TEST-strategy.md#9.5+10.1.5",
+    "related": [
+      "supercell 流式聊天集成：分片拼接"
+    ],
+    "search_queries": [
+      "msw 拦截",
+      "OpenAI SDK mock",
+      "LLM retry 测试"
+    ]
+  }
+]

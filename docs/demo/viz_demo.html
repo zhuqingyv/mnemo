@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>mnemo · 知识可视化 demo (Canvas)</title>
+<style>
+  :root {
+    --bg-0: #0e1116;
+    --bg-1: #151a21;
+    --bg-2: #1c222b;
+    --bg-3: #252c37;
+    --border: #2a313c;
+    --border-strong: #3a4250;
+    --text-0: #e6edf3;
+    --text-1: #b9c2cd;
+    --text-2: #7d8693;
+    --text-3: #565d68;
+    --accent: #58a6ff;
+    --accent-dim: #1f6feb;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --purple: #a371f7;
+    --gray: #6e7681;
+    --mono: "JetBrains Mono", "Fira Code", "SF Mono", "Menlo", "Consolas", monospace;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100vh; overflow: hidden;
+    background: var(--bg-0); color: var(--text-0);
+    font-family: var(--mono); font-size: 13px;
+  }
+
+  button { font-family: inherit; font-size: inherit; cursor: pointer; }
+  kbd {
+    font-family: var(--mono); font-size: 10.5px;
+    background: var(--bg-3); color: var(--text-1);
+    padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);
+  }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; background: var(--bg-1);
+    border-bottom: 1px solid var(--border);
+    height: 52px;
+  }
+  .topbar .brand {
+    font-weight: 700; color: var(--text-0);
+    letter-spacing: 0.5px; font-size: 14px;
+  }
+  .topbar .brand .dot { color: var(--accent); }
+  .topbar .hint { color: var(--text-3); font-size: 11px; margin-left: 4px; }
+
+  .search-wrap { flex: 1; max-width: 560px; position: relative; }
+  .search-wrap input {
+    width: 100%; background: var(--bg-2); color: var(--text-0);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 8px 36px 8px 32px; font-family: var(--mono); font-size: 13px;
+    outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .search-wrap input:focus {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 2px rgba(88,166,255,0.15);
+  }
+  .search-wrap .icon-search {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--text-2); pointer-events: none;
+  }
+  .search-wrap .clear-btn {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--text-3);
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .search-wrap .clear-btn:hover { color: var(--text-0); background: var(--bg-3); }
+
+  .btn {
+    background: var(--bg-2); color: var(--text-0);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 7px 12px; transition: background 0.15s, border-color 0.15s;
+  }
+  .btn:hover { background: var(--bg-3); border-color: var(--border-strong); }
+  .btn.primary { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+  .btn.primary:hover { background: #2a7aed; }
+
+  .stage {
+    position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
+    overflow: hidden; background: var(--bg-0);
+  }
+  #canvas {
+    position: absolute; inset: 0;
+    display: block;
+    cursor: grab;
+  }
+  #canvas.panning { cursor: grabbing; }
+  #canvas.over-card { cursor: pointer; }
+
+  .hud {
+    position: absolute;
+    font-size: 11.5px;
+  }
+  .hud.bottom-left {
+    left: 14px; bottom: 14px;
+    background: rgba(21,26,33,0.9);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 8px 12px;
+    color: var(--text-2);
+    line-height: 1.6;
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+  }
+  .hud.bottom-left .key { color: var(--text-1); font-weight: 600; }
+  .hud.bottom-left .sep { color: var(--border-strong); margin: 0 4px; }
+
+  .hud.top-left {
+    left: 14px; top: 14px;
+    display: flex; gap: 10px; align-items: center;
+    flex-wrap: wrap;
+    pointer-events: auto;
+  }
+  .hud.top-left .stat {
+    background: rgba(21,26,33,0.9);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 10px;
+    color: var(--text-2);
+    display: inline-flex; gap: 6px; align-items: center;
+    backdrop-filter: blur(6px);
+  }
+  .hud.top-left .stat .num { color: var(--text-0); font-weight: 600; }
+  .hud.top-left .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-active { background: var(--green); }
+  .dot-stale { background: var(--yellow); }
+  .dot-archived { background: var(--gray); }
+  .dot-contradicts { background: var(--red); }
+
+  .hud.top-right {
+    right: 14px; top: 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: auto;
+  }
+  .zoom-controls {
+    display: flex; flex-direction: column; gap: 2px;
+    background: rgba(21,26,33,0.9);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    backdrop-filter: blur(6px);
+    overflow: hidden;
+  }
+  .zoom-controls button {
+    background: transparent; color: var(--text-1);
+    border: none; padding: 6px 10px;
+    font-family: var(--mono); font-size: 13px;
+    min-width: 36px;
+  }
+  .zoom-controls button:hover { background: var(--bg-3); color: var(--text-0); }
+  .zoom-controls .zoom-readout {
+    padding: 4px 8px; font-size: 10.5px; color: var(--text-3); text-align: center;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  }
+
+  .search-diff {
+    position: absolute;
+    top: 8px; left: 50%; transform: translateX(-50%);
+    background: rgba(21,26,33,0.95);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    color: var(--text-2);
+    display: none;
+    gap: 12px; align-items: center;
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+    z-index: 10;
+  }
+  .search-diff.show { display: inline-flex; }
+  .search-diff .hit-count { color: var(--accent); font-weight: 600; }
+  .search-diff .exit {
+    background: none; border: 1px solid var(--border);
+    color: var(--text-2); padding: 2px 8px; border-radius: 3px; font-size: 11px;
+  }
+  .search-diff .exit:hover { color: var(--text-0); border-color: var(--border-strong); }
+
+  .content-panel {
+    position: fixed; top: 52px; right: 0;
+    width: 420px; height: calc(100vh - 52px);
+    background: var(--bg-1);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    animation: panelSlideIn 240ms ease-out;
+    z-index: 30;
+  }
+  @keyframes panelSlideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .pnl-head {
+    position: sticky; top: 0;
+    background: var(--bg-1);
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    z-index: 2;
+  }
+  .pnl-head .pnl-title {
+    flex: 1; font-weight: 700; font-size: 14px; color: var(--text-0);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pnl-close {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-2); padding: 3px 8px; border-radius: 4px;
+  }
+  .pnl-close:hover { color: var(--text-0); background: var(--bg-3); }
+
+  .pnl-body { padding: 14px; }
+  .pnl-section { margin-bottom: 16px; }
+  .pnl-section h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-3); margin: 0 0 8px 0; font-weight: 600;
+  }
+  .pnl-content {
+    font-size: 12.5px; color: var(--text-0); line-height: 1.6;
+    white-space: pre-wrap;
+    background: var(--bg-0);
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .meta-row {
+    display: flex; gap: 8px; font-size: 11.5px; color: var(--text-2);
+    margin-bottom: 4px;
+  }
+  .meta-row .k { color: var(--text-3); min-width: 76px; }
+  .meta-row .v { color: var(--text-1); }
+
+  .rerank-panel {
+    background: var(--bg-0); border: 1px solid var(--border);
+    border-radius: 4px; padding: 10px 12px;
+  }
+  .rerank-panel .rr-final {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .rerank-panel .rr-factor {
+    display: grid; grid-template-columns: 100px 1fr 44px;
+    align-items: center; gap: 8px;
+    font-size: 11.5px; margin-bottom: 5px;
+  }
+  .rerank-panel .rr-label { color: var(--text-2); }
+  .rerank-panel .rr-bar {
+    height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden;
+  }
+  .rerank-panel .rr-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.5s ease-out;
+  }
+  .rerank-panel .rr-num {
+    color: var(--text-1); text-align: right; font-weight: 600;
+  }
+
+  .rel-list .rel-item {
+    padding: 6px 0; border-bottom: 1px dashed var(--border);
+    font-size: 12px; color: var(--text-1);
+    display: flex; gap: 8px; align-items: baseline;
+  }
+  .rel-list .rel-item:last-child { border-bottom: none; }
+  .rel-list .rel-item .rel-verb { color: var(--text-3); font-size: 11px; }
+  .rel-list .rel-item .rel-target {
+    color: var(--accent); cursor: pointer; padding: 1px 4px;
+    border-radius: 3px;
+  }
+  .rel-list .rel-item .rel-target:hover { background: rgba(88,166,255,0.1); }
+  .rel-list .rel-item.contradict .rel-target { color: #ffa198; }
+
+  .supersede-view {
+    background: var(--bg-0);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+  }
+  .ss-version {
+    padding: 10px 12px; margin-bottom: 8px;
+    background: var(--bg-1); border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .ss-version.old { opacity: 0.5; }
+  .ss-version.current { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(88,166,255,0.2); }
+  .ss-version:hover { background: var(--bg-2); }
+  .ss-version .v-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 3px;
+  }
+  .ss-version .v-tag { font-weight: 700; color: var(--text-0); font-size: 12px; }
+  .ss-version .v-date { font-size: 11px; color: var(--text-3); }
+  .ss-version .v-title { font-size: 12.5px; color: var(--text-0); font-weight: 600; margin-bottom: 2px; }
+  .ss-version .v-sum { font-size: 11.5px; color: var(--text-2); line-height: 1.5; }
+  .ss-arrow { text-align: center; color: var(--text-3); margin: -2px 0 4px 0; font-size: 11px; }
+
+  .timeline-mini { font-family: var(--mono); font-size: 11.5px; }
+  .timeline-mini .ev {
+    display: flex; gap: 10px; padding: 4px 0;
+    border-left: 2px solid var(--border);
+    padding-left: 10px; margin-left: 4px;
+    color: var(--text-1); position: relative;
+  }
+  .timeline-mini .ev::before {
+    content: ""; position: absolute; left: -5px; top: 10px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-dim);
+  }
+  .timeline-mini .ev.supersede::before { background: var(--yellow); }
+  .timeline-mini .ev .ev-date { color: var(--text-3); min-width: 88px; }
+
+  .duel-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 32px;
+    animation: fadeIn 240ms ease-out;
+  }
+  @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+
+  .duel {
+    background: var(--bg-1);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    max-width: 1040px; width: 100%;
+    max-height: 86vh; overflow-y: auto;
+    padding: 24px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.55);
+    animation: duelPop 260ms ease-out;
+    position: relative;
+  }
+  @keyframes duelPop {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .duel .duel-banner {
+    text-align: center;
+    font-size: 14px; font-weight: 700;
+    color: #ffa198;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: rgba(248, 81, 73, 0.08);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+  }
+  .duel .duel-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: 16px; align-items: stretch;
+    margin-bottom: 20px;
+  }
+  .duel .duel-card {
+    background: var(--bg-0); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px;
+    min-height: 200px;
+  }
+  .duel .duel-card .dc-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: var(--text-0); }
+  .duel .duel-card .dc-content { font-size: 12.5px; color: var(--text-1); line-height: 1.6; margin-bottom: 10px; }
+  .duel .duel-card .dc-meta { font-size: 11.5px; color: var(--text-3); display: flex; flex-direction: column; gap: 2px; }
+  .duel .duel-card .dc-meta .v { color: var(--text-1); }
+  .duel .duel-vs {
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .duel .duel-vs .bolt {
+    font-size: 32px;
+    color: var(--red);
+    filter: drop-shadow(0 0 12px rgba(248,81,73,0.6));
+    animation: boltPulse 1.8s infinite ease-in-out;
+  }
+  .duel .duel-vs .crack {
+    position: absolute; top: 0; bottom: 0;
+    left: 50%; width: 2px;
+    background: repeating-linear-gradient(to bottom,
+      rgba(248,81,73,0.6) 0 8px, transparent 8px 14px,
+      rgba(248,81,73,0.4) 14px 20px, transparent 20px 26px);
+    transform: translateX(-50%);
+  }
+  @keyframes boltPulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
+  .duel .duel-actions {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    padding-top: 14px; border-top: 1px solid var(--border);
+  }
+  .duel .duel-actions button {
+    background: var(--bg-2); color: var(--text-0);
+    border: 1px solid var(--border); padding: 8px 14px;
+    border-radius: 5px; font-size: 12px;
+  }
+  .duel .duel-actions button:hover { background: var(--bg-3); border-color: var(--border-strong); }
+  .duel .duel-actions button.primary { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+  .duel .duel-actions button.danger { color: #ffa198; border-color: rgba(248,81,73,0.4); }
+  .duel .duel-close {
+    position: absolute; top: 12px; right: 14px;
+    background: none; border: none; color: var(--text-2);
+    font-size: 22px; padding: 4px 8px; border-radius: 4px;
+  }
+  .duel .duel-close:hover { color: var(--text-0); background: var(--bg-3); }
+
+  .toast-stack {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 200;
+  }
+  .toast {
+    background: var(--bg-3); color: var(--text-0);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px; padding: 10px 16px;
+    font-size: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    animation: toastIn 220ms ease-out;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tooltip {
+    position: absolute;
+    background: var(--bg-3);
+    border: 1px solid var(--border-strong);
+    color: var(--text-1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 20;
+    display: none;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot">●</span> mnemo<span class="hint">/knowledge-viz · canvas</span></div>
+  <div class="search-wrap">
+    <span class="icon-search">⌕</span>
+    <input id="search-input" placeholder="搜索知识库…（试试 “MCP 超时” / “SQLite” / “nft”）" />
+    <button class="clear-btn" id="search-clear" title="清除">×</button>
+  </div>
+  <button class="btn primary" id="simulate-write" title="模拟 agent 写入新知识">+ 模拟写入</button>
+  <button class="btn" id="show-contradictions" title="查看未解决的矛盾对">⚡ 矛盾对</button>
+  <button class="btn" id="reset-view" title="回到默认视图">⊙ 重置视图</button>
+</div>
+
+<div class="stage">
+  <canvas id="canvas"></canvas>
+
+  <div class="search-diff" id="search-diff">
+    <span>🔍 "<b id="sd-query"></b>"</span>
+    <span class="hit-count"><span id="sd-hit">0</span> 命中</span>
+    <span id="sd-miss" style="color:var(--text-3)">0 未命中（折叠为灰条）</span>
+    <button class="exit" id="exit-search">退出</button>
+  </div>
+
+  <div class="hud top-left" id="stats-hud"></div>
+
+  <div class="hud top-right">
+    <div class="zoom-controls">
+      <button id="zoom-in" title="放大 (+)">＋</button>
+      <div class="zoom-readout" id="zoom-readout">100%</div>
+      <button id="zoom-out" title="缩小 (-)">−</button>
+      <button id="zoom-fit" title="适配屏幕 (0)">⊡</button>
+    </div>
+  </div>
+
+  <div class="hud bottom-left">
+    <div><span class="key">拖动</span> 平移画布 <span class="sep">·</span> <span class="key">滚轮</span> 缩放 <span class="sep">·</span> <span class="key">点击</span> 选中</div>
+    <div><span class="key">⌘/Ctrl+K</span> 搜索 <span class="sep">·</span> <span class="key">+ / −</span> 缩放 <span class="sep">·</span> <span class="key">0</span> 适配 <span class="sep">·</span> <span class="key">ESC</span> 关闭</div>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script>
+/* ========== Data ========== */
+const DATA = [
+  {
+    id: 'k01',
+    title: 'MCP 默认超时设置为 30s',
+    summary: '在 ~/.config/claude/mcp.json 中将所有 MCP server 的 connect/tool_call 超时设为 30 秒即可覆盖大多数场景。实测 nft-gmgn 的 RPC 聚合工具链能在 25s 内返回。',
+    content: '# MCP 超时配置（旧结论）\n\n参考 config.md（2026-02-10 写入）。\n\n- connect_timeout: 30s\n- tool_call_timeout: 30s\n- 失败时自动 fallback 到只读查询',
+    claim_type: 'decision', status: 'active', scope: 'global',
+    tags: ['mcp', 'config', '超时'], version: 1,
+    created_at: '2026-02-10', accessed_at: '2026-04-08',
+    feedback_helpful: 5, source: 'config.md', contradicts: ['k02'],
+  },
+  {
+    id: 'k02',
+    title: 'MCP 默认超时应设为 60s',
+    summary: '实践发现 30s 在 nft-gmgn 的批量 RPC 场景下会 20% 概率超时；调到 60s 后超时率 <1%。README 已更新建议值。',
+    content: '# MCP 超时配置（新建议）\n\n参考 README (2026-04-15)。\n\n- connect_timeout: 30s（不变）\n- **tool_call_timeout: 60s**（推荐）\n- 仍保留 30s 作为 baseline\n\n> 大批量 RPC / 远端索引聚合的场景必须使用 60s。',
+    claim_type: 'decision', status: 'active', scope: 'global',
+    tags: ['mcp', 'config', '超时'], version: 1,
+    created_at: '2026-04-15', accessed_at: '2026-04-20',
+    feedback_helpful: 1, source: 'README.md', contradicts: ['k01'],
+  },
+  {
+    id: 'k03',
+    title: 'SQLite FTS5 中文分词选 unicode61 + simplify',
+    summary: '默认 unicode61 tokenizer 对中文不做分词，配合 simplify_diacritics + custom separators 后可以做到字级匹配；召回率在 mnemo 基线上达 91%。',
+    content: '# SQLite FTS5 中文分词（v3）\n\n## 配置\nCREATE VIRTUAL TABLE docs USING fts5(content, tokenize="unicode61 remove_diacritics 2");\n\n## 归一化\n- 繁体 → 简体（opencc-python）\n- 全角 → 半角\n- 大小写统一为小写\n\n## 基线\n- 召回率 91.2%\n- 相比 v2 (85.6%) 提升 5.6pp',
+    claim_type: 'procedure', status: 'active', scope: 'project',
+    tags: ['sqlite', 'fts5', '中文', 'v3'], version: 3,
+    supersedes: 'k03v2',
+    created_at: '2026-04-10', accessed_at: '2026-04-19',
+    feedback_helpful: 3, source: 'src/search/tokenizer.py',
+  },
+  {
+    id: 'k03v2',
+    title: 'SQLite FTS5 中文分词用 jieba bridge',
+    summary: '（v2）使用 sqlite-jieba 扩展做词级分词，召回 85.6%，但依赖编译扩展导致部署复杂。已被 v3 unicode61 方案替代。',
+    content: 'v2 旧方案：sqlite-jieba 扩展。\n\n缺点：需要编译 .so，跨平台部署复杂。\n召回 85.6%。',
+    claim_type: 'procedure', status: 'superseded', scope: 'project',
+    tags: ['sqlite', 'fts5', 'v2'], version: 2,
+    superseded_by: 'k03', supersedes: 'k03v1',
+    created_at: '2026-03-05', accessed_at: '2026-04-10',
+    feedback_helpful: 2,
+  },
+  {
+    id: 'k03v1',
+    title: 'SQLite FTS5 中文分词用 trigram',
+    summary: '（v1）trigram 3-gram 切分，召回 74%。分词爆炸导致索引体积膨胀 4x。已被替代。',
+    content: 'v1 方案：trigram 切分。召回仅 74%，索引 4x 体积。已被替代。',
+    claim_type: 'procedure', status: 'superseded', scope: 'project',
+    tags: ['sqlite', 'trigram', 'v1'], version: 1,
+    superseded_by: 'k03v2',
+    created_at: '2026-01-20', accessed_at: '2026-03-05',
+    feedback_helpful: 0,
+  },
+  {
+    id: 'k04',
+    title: 'nft-gmgn 全局搜索入口在 GlobalSearchBar',
+    summary: 'src/components/search/GlobalSearchBar.tsx 是整个搜索入口；AI 模式接入点在其内部的 useAIMode hook。',
+    content: '# 搜索架构\n\n- 组件：GlobalSearchBar.tsx\n- 状态：searchStore.ts (Zustand)\n- 数据流：Input → debounce(200ms) → store.query() → SWR\n- AI 模式接入点：useAIMode hook',
+    claim_type: 'fact', status: 'active', scope: 'project',
+    tags: ['nft-gmgn', '搜索', 'react'], version: 1,
+    created_at: '2026-03-22', accessed_at: '2026-04-18',
+    feedback_helpful: 4, source: 'GlobalSearchBar.tsx', depends_on: ['k05'],
+  },
+  {
+    id: 'k05',
+    title: 'nft-gmgn 使用 Zustand 做全局状态',
+    summary: '项目弃用了 Redux 改为 Zustand，所有 store 集中在 src/stores/ 下，按领域拆分。',
+    content: '# 状态管理\n\n- 选型：Zustand > Redux\n- 目录：src/stores/*.ts\n- 持久化：仅 walletStore 用 zustand/persist\n\n## 坑\n- SSR 下 create() 要放在组件外',
+    claim_type: 'decision', status: 'active', scope: 'project',
+    tags: ['nft-gmgn', 'zustand'], version: 1,
+    created_at: '2026-02-28', accessed_at: '2026-04-17',
+    feedback_helpful: 3, source: 'src/stores/',
+  },
+  {
+    id: 'k06',
+    title: 'Phase 2 baseline 测试命令（旧）',
+    summary: '运行 pytest tests/baseline 即可验证 Phase 2 基线。这是上一阶段的命令，不适用于 Phase 3。',
+    content: '# Phase 2 基线\n\npytest tests/baseline/\n\n> Phase 3 已改为 scripts/phase3_regression_gate.py',
+    claim_type: 'procedure', status: 'stale', scope: 'project',
+    tags: ['phase2', 'baseline'], version: 1,
+    created_at: '2025-12-10', accessed_at: '2026-01-12',
+    stale_reason: '92 天未访问 · Phase 3 已替换',
+    feedback_helpful: 1,
+  },
+  {
+    id: 'k07',
+    title: 'Agent 写入 mnemo 必须带 summary 字段',
+    summary: '用户多次强调：create_knowledge 必须显式提供 summary，不允许让 LLM 自动总结。',
+    content: '# user says:\n\n> "summary 字段不能省 — 这是硬要求。"\n\n- create_knowledge(summary=...) 必填\n- 长度 ≤ 120 汉字\n- 必须包含检索关键词',
+    claim_type: 'fact', status: 'active', scope: 'global',
+    tags: ['mnemo', 'user-pref'], version: 1,
+    created_at: '2026-03-14', accessed_at: '2026-04-21',
+    feedback_helpful: 7, source: 'user 2026-03-14',
+  },
+  {
+    id: 'k08',
+    title: 'rerank 权重：FTS .35 · Vec .30 · Graph .15 · Fresh .15 · Auth .05',
+    summary: '当前 mnemo 混合检索默认权重。修改需同步更新 regression baseline。',
+    content: '# Rerank 权重\n\n| 因子 | 权重 |\n|---|---|\n| FTS BM25 | 0.35 |\n| Vector cos | 0.30 |\n| Graph | 0.15 |\n| Freshness | 0.15 |\n| Authority | 0.05 |\n\n> 改动需跑 phase3_regression_gate.py',
+    claim_type: 'decision', status: 'active', scope: 'project',
+    tags: ['mnemo', 'rerank'], version: 2,
+    supersedes: 'k08v1',
+    created_at: '2026-04-05', accessed_at: '2026-04-20',
+    feedback_helpful: 4, source: 'src/search/rerank.py',
+  },
+  {
+    id: 'k08v1',
+    title: 'rerank 旧权重：FTS .5 · Vector .5（双因子）',
+    summary: '（v1）最初只用 FTS + Vector 两个因子各 50%；Phase 3 加入 Graph/Fresh/Auth 后被替代。',
+    content: 'v1 双因子方案：FTS 0.5 / Vector 0.5。基线 86%。已被 v2 替代。',
+    claim_type: 'decision', status: 'superseded', scope: 'project',
+    tags: ['mnemo', 'rerank'], version: 1,
+    superseded_by: 'k08',
+    created_at: '2026-01-15', accessed_at: '2026-04-05',
+    feedback_helpful: 1,
+  },
+  {
+    id: 'k09',
+    title: 'nft-gmgn 图标库迁移到本地 SVG Sprite',
+    summary: '打包体积从 240KB 降到 34KB；首屏 TTI 提升约 180ms。迁移脚本在 tools/build-sprite.ts。',
+    content: '# 图标迁移\n\n- 原：@iconify 运行时 240KB\n- 新：build-time SVG sprite，34KB\n- TTI -180ms\n- DX：加图标要跑 pnpm build:sprite',
+    claim_type: 'decision', status: 'active', scope: 'project',
+    tags: ['nft-gmgn', '图标', '性能'], version: 1,
+    created_at: '2026-04-02', accessed_at: '2026-04-16',
+    feedback_helpful: 2, source: 'tools/build-sprite.ts',
+  },
+  {
+    id: 'k10',
+    title: '假设：把 embedding service 改成本地 ONNX 可以省 60% 延迟',
+    summary: '当前 embedding 走 OpenAI API ~80ms。假设本地 MiniLM-L6 ONNX 可降到 ~30ms，但召回质量需评估。',
+    content: '# 假设：本地 ONNX embedding\n\n## 现状\n- OpenAI text-embedding-3-small\n- ~80ms/次\n\n## 假设\n- MiniLM-L6-v2 本地 ONNX\n- 预计 30ms/次\n- 零 API 成本\n\n## 待验证\n- 召回质量\n- 内存 ~90MB\n- 冷启动',
+    claim_type: 'hypothesis', status: 'active', scope: 'project',
+    tags: ['mnemo', 'embedding', '假设'], version: 1,
+    created_at: '2026-04-18', accessed_at: '2026-04-20',
+    feedback_helpful: 0, source: 'brainstorm',
+  },
+  {
+    id: 'k11',
+    title: 'Archived：旧的 mnemo 命令 mnemo export 已移除',
+    summary: 'v0.3 之前有 mnemo export 命令，v0.4 改为 mnemo dump --format json。',
+    content: 'mnemo export → mnemo dump --format json',
+    claim_type: 'fact', status: 'archived', scope: 'project',
+    tags: ['mnemo', 'cli', '弃用'], version: 1,
+    created_at: '2025-11-02', accessed_at: '2026-02-20',
+    feedback_helpful: 0,
+  },
+  {
+    id: 'k12',
+    title: 'MCP 工具调用失败时 agent 应先 search 再 retry',
+    summary: '当 mcp tool 调用返回非 2xx 或超时时，先用 mnemo search 检查是否有已知 workaround，再决定 retry 或 abort。',
+    content: '# MCP 失败处理\n\n1. 工具异常 → 停下\n2. search(error_msg)\n3. 有命中 → 按 procedure 处理\n4. 无命中 → retry 一次（2s 退避）\n5. 还失败 → 上报 + 写 mnemo\n\n> 不要直接 retry 3 次放弃。',
+    claim_type: 'procedure', status: 'active', scope: 'global',
+    tags: ['mcp', 'agent', '错误处理'], version: 1,
+    created_at: '2026-03-30', accessed_at: '2026-04-19',
+    feedback_helpful: 6, source: 'AGENT_MNEMO_WORKFLOW.md',
+    depends_on: ['k07'],
+  },
+];
+
+/* ========== Theme palette ========== */
+const THEME = {
+  bg0: '#0e1116', bg1: '#151a21', bg2: '#1c222b', bg3: '#252c37',
+  border: '#2a313c', borderStrong: '#3a4250',
+  text0: '#e6edf3', text1: '#b9c2cd', text2: '#7d8693', text3: '#565d68',
+  accent: '#58a6ff', accentDim: '#1f6feb',
+  green: '#3fb950', yellow: '#d29922', red: '#f85149',
+  stalePaper: '#2a2618', stalePaperText: '#a89a6d',
+  scope: { global: '#58a6ff', project: '#3fb950', session: '#8b949e' },
+  typeIcon: { fact: '📌', decision: '✅', procedure: '🔧', hypothesis: '💡' },
+};
+const FONT_MONO = '"JetBrains Mono", "Fira Code", "SF Mono", "Menlo", "Consolas", monospace';
+
+const CARD_W = 340;
+const CARD_H = 148;
+const GAP_X = 24;
+const GAP_Y = 20;
+const COLS = 3;
+
+/* ========== State ========== */
+const state = {
+  cards: [],
+  byId: new Map(),
+  selectedId: null,
+  hoverId: null,
+  searchQuery: '',
+  hits: new Map(),
+  hitCount: 0,
+  view: { x: 40, y: 30, scale: 1 },
+  justCreated: new Map(),
+  resolvedContradictions: new Set(),
+  dragging: false,
+  dragStart: null,
+  dragMoved: false,
+  dpr: window.devicePixelRatio || 1,
+  canvas: null,
+  ctx: null,
+  linkHitZones: [],
+};
+
+function byId(id) { return DATA.find(k => k.id === id); }
+function relTime(dateStr) {
+  const d = new Date(dateStr);
+  const nowDate = new Date('2026-04-21');
+  const days = Math.round((nowDate - d) / 86400000);
+  if (days < 1) return '今天';
+  if (days < 2) return '昨天';
+  if (days < 7) return days + ' 天前';
+  if (days < 30) return Math.floor(days / 7) + ' 周前';
+  if (days < 365) return Math.floor(days / 30) + ' 个月前';
+  return Math.floor(days / 365) + ' 年前';
+}
+function nowMs() { return performance.now(); }
+
+function wrapText(ctx, text, maxWidth) {
+  const lines = [];
+  let line = '';
+  for (const ch of text) {
+    const next = line + ch;
+    if (ctx.measureText(next).width > maxWidth && line) {
+      lines.push(line);
+      line = ch;
+    } else {
+      line = next;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+function truncateText(ctx, text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  const ell = '…';
+  let lo = 0, hi = text.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (ctx.measureText(text.slice(0, mid) + ell).width <= maxWidth) lo = mid;
+    else hi = mid - 1;
+  }
+  return text.slice(0, lo) + ell;
+}
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+function doSearch(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return { hits: new Map(), order: [] };
+  const terms = q.split(/\s+/).filter(Boolean);
+  const hits = new Map();
+  const order = [];
+  for (const k of DATA) {
+    if (k.status === 'archived' || k.status === 'superseded') continue;
+    const hay = (k.title + ' ' + k.summary + ' ' + (k.tags || []).join(' ') + ' ' + (k.content || '')).toLowerCase();
+    let matches = 0, titleMatches = 0;
+    for (const t of terms) {
+      if (hay.includes(t)) matches++;
+      if (k.title.toLowerCase().includes(t)) titleMatches++;
+    }
+    if (matches === 0) continue;
+    const fts = Math.min(1, (matches / terms.length) * 0.6 + titleMatches * 0.3 + (hay.includes(q) ? 0.25 : 0));
+    const vector = Math.min(1, fts * 0.85 + 0.05);
+    const graph = Math.min(1, ((k.depends_on?.length || 0) + (k.contradicts?.length || 0)) * 0.2);
+    const ageDays = (new Date('2026-04-21') - new Date(k.created_at)) / 86400000;
+    const freshness = Math.exp(-ageDays / 90);
+    const authority = Math.min(1, (k.feedback_helpful || 0) / 8);
+    const final = Math.min(0.99, 0.35 * fts + 0.30 * vector + 0.15 * graph + 0.15 * freshness + 0.05 * authority);
+    hits.set(k.id, { final, factors: { fts, vector, graph, freshness, authority } });
+    order.push(k.id);
+  }
+  order.sort((a, b) => hits.get(b).final - hits.get(a).final);
+  return { hits, order };
+}
+
+function computeLayout() {
+  const cards = [];
+  const visible = DATA.filter(k => k.status !== 'superseded' && k.status !== 'archived');
+
+  if (state.searchQuery) {
+    const collapsedH = 30;
+    let y = 0, col = 0;
+    const hitIds = new Set(state.hits.keys());
+    const hitCards = visible.filter(k => hitIds.has(k.id))
+      .sort((a, b) => state.hits.get(b.id).final - state.hits.get(a.id).final);
+    const missCards = visible.filter(k => !hitIds.has(k.id));
+
+    for (const k of hitCards) {
+      cards.push({ k, x: col * (CARD_W + GAP_X), y, w: CARD_W, h: CARD_H, collapsed: false, hit: state.hits.get(k.id) });
+      col++;
+      if (col >= COLS) { col = 0; y += CARD_H + GAP_Y; }
+    }
+    if (col > 0) { col = 0; y += CARD_H + GAP_Y; }
+    const missW = COLS * CARD_W + (COLS - 1) * GAP_X;
+    for (const k of missCards) {
+      cards.push({ k, x: 0, y, w: missW, h: collapsedH, collapsed: true });
+      y += collapsedH + 6;
+    }
+  } else {
+    let col = 0, row = 0;
+    for (const k of visible) {
+      cards.push({
+        k,
+        x: col * (CARD_W + GAP_X),
+        y: row * (CARD_H + GAP_Y),
+        w: CARD_W, h: CARD_H,
+        collapsed: false,
+      });
+      col++;
+      if (col >= COLS) { col = 0; row++; }
+    }
+  }
+
+  state.cards = cards;
+  state.byId = new Map(cards.map(c => [c.k.id, c]));
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  ctx.lineTo(x + rr, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+  ctx.lineTo(x, y + rr);
+  ctx.quadraticCurveTo(x, y, x + rr, y);
+  ctx.closePath();
+}
+function drawPill(ctx, x, y, label, fg, bg, borderCol) {
+  ctx.font = '600 10.5px ' + FONT_MONO;
+  const pad = 6;
+  const w = ctx.measureText(label).width + pad * 2;
+  const h = 16;
+  ctx.fillStyle = bg;
+  ctx.strokeStyle = borderCol;
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, w, h, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = fg;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.fillText(label, x + pad, y + h / 2 + 0.5);
+  return { w, h };
+}
+
+function drawCard(ctx, c, t) {
+  const { k } = c;
+  const selected = state.selectedId === k.id;
+  const hovered = state.hoverId === k.id;
+  const hit = c.hit;
+  const bornMs = state.justCreated.get(k.id);
+
+  let ty = 0, haloAlpha = 0, extraOpacity = 1;
+  if (bornMs != null) {
+    const elapsed = t - bornMs;
+    if (elapsed < 260) {
+      const tt = elapsed / 260;
+      ty = -40 * (1 - easeOutCubic(tt));
+      extraOpacity = tt;
+    }
+    if (elapsed >= 260 && elapsed < 260 + 2400) {
+      const phase = (elapsed - 260) / 2400;
+      haloAlpha = (Math.sin(phase * Math.PI * 2) * 0.5 + 0.5) * (1 - phase) * 0.85;
+    }
+  }
+
+  const x = c.x;
+  const y = c.y + ty;
+  const w = c.w;
+  const h = c.h;
+
+  const prevAlpha = ctx.globalAlpha;
+
+  if (c.collapsed) {
+    ctx.globalAlpha = 0.6 * prevAlpha;
+    ctx.strokeStyle = THEME.border;
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 1;
+    roundRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 4);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = THEME.scope[k.scope] || THEME.scope.project;
+    ctx.globalAlpha = 0.35 * prevAlpha;
+    ctx.fillRect(x, y, 3, h);
+    ctx.globalAlpha = prevAlpha;
+
+    ctx.fillStyle = THEME.text2;
+    ctx.font = '500 12px ' + FONT_MONO;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    const icon = THEME.typeIcon[k.claim_type] || '';
+    const txt = icon + '  ' + k.title;
+    ctx.fillText(truncateText(ctx, txt, w - 30), x + 14, y + h / 2);
+
+    state.linkHitZones.push({ kind: 'select', id: k.id, wx: x, wy: y, ww: w, wh: h });
+    return;
+  }
+
+  let bgFill = THEME.bg1;
+  let textFaded = false;
+  if (k.status === 'stale') { bgFill = THEME.stalePaper; textFaded = true; }
+
+  if (haloAlpha > 0.001) {
+    ctx.strokeStyle = 'rgba(88,166,255,' + (haloAlpha * 0.9).toFixed(3) + ')';
+    ctx.lineWidth = 3;
+    roundRect(ctx, x - 1.5, y - 1.5, w + 3, h + 3, 7);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(88,166,255,' + (haloAlpha * 0.35).toFixed(3) + ')';
+    ctx.lineWidth = 8;
+    roundRect(ctx, x - 4, y - 4, w + 8, h + 8, 10);
+    ctx.stroke();
+  }
+
+  const cardOpacity = (k.status === 'stale' ? 0.88 : 1) * extraOpacity;
+  ctx.globalAlpha = cardOpacity * prevAlpha;
+
+  ctx.fillStyle = bgFill;
+  roundRect(ctx, x, y, w, h, 6);
+  ctx.fill();
+
+  if (selected) { ctx.strokeStyle = THEME.accent; ctx.lineWidth = 2; }
+  else if (hit) { ctx.strokeStyle = 'rgba(88,166,255,0.45)'; ctx.lineWidth = 1.5; }
+  else if (hovered) { ctx.strokeStyle = THEME.borderStrong; ctx.lineWidth = 1; }
+  else { ctx.strokeStyle = THEME.border; ctx.lineWidth = 1; }
+  roundRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 6);
+  ctx.stroke();
+
+  ctx.fillStyle = THEME.scope[k.scope] || THEME.scope.project;
+  ctx.fillRect(x, y, 4, h);
+
+  const px = x + 12;
+  const py = y + 10;
+  const innerW = w - 12 - 14;
+
+  let bx = px;
+  const by1 = py;
+  const statusLbl = k.status === 'stale' ? '🕒 stale'
+    : k.status === 'archived' ? '🗄️ archived'
+    : '● ' + k.status;
+  const statusColor = k.status === 'active' ? '#7ee787'
+    : k.status === 'stale' ? '#e3b341'
+    : THEME.text2;
+  const statusBg = k.status === 'active' ? 'rgba(63,185,80,0.12)'
+    : k.status === 'stale' ? 'rgba(210,153,34,0.14)'
+    : 'rgba(110,118,129,0.18)';
+  const statusBorder = k.status === 'active' ? 'rgba(63,185,80,0.35)'
+    : k.status === 'stale' ? 'rgba(210,153,34,0.35)'
+    : THEME.borderStrong;
+  let pill = drawPill(ctx, bx, by1, statusLbl, statusColor, statusBg, statusBorder);
+  bx += pill.w + 5;
+  pill = drawPill(ctx, bx, by1, k.claim_type, THEME.text1, THEME.bg3, THEME.border);
+  bx += pill.w + 5;
+  const scopeColor = k.scope === 'global' ? '#58a6ff' : k.scope === 'project' ? '#7ee787' : THEME.text2;
+  const scopeBg = k.scope === 'global' ? 'rgba(88,166,255,0.1)' : 'rgba(63,185,80,0.08)';
+  pill = drawPill(ctx, bx, by1, k.scope, scopeColor, scopeBg, 'rgba(88,166,255,0.3)');
+  bx += pill.w + 5;
+  if ((k.contradicts || []).length && k.status === 'active') {
+    const unresolved = (k.contradicts || []).some(cid => !state.resolvedContradictions.has([k.id, cid].sort().join('::')));
+    if (unresolved) {
+      pill = drawPill(ctx, bx, by1, '⚡ 矛盾', '#ffa198', 'rgba(248,81,73,0.12)', 'rgba(248,81,73,0.35)');
+      bx += pill.w + 5;
+    }
+  }
+
+  const titleY = py + 26;
+  ctx.fillStyle = textFaded ? THEME.stalePaperText : THEME.text0;
+  ctx.font = '700 15px ' + FONT_MONO;
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  const icon = THEME.typeIcon[k.claim_type] || '';
+  const titleStr = icon + '  ' + k.title + (k.version > 1 ? '  v' + k.version : '');
+  ctx.fillText(truncateText(ctx, titleStr, innerW), px, titleY);
+
+  const sumY = titleY + 22;
+  ctx.fillStyle = textFaded ? 'rgba(168,154,109,0.85)' : THEME.text1;
+  ctx.font = '400 12px ' + FONT_MONO;
+  ctx.textBaseline = 'top';
+  const sumLines = wrapText(ctx, k.summary, innerW);
+  const maxSumLines = 2;
+  for (let i = 0; i < Math.min(maxSumLines, sumLines.length); i++) {
+    let line = sumLines[i];
+    if (i === maxSumLines - 1 && sumLines.length > maxSumLines) {
+      line = truncateText(ctx, line + sumLines[i + 1], innerW);
+    }
+    ctx.fillText(line, px, sumY + i * 16);
+  }
+
+  let relY = sumY + 34;
+  const relLines = [];
+  if (k.supersedes) relLines.push({ text: '📄 替代了 v' + (k.version - 1) + ' 旧版本', kind: 'jump', target: k.supersedes, color: THEME.accent });
+  if (k.contradicts && k.contradicts.length) {
+    for (const cid of k.contradicts) {
+      const other = byId(cid);
+      if (!other) continue;
+      const key = [k.id, cid].sort().join('::');
+      if (state.resolvedContradictions.has(key)) continue;
+      relLines.push({ text: '⚡ 与 ' + truncateText(ctx, other.title, innerW - 100) + ' 矛盾', kind: 'duel', a: k.id, b: cid, color: '#ffa198' });
+      break;
+    }
+  }
+  if (relLines.length === 0 && k.depends_on && k.depends_on.length) {
+    const dep = byId(k.depends_on[0]);
+    if (dep) relLines.push({ text: '↳ 依赖 ' + truncateText(ctx, dep.title, innerW - 80), kind: 'jump', target: k.depends_on[0], color: THEME.accent });
+  }
+  if (relLines.length > 0) {
+    const rl = relLines[0];
+    ctx.font = '500 11.5px ' + FONT_MONO;
+    ctx.fillStyle = rl.color;
+    ctx.fillText(rl.text, px, relY);
+    const tw = ctx.measureText(rl.text).width;
+    state.linkHitZones.push({
+      kind: rl.kind, target: rl.target, a: rl.a, b: rl.b,
+      wx: px, wy: relY - 2, ww: tw, wh: 14,
+    });
+  }
+
+  if (hit) {
+    const barY = y + h - 28;
+    ctx.font = '600 10.5px ' + FONT_MONO;
+    ctx.fillStyle = THEME.text2;
+    ctx.fillText('rerank', px, barY);
+    const barX = px + 44;
+    const barW = innerW - 90;
+    ctx.fillStyle = THEME.bg3;
+    roundRect(ctx, barX, barY + 3, barW, 5, 2);
+    ctx.fill();
+    const grad = ctx.createLinearGradient(barX, barY, barX + barW, barY);
+    grad.addColorStop(0, THEME.accentDim);
+    grad.addColorStop(1, THEME.accent);
+    ctx.fillStyle = grad;
+    roundRect(ctx, barX, barY + 3, barW * hit.final, 5, 2);
+    ctx.fill();
+    ctx.fillStyle = THEME.accent;
+    ctx.textAlign = 'right';
+    ctx.fillText(hit.final.toFixed(2), x + w - 12, barY);
+    ctx.textAlign = 'left';
+  }
+
+  const footY = y + h - 14;
+  ctx.font = '400 11px ' + FONT_MONO;
+  ctx.fillStyle = THEME.text3;
+  let footStr = (k.tags || []).slice(0, 3).map(t => '#' + t).join(' ') + '  ·  🕒 ' + relTime(k.accessed_at || k.created_at);
+  if (k.feedback_helpful) footStr += '  ·  👍 ×' + k.feedback_helpful;
+  ctx.fillText(truncateText(ctx, footStr, innerW), px, footY);
+
+  if (k.status === 'stale' && k.stale_reason && relLines.length === 0) {
+    ctx.fillStyle = '#b3a15d';
+    ctx.font = '500 11px ' + FONT_MONO;
+    ctx.fillText('🕒 ' + truncateText(ctx, k.stale_reason, innerW), px, relY);
+  }
+
+  if (k.supersedes) {
+    const cw = 98;
+    const ch = 18;
+    const cx = x + w - cw;
+    const cy = y;
+    ctx.fillStyle = THEME.bg3;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + cw, cy);
+    ctx.lineTo(cx + cw, cy + ch);
+    ctx.lineTo(cx + 6, cy + ch);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = THEME.border;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = THEME.accent;
+    ctx.font = '700 10px ' + FONT_MONO;
+    ctx.textBaseline = 'middle';
+    ctx.fillText('📄 v' + k.version + ' ← v' + (k.version - 1), cx + 8, cy + ch / 2);
+    state.linkHitZones.push({ kind: 'supersede-corner', id: k.id, wx: cx, wy: cy, ww: cw, wh: ch });
+  }
+
+  if (bornMs != null) {
+    const bw = 42, bh = 16;
+    const bxb = x + w - bw - 6;
+    const byb = y + 6;
+    ctx.fillStyle = THEME.accentDim;
+    roundRect(ctx, bxb, byb, bw, bh, 3);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 9.5px ' + FONT_MONO;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.fillText('NEW', bxb + bw / 2, byb + bh / 2 + 0.5);
+    ctx.textAlign = 'left';
+  }
+
+  ctx.globalAlpha = prevAlpha;
+
+  state.linkHitZones.push({ kind: 'select', id: k.id, wx: x, wy: y, ww: w, wh: h });
+}
+
+function render() {
+  const ctx = state.ctx;
+  const canvas = state.canvas;
+  const t = nowMs();
+
+  ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+  ctx.fillStyle = THEME.bg0;
+  ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+  drawGrid(ctx);
+
+  ctx.setTransform(
+    state.dpr * state.view.scale, 0,
+    0, state.dpr * state.view.scale,
+    state.dpr * state.view.x,
+    state.dpr * state.view.y,
+  );
+
+  state.linkHitZones = [];
+
+  drawConnections(ctx);
+
+  const cards = state.cards;
+  for (const c of cards) {
+    if (c.k.id === state.selectedId) continue;
+    if (!isOnScreen(c)) continue;
+    drawCard(ctx, c, t);
+  }
+  const sel = cards.find(c => c.k.id === state.selectedId);
+  if (sel && isOnScreen(sel)) drawCard(ctx, sel, t);
+
+  ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+  requestAnimationFrame(render);
+}
+
+function isOnScreen(c) {
+  const sx = c.x * state.view.scale + state.view.x;
+  const sy = c.y * state.view.scale + state.view.y;
+  const sw = c.w * state.view.scale;
+  const sh = c.h * state.view.scale;
+  const W = state.canvas.clientWidth;
+  const H = state.canvas.clientHeight;
+  return sx + sw > -60 && sx < W + 60 && sy + sh > -60 && sy < H + 60;
+}
+
+function drawGrid(ctx) {
+  const step = 40 * state.view.scale;
+  if (step < 10) return;
+  const W = state.canvas.clientWidth;
+  const H = state.canvas.clientHeight;
+  const ox = state.view.x % step;
+  const oy = state.view.y % step;
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = ox; x < W; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = oy; y < H; y += step) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+}
+
+function drawConnections(ctx) {
+  for (const c of state.cards) {
+    if (c.collapsed) continue;
+    const k = c.k;
+    if (!k.contradicts || !k.contradicts.length) continue;
+    for (const cid of k.contradicts) {
+      if (cid < k.id) continue;
+      const other = state.byId.get(cid);
+      if (!other) continue;
+      const key = [k.id, cid].sort().join('::');
+      if (state.resolvedContradictions.has(key)) continue;
+      const x1 = c.x + c.w / 2, y1 = c.y + c.h;
+      const x2 = other.x + other.w / 2, y2 = other.y + other.h;
+      const mx = (x1 + x2) / 2;
+      const my = Math.max(y1, y2) + 40;
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(248,81,73,0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.quadraticCurveTo(mx, my, x2, y2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(248,81,73,0.75)';
+      ctx.font = '600 14px ' + FONT_MONO;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⚡ 矛盾', mx, my - 2);
+      ctx.restore();
+      ctx.textAlign = 'left';
+
+      state.linkHitZones.push({ kind: 'duel', a: k.id, b: cid, wx: mx - 44, wy: my - 12, ww: 88, wh: 20 });
+    }
+  }
+
+  for (const c of state.cards) {
+    if (c.collapsed) continue;
+    const k = c.k;
+    if (!k.depends_on || !k.depends_on.length) continue;
+    for (const did of k.depends_on) {
+      const other = state.byId.get(did);
+      if (!other) continue;
+      const x1 = c.x, y1 = c.y + c.h / 2;
+      const x2 = other.x + other.w, y2 = other.y + other.h / 2;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(125,134,147,0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 4]);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      const mx = (x1 + x2) / 2;
+      ctx.bezierCurveTo(mx, y1, mx, y2, x2, y2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+  }
+}
+
+function worldToScreen(wx, wy) {
+  return { x: wx * state.view.scale + state.view.x, y: wy * state.view.scale + state.view.y };
+}
+function screenToWorld(sx, sy) {
+  return { x: (sx - state.view.x) / state.view.scale, y: (sy - state.view.y) / state.view.scale };
+}
+
+function pickAt(sx, sy) {
+  const { x: wx, y: wy } = screenToWorld(sx, sy);
+  let bestLink = null;
+  let bestCard = null;
+  for (const z of state.linkHitZones) {
+    if (wx >= z.wx && wx <= z.wx + z.ww && wy >= z.wy && wy <= z.wy + z.wh) {
+      if (z.kind === 'select') bestCard = z;
+      else bestLink = z;
+    }
+  }
+  return bestLink || bestCard || null;
+}
+
+function setupCanvas() {
+  const canvas = document.getElementById('canvas');
+  state.canvas = canvas;
+  state.ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('mouseleave', () => { state.dragging = false; state.hoverId = null; });
+  canvas.addEventListener('wheel', onWheel, { passive: false });
+}
+
+function resizeCanvas() {
+  const c = state.canvas;
+  state.dpr = window.devicePixelRatio || 1;
+  const w = window.innerWidth;
+  const h = window.innerHeight - 52;
+  c.style.width = w + 'px';
+  c.style.height = h + 'px';
+  c.width = Math.floor(w * state.dpr);
+  c.height = Math.floor(h * state.dpr);
+}
+
+function onMouseDown(e) {
+  state.dragging = true;
+  state.dragStart = { x: e.clientX, y: e.clientY, vx: state.view.x, vy: state.view.y };
+  state.dragMoved = false;
+  state.canvas.classList.add('panning');
+}
+function onMouseMove(e) {
+  const rect = state.canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+
+  if (state.dragging) {
+    const dx = e.clientX - state.dragStart.x;
+    const dy = e.clientY - state.dragStart.y;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) state.dragMoved = true;
+    state.view.x = state.dragStart.vx + dx;
+    state.view.y = state.dragStart.vy + dy;
+    return;
+  }
+
+  const hit = pickAt(sx, sy);
+  if (hit && hit.kind === 'select') {
+    state.hoverId = hit.id;
+    state.canvas.classList.add('over-card');
+  } else if (hit) {
+    state.hoverId = null;
+    state.canvas.classList.add('over-card');
+  } else {
+    state.hoverId = null;
+    state.canvas.classList.remove('over-card');
+  }
+
+  const tooltip = document.getElementById('tooltip');
+  if (hit && hit.kind !== 'select') {
+    const label = hit.kind === 'duel' ? '点击 → 进入矛盾对照'
+      : hit.kind === 'supersede-corner' ? '点击 → 查看版本链'
+      : '点击 → 跳转';
+    tooltip.textContent = label;
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY + 12) + 'px';
+    tooltip.style.display = 'block';
+  } else {
+    tooltip.style.display = 'none';
+  }
+}
+function onMouseUp(e) {
+  if (!state.dragging) return;
+  state.dragging = false;
+  state.canvas.classList.remove('panning');
+  if (state.dragMoved) return;
+
+  const rect = state.canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const hit = pickAt(sx, sy);
+  if (!hit) {
+    if (state.selectedId) { state.selectedId = null; renderPanel(); }
+    return;
+  }
+  if (hit.kind === 'select') {
+    state.selectedId = (state.selectedId === hit.id) ? null : hit.id;
+    renderPanel();
+  } else if (hit.kind === 'jump') {
+    state.selectedId = hit.target;
+    centerOn(hit.target);
+    renderPanel();
+  } else if (hit.kind === 'duel') {
+    showContradictionDuel(hit.a, hit.b);
+  } else if (hit.kind === 'supersede-corner') {
+    state.selectedId = hit.id;
+    renderPanel();
+    toast('翻到版本链视图');
+  }
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  const rect = state.canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+
+  const factor = Math.exp(-e.deltaY * 0.0015);
+  const newScale = Math.max(0.3, Math.min(2.5, state.view.scale * factor));
+  const wb = screenToWorld(sx, sy);
+  state.view.scale = newScale;
+  const wa = screenToWorld(sx, sy);
+  state.view.x += (wa.x - wb.x) * state.view.scale;
+  state.view.y += (wa.y - wb.y) * state.view.scale;
+
+  document.getElementById('zoom-readout').textContent = Math.round(newScale * 100) + '%';
+}
+
+function zoomBy(mult) {
+  const W = state.canvas.clientWidth, H = state.canvas.clientHeight;
+  const cx = W / 2, cy = H / 2;
+  const newScale = Math.max(0.3, Math.min(2.5, state.view.scale * mult));
+  const wb = screenToWorld(cx, cy);
+  state.view.scale = newScale;
+  const wa = screenToWorld(cx, cy);
+  state.view.x += (wa.x - wb.x) * state.view.scale;
+  state.view.y += (wa.y - wb.y) * state.view.scale;
+  document.getElementById('zoom-readout').textContent = Math.round(newScale * 100) + '%';
+}
+
+function centerOn(id) {
+  const c = state.byId.get(id);
+  if (!c) return;
+  const W = state.canvas.clientWidth, H = state.canvas.clientHeight;
+  state.view.x = W / 2 - (c.x + c.w / 2) * state.view.scale;
+  state.view.y = H / 2 - (c.y + c.h / 2) * state.view.scale;
+}
+
+function fitToView() {
+  if (state.cards.length === 0) computeLayout();
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const c of state.cards) {
+    minX = Math.min(minX, c.x);
+    minY = Math.min(minY, c.y);
+    maxX = Math.max(maxX, c.x + c.w);
+    maxY = Math.max(maxY, c.y + c.h);
+  }
+  const W = state.canvas.clientWidth, H = state.canvas.clientHeight;
+  const pad = 40;
+  const sx = (W - pad * 2) / (maxX - minX);
+  const sy = (H - pad * 2) / (maxY - minY);
+  const s = Math.min(sx, sy, 1);
+  state.view.scale = Math.max(0.4, s);
+  state.view.x = (W - (maxX - minX) * state.view.scale) / 2 - minX * state.view.scale;
+  state.view.y = (H - (maxY - minY) * state.view.scale) / 2 - minY * state.view.scale;
+  document.getElementById('zoom-readout').textContent = Math.round(state.view.scale * 100) + '%';
+}
+
+function resetView() {
+  state.view.scale = 1;
+  state.view.x = 40;
+  state.view.y = 30;
+  document.getElementById('zoom-readout').textContent = '100%';
+}
+
+function renderStats() {
+  const active = DATA.filter(k => k.status === 'active').length;
+  const stale = DATA.filter(k => k.status === 'stale').length;
+  const archived = DATA.filter(k => k.status === 'archived').length;
+  const superseded = DATA.filter(k => k.status === 'superseded').length;
+  const contradictions = new Set();
+  DATA.forEach(k => (k.contradicts || []).forEach(c => {
+    const key = [k.id, c].sort().join('::');
+    if (!state.resolvedContradictions.has(key)) contradictions.add(key);
+  }));
+
+  document.getElementById('stats-hud').innerHTML = `
+    <span class="stat"><span class="dot dot-active"></span> active <span class="num">${active}</span></span>
+    <span class="stat"><span class="dot dot-stale"></span> stale <span class="num">${stale}</span></span>
+    <span class="stat">📄 superseded <span class="num">${superseded}</span></span>
+    <span class="stat"><span class="dot dot-archived"></span> archived <span class="num">${archived}</span></span>
+    <span class="stat"><span class="dot dot-contradicts"></span> 矛盾 <span class="num">${contradictions.size}</span></span>
+    <span class="stat">total <span class="num">${DATA.length}</span></span>
+  `;
+}
+
+function renderPanel() {
+  const existing = document.querySelector('.content-panel');
+  if (!state.selectedId) {
+    if (existing) existing.remove();
+    return;
+  }
+  const k = byId(state.selectedId);
+  if (!k) return;
+  const hit = state.hits.get(state.selectedId);
+
+  const chain = [];
+  let cursor = k;
+  while (cursor) { chain.unshift(cursor); cursor = cursor.supersedes ? byId(cursor.supersedes) : null; }
+  cursor = k;
+  while (cursor && cursor.superseded_by) {
+    const next = byId(cursor.superseded_by);
+    if (next && !chain.includes(next)) chain.push(next);
+    cursor = next;
+  }
+  const currentIdx = chain.findIndex(c => c.id === k.id);
+
+  const relHtml = [];
+  if (k.contradicts) for (const cid of k.contradicts) {
+    const o = byId(cid);
+    if (!o) continue;
+    const key = [k.id, cid].sort().join('::');
+    if (state.resolvedContradictions.has(key)) continue;
+    relHtml.push(`<div class="rel-item contradict">⚡ <span class="rel-verb">与</span> <span class="rel-target" data-duel="${k.id}::${cid}">${escapeHtml(o.title)}</span> <span class="rel-verb">矛盾 — 需裁决</span></div>`);
+  }
+  if (k.depends_on) for (const did of k.depends_on) {
+    const o = byId(did);
+    if (!o) continue;
+    relHtml.push(`<div class="rel-item"><span class="rel-verb">依赖</span> <span class="rel-target" data-jump="${did}">${escapeHtml(o.title)}</span></div>`);
+  }
+  if (k.supersedes) {
+    const o = byId(k.supersedes);
+    if (o) relHtml.push(`<div class="rel-item">📄 <span class="rel-verb">替代了</span> <span class="rel-target" data-jump="${k.supersedes}">v${k.version - 1}</span></div>`);
+  }
+  if (k.superseded_by) {
+    const o = byId(k.superseded_by);
+    if (o) relHtml.push(`<div class="rel-item">📄 <span class="rel-verb">被</span> <span class="rel-target" data-jump="${k.superseded_by}">v${o.version} 新版本</span> <span class="rel-verb">替代</span></div>`);
+  }
+
+  const supersedeStack = chain.length > 1 ? `
+    <div class="pnl-section">
+      <h4>版本链（${chain.length} 个版本）</h4>
+      <div class="supersede-view">
+        ${chain.map((v, i) => {
+          const isCurrent = v.id === k.id;
+          const isOld = i < currentIdx;
+          return `
+            <div class="ss-version ${isCurrent ? 'current' : ''} ${isOld ? 'old' : ''}" data-jump="${v.id}">
+              <div class="v-head">
+                <span class="v-tag">v${v.version} ${isCurrent ? '(当前)' : (isOld ? '(旧)' : '(新)')}</span>
+                <span class="v-date">${v.created_at}</span>
+              </div>
+              <div class="v-title">${escapeHtml(v.title)}</div>
+              <div class="v-sum">${escapeHtml(v.summary.slice(0, 90))}${v.summary.length > 90 ? '…' : ''}</div>
+            </div>
+            ${i < chain.length - 1 ? '<div class="ss-arrow">↓ 被替代</div>' : ''}
+          `;
+        }).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const rerankHtml = hit ? `
+    <div class="pnl-section">
+      <h4>Rerank 评分（${hit.final.toFixed(3)}）</h4>
+      <div class="rerank-panel">
+        <div class="rr-final">📊 最终分 = ${hit.final.toFixed(3)}</div>
+        ${[
+          ['FTS BM25', hit.factors.fts, '0.35', '#58a6ff'],
+          ['Vector cos', hit.factors.vector, '0.30', '#a371f7'],
+          ['Graph', hit.factors.graph, '0.15', '#3fb950'],
+          ['Freshness', hit.factors.freshness, '0.15', '#d29922'],
+          ['Authority', hit.factors.authority, '0.05', '#f85149'],
+        ].map(([lbl, val, w, color]) => `
+          <div class="rr-factor">
+            <span class="rr-label">${lbl} (×${w})</span>
+            <div class="rr-bar"><div class="rr-fill" style="width:${(val * 100).toFixed(0)}%; background:${color};"></div></div>
+            <span class="rr-num">${val.toFixed(2)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const html = `
+    <aside class="content-panel">
+      <div class="pnl-head">
+        <span>📄</span>
+        <div class="pnl-title">${escapeHtml(k.title)}</div>
+        <button class="pnl-close" id="panel-close">ESC ✕</button>
+      </div>
+      <div class="pnl-body">
+        <div class="pnl-section">
+          <div class="meta-row"><span class="k">ID</span><span class="v">${k.id}</span></div>
+          <div class="meta-row"><span class="k">类型</span><span class="v">${THEME.typeIcon[k.claim_type]} ${k.claim_type} · ${k.status}</span></div>
+          <div class="meta-row"><span class="k">scope</span><span class="v">${k.scope}</span></div>
+          <div class="meta-row"><span class="k">版本</span><span class="v">v${k.version}</span></div>
+          <div class="meta-row"><span class="k">创建</span><span class="v">${k.created_at} (${relTime(k.created_at)})</span></div>
+          <div class="meta-row"><span class="k">最近访问</span><span class="v">${k.accessed_at || k.created_at}</span></div>
+          ${k.feedback_helpful ? `<div class="meta-row"><span class="k">反馈</span><span class="v" style="color:#7ee787">👍 helpful ×${k.feedback_helpful}</span></div>` : ''}
+          ${k.source ? `<div class="meta-row"><span class="k">来源</span><span class="v" style="color:#e3b341">${escapeHtml(k.source)}</span></div>` : ''}
+          ${k.stale_reason ? `<div class="meta-row"><span class="k">stale 原因</span><span class="v" style="color:#e3b341">${escapeHtml(k.stale_reason)}</span></div>` : ''}
+        </div>
+
+        <div class="pnl-section">
+          <h4>完整内容</h4>
+          <div class="pnl-content">${escapeHtml(k.content || '(无完整内容)')}</div>
+        </div>
+
+        ${rerankHtml}
+
+        ${relHtml.length ? `
+        <div class="pnl-section">
+          <h4>关系（句子式，${relHtml.length} 条）</h4>
+          <div class="rel-list">${relHtml.join('')}</div>
+        </div>
+        ` : ''}
+
+        ${supersedeStack}
+
+        <div class="pnl-section">
+          <h4>事件时间线</h4>
+          <div class="timeline-mini">
+            <div class="ev"><span class="ev-date">${k.created_at}</span><span class="ev-text">写入 create_knowledge</span></div>
+            ${k.supersedes ? `<div class="ev supersede"><span class="ev-date">${k.created_at}</span><span class="ev-text">替代旧版本 ${k.supersedes}</span></div>` : ''}
+            ${k.feedback_helpful ? `<div class="ev"><span class="ev-date">~${relTime(k.accessed_at || k.created_at)}</span><span class="ev-text">feedback_knowledge × ${k.feedback_helpful}</span></div>` : ''}
+            <div class="ev"><span class="ev-date">${k.accessed_at || k.created_at}</span><span class="ev-text">最近一次 search 命中</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  `;
+
+  if (existing) existing.outerHTML = html;
+  else document.body.insertAdjacentHTML('beforeend', html);
+
+  document.getElementById('panel-close').addEventListener('click', () => {
+    state.selectedId = null;
+    renderPanel();
+  });
+  document.querySelectorAll('.content-panel [data-jump]').forEach(el => {
+    el.addEventListener('click', () => {
+      state.selectedId = el.dataset.jump;
+      centerOn(state.selectedId);
+      renderPanel();
+    });
+  });
+  document.querySelectorAll('.content-panel [data-duel]').forEach(el => {
+    el.addEventListener('click', () => {
+      const [a, b] = el.dataset.duel.split('::');
+      showContradictionDuel(a, b);
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function showContradictionDuel(leftId, rightId) {
+  const a = byId(leftId), b = byId(rightId);
+  if (!a || !b) return;
+  const html = `
+    <div class="duel-overlay" id="duel-overlay">
+      <div class="duel" onclick="event.stopPropagation()">
+        <button class="duel-close" id="duel-close">✕</button>
+        <div class="duel-banner">⚡ 这两条知识打架了 · 需要你来裁决 ⚡</div>
+        <div class="duel-row">
+          <div class="duel-card">
+            <div class="dc-title">${escapeHtml(a.title)}</div>
+            <div class="dc-content">${escapeHtml(a.summary)}</div>
+            <div class="dc-meta">
+              <div>来源：<span class="v">${escapeHtml(a.source || '—')}</span></div>
+              <div>写入：<span class="v">${a.created_at}</span></div>
+              <div>反馈：<span class="v">👍 ×${a.feedback_helpful || 0}</span></div>
+            </div>
+          </div>
+          <div class="duel-vs">
+            <div class="crack"></div>
+            <div class="bolt">⚡</div>
+          </div>
+          <div class="duel-card">
+            <div class="dc-title">${escapeHtml(b.title)}</div>
+            <div class="dc-content">${escapeHtml(b.summary)}</div>
+            <div class="dc-meta">
+              <div>来源：<span class="v">${escapeHtml(b.source || '—')}</span></div>
+              <div>写入：<span class="v">${b.created_at}</span></div>
+              <div>反馈：<span class="v">👍 ×${b.feedback_helpful || 0}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="duel-actions">
+          <button class="primary" data-resolve="left">保留左侧（归档右侧）</button>
+          <button class="primary" data-resolve="right">保留右侧（归档左侧）</button>
+          <button data-resolve="both">都保留（alternative_to）</button>
+          <button class="danger" data-resolve="archive">都归档</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.getElementById('duel-overlay').addEventListener('click', () => closeDuel());
+  document.getElementById('duel-close').addEventListener('click', closeDuel);
+  document.querySelectorAll('[data-resolve]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      resolveContradiction(leftId, rightId, e.target.dataset.resolve);
+      closeDuel();
+    });
+  });
+}
+function closeDuel() {
+  const el = document.getElementById('duel-overlay');
+  if (el) el.remove();
+}
+function resolveContradiction(aId, bId, action) {
+  const key = [aId, bId].sort().join('::');
+  state.resolvedContradictions.add(key);
+  const a = byId(aId), b = byId(bId);
+  if (action === 'left') { if (b) b.status = 'archived'; toast(`✓ 已保留 "${a.title.slice(0,20)}…"`); }
+  else if (action === 'right') { if (a) a.status = 'archived'; toast(`✓ 已保留 "${b.title.slice(0,20)}…"`); }
+  else if (action === 'both') { toast(`✓ 两条都保留（alternative_to）`); }
+  else if (action === 'archive') { if (a) a.status = 'archived'; if (b) b.status = 'archived'; toast(`✓ 两条都已归档`); }
+  computeLayout();
+  renderStats();
+  renderPanel();
+}
+
+function toast(msg, duration = 2600) {
+  const stack = document.getElementById('toast-stack');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  stack.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity 0.3s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+const SIM_CARDS = [
+  {
+    title: 'nft-gmgn 搜索结果用 react-window 虚拟列表',
+    summary: 'SearchResultsList 外层用 FixedSizeList，行高 72px，稳定渲染 10k+ 条结果不掉帧。',
+    content: '# 虚拟列表\n\nreact-window + FixedSizeList\n- itemSize: 72\n- 外层 AutoSizer',
+    claim_type: 'fact', tags: ['nft-gmgn', 'react'],
+    source: 'SearchResultsList.tsx',
+  },
+  {
+    title: 'mnemo feedback 调用率远低于预期（仅 3%）',
+    summary: 'search ~812 次 / feedback 仅 23 次。需在 MCP instruction 里强化 feedback 强制性。',
+    content: '# 观察\n\n- search: 812\n- feedback_knowledge: 23 (2.8%)\n- 目标: >30%',
+    claim_type: 'hypothesis', tags: ['mnemo', 'observability'],
+    source: 'logs/mcp_access.log',
+  },
+  {
+    title: 'user says: 新 agent 必须读过 TEAM_ROSTER 才能上岗',
+    summary: '用户要求：spawn 新 agent 的 prompt 开头必须注入角色清单摘要。',
+    content: '# user 原话\n\n> "我不想 spawn 出来的人还要我告诉他团里有谁。"\n\n落地：spawn 模板自动注入 TEAM_ROSTER 头 30 行。',
+    claim_type: 'fact', tags: ['user-pref', 'team', 'spawn'],
+    source: 'user 2026-04-21',
+  },
+];
+let simIdx = 0;
+function simulateWrite() {
+  const tmpl = SIM_CARDS[simIdx % SIM_CARDS.length];
+  simIdx++;
+  const id = 'ksim' + (Date.now() % 10000);
+  const card = {
+    ...tmpl,
+    id, status: 'active', version: 1,
+    scope: tmpl.tags.includes('user-pref') ? 'global' : 'project',
+    created_at: '2026-04-21', accessed_at: '2026-04-21',
+    feedback_helpful: 0,
+  };
+  DATA.unshift(card);
+  computeLayout();
+  state.justCreated.set(id, nowMs());
+  renderStats();
+  toast(`✨ 新知识写入：${card.title.slice(0, 28)}…`);
+  centerOn(id);
+  setTimeout(() => { state.justCreated.delete(id); }, 10000);
+}
+
+function onSearchInput(e) {
+  state.searchQuery = e.target.value;
+  const r = doSearch(state.searchQuery);
+  state.hits = r.hits;
+  state.hitCount = r.hits.size;
+  const diff = document.getElementById('search-diff');
+  if (state.searchQuery.trim()) {
+    diff.classList.add('show');
+    document.getElementById('sd-query').textContent = state.searchQuery;
+    document.getElementById('sd-hit').textContent = state.hits.size;
+    const total = DATA.filter(k => k.status !== 'superseded' && k.status !== 'archived').length;
+    document.getElementById('sd-miss').textContent = (total - state.hits.size) + ' 未命中（折叠为灰条）';
+  } else {
+    diff.classList.remove('show');
+  }
+  computeLayout();
+  if (state.searchQuery.trim() && state.hits.size > 0) fitToHits();
+}
+
+function fitToHits() {
+  const hitIds = new Set(state.hits.keys());
+  const hits = state.cards.filter(c => hitIds.has(c.k.id));
+  if (hits.length === 0) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const c of hits) {
+    minX = Math.min(minX, c.x);
+    minY = Math.min(minY, c.y);
+    maxX = Math.max(maxX, c.x + c.w);
+    maxY = Math.max(maxY, c.y + c.h);
+  }
+  const W = state.canvas.clientWidth, H = state.canvas.clientHeight;
+  const pad = 80;
+  const sx = (W - pad * 2) / (maxX - minX);
+  const sy = (H - pad * 2) / (maxY - minY);
+  const s = Math.min(sx, sy, 1);
+  state.view.scale = Math.max(0.55, s);
+  state.view.x = (W - (maxX - minX) * state.view.scale) / 2 - minX * state.view.scale;
+  state.view.y = (H - (maxY - minY) * state.view.scale) / 2 - minY * state.view.scale;
+  document.getElementById('zoom-readout').textContent = Math.round(state.view.scale * 100) + '%';
+}
+
+function wireUI() {
+  document.getElementById('search-input').addEventListener('input', onSearchInput);
+  document.getElementById('search-clear').addEventListener('click', () => {
+    document.getElementById('search-input').value = '';
+    onSearchInput({ target: { value: '' } });
+  });
+  document.getElementById('exit-search').addEventListener('click', () => {
+    document.getElementById('search-input').value = '';
+    onSearchInput({ target: { value: '' } });
+  });
+  document.getElementById('simulate-write').addEventListener('click', simulateWrite);
+  document.getElementById('show-contradictions').addEventListener('click', () => {
+    for (const k of DATA) {
+      if (!(k.contradicts || []).length) continue;
+      for (const cid of k.contradicts) {
+        const key = [k.id, cid].sort().join('::');
+        if (!state.resolvedContradictions.has(key)) {
+          showContradictionDuel(k.id, cid);
+          return;
+        }
+      }
+    }
+    toast('✓ 没有未解决的矛盾');
+  });
+  document.getElementById('reset-view').addEventListener('click', resetView);
+  document.getElementById('zoom-in').addEventListener('click', () => zoomBy(1.25));
+  document.getElementById('zoom-out').addEventListener('click', () => zoomBy(0.8));
+  document.getElementById('zoom-fit').addEventListener('click', fitToView);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') {
+      if (e.key === 'Escape') e.target.blur();
+      return;
+    }
+    if (e.key === 'Escape') {
+      if (document.getElementById('duel-overlay')) { closeDuel(); return; }
+      if (state.selectedId) { state.selectedId = null; renderPanel(); return; }
+      if (state.searchQuery) {
+        document.getElementById('search-input').value = '';
+        onSearchInput({ target: { value: '' } });
+      }
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('search-input').focus();
+    }
+    if (e.key === '+' || e.key === '=') zoomBy(1.2);
+    if (e.key === '-' || e.key === '_') zoomBy(0.8);
+    if (e.key === '0') fitToView();
+  });
+}
+
+function boot() {
+  setupCanvas();
+  computeLayout();
+  renderStats();
+  wireUI();
+  resetView();
+  requestAnimationFrame(render);
+  setTimeout(() => toast('💡 拖动平移 · 滚轮缩放 · 试搜 "MCP 超时" · 点 ⚡ 红色曲线看矛盾'), 500);
+}
+boot();
+</script>
+
+</body>
+</html>

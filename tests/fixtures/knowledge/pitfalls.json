@@ -1,0 +1,773 @@
+[
+  {
+    "title": "sqlite-vec pre-v1 不稳定",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "dependency",
+      "mnemo"
+    ],
+    "summary": "sqlite-vec 仍在 pre-v1 阶段，API 可能破坏性变更，锁版本 0.1.9 使用",
+    "content": "sqlite-vec 是 mnemo 向量搜索的核心依赖，但目前仍处于 0.1.x pre-release，未发布稳定版本。API 和数据格式都可能在次要版本升级时发生破坏性变更。应对：pyproject.toml 中锁定到 `sqlite-vec==0.1.9`，升级前先在独立 branch 验证，不跟随 latest。后续关注 v1.0 stable release。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "/Users/zhuqingyu/project/mnemo/.claude/memory/RISKS.md",
+    "related": [
+      "Embedding 模型更新导致重建索引"
+    ],
+    "search_queries": [
+      "sqlite-vec 版本",
+      "向量库风险",
+      "pre-v1 锁版本"
+    ]
+  },
+  {
+    "title": "FTS5 中文分词不完善",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "search",
+      "i18n",
+      "mnemo"
+    ],
+    "summary": "SQLite FTS5 默认 unicode61 tokenizer 不切分连续中文，纯中文短语搜索会漏",
+    "content": "MVP 实测发现：'编码规范' 因有空格/标点分隔能搜到，但 '批量测试'、'第15条' 这种连续中文短语搜不到。原因：FTS5 默认 unicode61 tokenizer 不识别中文词边界，把整段中文当一个 token。应对：Phase 1 改用 jieba 分词器（已完成，通过 120 个测试），Phase 2 补向量语义搜索作兜底。临时绕过：Agent 搜索中文短语时可先用英文关键词兜底。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "fact",
+    "source": "mnemo/.claude/memory/RISKS.md + session e8c1e554 L710",
+    "related": [
+      "中文搜索先用英文关键词兜底",
+      "FTS5 用 jieba 做中文分词"
+    ],
+    "search_queries": [
+      "FTS5 中文",
+      "中文分词",
+      "unicode61 tokenizer"
+    ]
+  },
+  {
+    "title": "Embedding 模型更新导致重建索引",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "vector",
+      "migration",
+      "mnemo"
+    ],
+    "summary": "升级 embedding 模型会让已有向量失效，必须全量重建索引",
+    "content": "不同 embedding 模型输出的向量空间不兼容，切换模型后历史向量的相似度度量会错乱。应对：设计 reindex 机制，向量表记录 model_name + model_version，升级模型时后台批量重算向量；对外提供 `mnemo reindex-vectors` 命令。避免：不在未设计 reindex 的情况下随意换模型。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "mnemo/.claude/memory/RISKS.md",
+    "related": [
+      "sqlite-vec pre-v1 不稳定"
+    ],
+    "search_queries": [
+      "embedding 模型升级",
+      "重建索引",
+      "reindex 机制"
+    ]
+  },
+  {
+    "title": "Fork basic-memory 改造量超预期",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "architecture",
+      "mnemo"
+    ],
+    "summary": "basic-memory 代码量大、有 canvas/ChatGPT 等无关模块，直接 fork 改造工作量不可控",
+    "content": "basic-memory 有 21 次 migration 的成熟存储层，但也夹杂 canvas/UI SDK/ChatGPT tools/Postgres 等 mnemo 不需要的模块。风险：fork 后要一边删代码一边加自己的特性，改造量不可控。应对：先审查代码再决定 fork 范围。最终决定：不 fork，只借鉴架构设计自研。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "mnemo/.claude/memory/RISKS.md + DECISIONS.md",
+    "related": [
+      "basic-memory 是 AGPL-3.0 不能 fork",
+      "不 fork basic-memory 自研 mnemo"
+    ],
+    "search_queries": [
+      "fork basic-memory",
+      "改造风险",
+      "代码审查"
+    ]
+  },
+  {
+    "title": "Scope creep 加 UI 的冲动",
+    "tags": [
+      "risk",
+      "high-risk",
+      "scope",
+      "mnemo"
+    ],
+    "summary": "mnemo 定位纯 headless，任何加 Web UI / TUI 的冲动都会偏离 Agent-first",
+    "content": "mnemo 是 Agent-first 知识库，人只通过 CLI 做管理。风险：开发中期会出现'加个 Web UI 方便看数据'的冲动，一旦加了 UI 就必须维护前端、设计交互、做权限，工作量翻倍且偏离目标用户。应对：严格 headless only，任何 UI 需求走 CLI 的 `mnemo export` 命令，导出 markdown 后用外部工具查看。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "mnemo/.claude/memory/RISKS.md",
+    "related": [
+      "纯数据库架构不落 markdown 文件",
+      "mnemo 产品定位 Agent-first 知识库"
+    ],
+    "search_queries": [
+      "scope creep",
+      "加 UI",
+      "headless only"
+    ]
+  },
+  {
+    "title": "basic-memory 是 AGPL-3.0 不能 fork",
+    "tags": [
+      "risk",
+      "high-risk",
+      "license",
+      "legal",
+      "mnemo"
+    ],
+    "summary": "basic-memory 实际协议是 AGPL-3.0，有网络传染性，fork 会导致 mteam 被迫开源",
+    "content": "第一轮 code-reviewer 报告错写成 MIT，实际是 AGPL-3.0-or-later。AGPL 特性：即使只通过 MCP/网络提供服务也必须公开全部源码，传染到所有引用代码，未来 mteam 商业化无法闭源。应对：不 fork basic-memory，只借鉴架构思路，一行代码都不复制，mnemo 用自选协议（Proprietary 闭源）。教训：引入任何开源依赖前必须看 LICENSE 不是猜。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "fact",
+    "source": "mnemo/.claude/memory/DECISIONS.md + session e8c1e554 L320",
+    "related": [
+      "不 fork basic-memory 自研 mnemo",
+      "引入依赖前先看 License"
+    ],
+    "search_queries": [
+      "basic-memory License",
+      "AGPL 传染",
+      "fork 协议风险"
+    ]
+  },
+  {
+    "title": "引入依赖前先看 License",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "license",
+      "procedure"
+    ],
+    "summary": "任何开源依赖引入前必须亲自读 LICENSE 文件，不能靠传言或一级报告",
+    "content": "basic-memory 协议一开始被误报为 MIT，实际是 AGPL-3.0。一级调研报告可能失准，决策前必须核实原始 LICENSE 文件（GitHub 仓库根目录或 pypi metadata）。应对流程：决定 fork/嵌入任何开源代码前，亲自 curl 或打开仓库 LICENSE 文件，确认协议类型、传染性、商用限制。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "session e8c1e554 L320 教训",
+    "related": [
+      "basic-memory 是 AGPL-3.0 不能 fork"
+    ],
+    "search_queries": [
+      "License 核实",
+      "开源协议检查",
+      "依赖引入流程"
+    ]
+  },
+  {
+    "title": "mock 测试通过但生产 migration 失败",
+    "tags": [
+      "risk",
+      "high-risk",
+      "testing",
+      "delivery-rule"
+    ],
+    "summary": "历史教训：mock 单测全绿但 migration 到生产环境失败，从此全面禁用 mock",
+    "content": "历史项目中曾出现：所有单测 mock 数据库后绿灯通过，但生产环境运行 migration 时失败（表结构假设与真实 SQLite 版本不匹配）。教训：mock 掩盖了真实依赖行为。应对：所有测试必须连接真实数据库（SQLite 内存库 / 本地实例），禁止 mock。mnemo Phase 1 所有 70+ 测试无 mock，保证发现问题不遗漏到生产。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "~/.claude/CLAUDE.md + session e8c1e554 L1007",
+    "related": [
+      "不 mock 测试",
+      "新模块必须带单测"
+    ],
+    "search_queries": [
+      "mock 测试失败",
+      "migration 事故",
+      "测试教训"
+    ]
+  },
+  {
+    "title": "tsc 通过不等于功能正常",
+    "tags": [
+      "risk",
+      "high-risk",
+      "delivery-rule",
+      "testing"
+    ],
+    "summary": "ai-store P4 教训：TypeScript tsc 0 error 不代表功能可用，必须真实环境 dog-food",
+    "content": "ai-store 项目 P4 阶段曾因 tsc 全绿、E2E 全过就宣告完成，结果用户实际操作时多个功能破损。教训：类型检查和自动化测试只能保证代码形式正确，无法覆盖真实用户路径。应对：任何功能完成必须经过 dog-food（用户或郭总亲自操作）才算验收。队员自报'通过'不算数。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "/Users/zhuqingyu/project/ai-store/.claude/memory/OPERATIONS.md §6",
+    "related": [
+      "队员说通过不算数",
+      "有证据才能说完成"
+    ],
+    "search_queries": [
+      "tsc 通过",
+      "dog-food 验收",
+      "P4 教训"
+    ]
+  },
+  {
+    "title": "队员说通过不算数",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "delivery-rule",
+      "team-rule"
+    ],
+    "summary": "ai-store 教训：队员自报'功能通过'必须经过总控二次验证，不能直接进验收",
+    "content": "多 Agent 协作中常见：开发队员自己测试一遍就说'全通过'，总控不验证直接进下一阶段，结果漏掉 bug 到用户面前。应对：团队 leader / 总控必须亲自 dog-food 一遍关键功能，或指定独立验证员，不能把验收权交给开发者本人。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "ai-store OPERATIONS.md §6",
+    "related": [
+      "tsc 通过不等于功能正常",
+      "有证据才能说完成"
+    ],
+    "search_queries": [
+      "队员自报",
+      "验收机制",
+      "dog-food"
+    ]
+  },
+  {
+    "title": "inferOnce 是通用需求不要埋在协商模块里",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "architecture",
+      "ai-store"
+    ],
+    "summary": "ai-store P4 教训：inferOnce（单次推理）曾埋在协商模块内部，后来发现多处需要导致重构",
+    "content": "ai-store P4 阶段 inferOnce 能力最初埋在 NegotiationManager 内部，后来发现 App builtin 工具、普通 tool 调用都需要单次推理，被迫抽成公共服务。教训：单次推理是通用能力，不该耦合在特定业务模块。应对：新项目中出现看似'只某处用'的基础能力，先问一句'未来有没有第二个调用方'，若有至少预留可抽取的接口。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "fact",
+    "source": "ai-store OPERATIONS.md §6 P4教训 #3",
+    "related": [
+      "持久化要第一时间做"
+    ],
+    "search_queries": [
+      "inferOnce 通用需求",
+      "抽取公共服务",
+      "单次推理"
+    ]
+  },
+  {
+    "title": "持久化要第一时间做",
+    "tags": [
+      "risk",
+      "high-risk",
+      "architecture",
+      "ai-store"
+    ],
+    "summary": "ai-store P4 教训：协商记录只存内存导致重启清零，持久化必须从第一版就有",
+    "content": "ai-store P4 初版把协商记录只保存在内存 Map，重启进程后全部清零，用户反馈数据丢失。教训：任何有状态的数据，即使早期 MVP 也必须有落盘策略。应对：新增有状态模块第一个 commit 就要包含持久化（即使是最简单的 JSON 文件），不能把持久化留到'后续优化'。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "fact",
+    "source": "ai-store OPERATIONS.md §6 P4教训 #2",
+    "related": [
+      "inferOnce 是通用需求不要埋在协商模块里"
+    ],
+    "search_queries": [
+      "持久化",
+      "内存数据丢失",
+      "MVP 落盘"
+    ]
+  },
+  {
+    "title": "UI 样式不能留到最后",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "ai-store",
+      "delivery-rule"
+    ],
+    "summary": "ai-store P3 教训：P3 只做功能没做样式，P4 一次性补 370 行 CSS 代价很高",
+    "content": "ai-store P3 阶段只关注功能实现，样式全用默认样式应付，P4 集中补样式时发现要一次性写 370 行 CSS 且影响已有布局。教训：UI 样式应和功能同步交付，而不是'功能先跑起来后续再美化'。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "fact",
+    "source": "ai-store OPERATIONS.md §6 P4教训 #1",
+    "related": [
+      "不带技术债上线"
+    ],
+    "search_queries": [
+      "UI 样式补救",
+      "P4 CSS",
+      "功能样式同步"
+    ]
+  },
+  {
+    "title": "产品先行开发后跟",
+    "tags": [
+      "risk",
+      "high-risk",
+      "process",
+      "ai-store"
+    ],
+    "summary": "ai-store P5 教训：架构方案不应在产品需求未对齐前并行设计，会被迫重做",
+    "content": "ai-store P5 曾让产品和架构并行推进，结果产品方向变化后架构方案作废返工。教训：产品需求未明确前动架构是低效。应对：必须先让产品人（郭聪明 + 老乔 + 钱多多）对齐需求，再让架构师（阿构 + 老尺）设计，两个阶段串行。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "decision",
+    "source": "ai-store OPERATIONS.md §6 P5教训 #6",
+    "related": [
+      "种子 App 必须从用户场景倒推"
+    ],
+    "search_queries": [
+      "产品先行",
+      "架构返工",
+      "P5 教训"
+    ]
+  },
+  {
+    "title": "种子 App 必须从用户场景倒推",
+    "tags": [
+      "risk",
+      "high-risk",
+      "product",
+      "ai-store"
+    ],
+    "summary": "ai-store P5 教训：工程师思维凑出来的种子 App 没有吸引力，必须从真实用户场景反推",
+    "content": "ai-store P5 第一版种子 App 是工程师按'能展示功能'逻辑凑的，老乔评审后发现用户根本没有对应需求。教训：种子内容（demo、示例）必须从真实用户场景起手，不能让工程师自己拍脑袋。应对：老乔（用户场景调研）必须参与种子内容决策。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "fact",
+    "source": "ai-store OPERATIONS.md §6 P5教训 #7",
+    "related": [
+      "产品先行开发后跟"
+    ],
+    "search_queries": [
+      "种子 App",
+      "用户场景",
+      "工程师思维"
+    ]
+  },
+  {
+    "title": "不带技术债上线",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "ai-store",
+      "delivery-rule"
+    ],
+    "summary": "ai-store P5 教训：manifest 双格式这种技术债必须在本阶段解决，不能推到下阶段",
+    "content": "ai-store P5 发现 manifest 需要支持新旧两种格式，曾想推到 P6 统一，老锤否决：积累的技术债会复利拖慢后续所有工作。教训：技术债发现阶段必须清理，不能跨阶段累积。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "decision",
+    "source": "ai-store OPERATIONS.md §6 P5教训 #8",
+    "related": [
+      "UI 样式不能留到最后"
+    ],
+    "search_queries": [
+      "技术债",
+      "manifest 双格式",
+      "本阶段解决"
+    ]
+  },
+  {
+    "title": "legacy_text 路线已归档禁止复活",
+    "tags": [
+      "risk",
+      "high-risk",
+      "ai-child",
+      "architecture"
+    ],
+    "summary": "ai-child 项目 legacy_text 路线已归档，严禁侵入主线（已有子 Agent 试图复活被打回）",
+    "content": "ai-child 目标是'从零习得语言的具身智能体'，legacy_text 路线（用外部文本预训练）违背项目目标且已被归档。风险：新 Agent 不了解历史，可能看到 legacy_text 目录误以为是活跃代码、甚至复活它。应对：CLAUDE.md 明确标注 '禁止 legacy_text 路线侵入主线（已归档，不复活）'。新 Agent 看到 legacy_text 目录要先问。",
+    "scope": "project",
+    "project_name": "ai-child",
+    "claim_type": "decision",
+    "source": "/Users/zhuqingyu/project/ai-child/CLAUDE.md",
+    "related": [],
+    "search_queries": [
+      "legacy_text 归档",
+      "ai-child 禁止",
+      "复活 legacy"
+    ]
+  },
+  {
+    "title": "ai-child 禁止绕过 encoder 注入向量",
+    "tags": [
+      "risk",
+      "high-risk",
+      "ai-child",
+      "anti-pattern"
+    ],
+    "summary": "ai-child 禁止直接注入预训练向量绕过感知 encoder，违背实时感知目标",
+    "content": "ai-child 核心是'完全通过与世界的实时交互积累'。风险：开发者为了让指标好看，直接把 word2vec 向量注入感知层，然后声称'感知能力已验证'。应对：任何感知能力必须从 camera/mic 原始输入出发，禁止绕过 encoder 直接注入。",
+    "scope": "project",
+    "project_name": "ai-child",
+    "claim_type": "decision",
+    "source": "/Users/zhuqingyu/project/ai-child/CLAUDE.md 禁止事项",
+    "related": [
+      "ai-child 禁止用外部检索假装内部记忆"
+    ],
+    "search_queries": [
+      "绕过 encoder",
+      "注入向量",
+      "感知验证造假"
+    ]
+  },
+  {
+    "title": "不要偏离 NORTH_STAR",
+    "tags": [
+      "risk",
+      "high-risk",
+      "ai-store",
+      "process"
+    ],
+    "summary": "ai-store 每期产出必须朝 NORTH_STAR 前进，任何偏离被郭总一票否决",
+    "content": "ai-store 团队的最高红线：所有任务派发前先读 NORTH_STAR，产出不对齐就砍。应对：郭总总控时先对目标，再派任务；任何'顺便做下'的需求被严格拒绝。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "decision",
+    "source": "/Users/zhuqingyu/project/ai-store/.claude/memory/OPERATIONS.md §3",
+    "related": [
+      "不说完成除非四道验收全过"
+    ],
+    "search_queries": [
+      "NORTH_STAR",
+      "偏离目标",
+      "任务对齐"
+    ]
+  },
+  {
+    "title": "不说完成除非四道验收全过",
+    "tags": [
+      "risk",
+      "high-risk",
+      "ai-store",
+      "delivery-rule"
+    ],
+    "summary": "ai-store 验收四道：刺猬测试 → 郭总 dog-food → 钱多多商业评估 → 三人共识",
+    "content": "ai-store 红线：不能轻易说'完成'。四道关卡：1) 刺猬（测试 leader）测试通过；2) 郭总亲自 dog-food 使用；3) 钱多多从商业角度评估；4) 三人（郭总+钱多多+老乔）达成共识。风险：任何一关没过就说完成会被打回。",
+    "scope": "project",
+    "project_name": "ai-store",
+    "claim_type": "decision",
+    "source": "ai-store OPERATIONS.md §3",
+    "related": [
+      "不要偏离 NORTH_STAR",
+      "队员说通过不算数"
+    ],
+    "search_queries": [
+      "四道验收",
+      "dog-food",
+      "验收全过"
+    ]
+  },
+  {
+    "title": "中文搜索先用英文关键词兜底",
+    "tags": [
+      "risk",
+      "low-risk",
+      "mnemo",
+      "workaround"
+    ],
+    "summary": "mnemo FTS5 中文分词有盲区时，Agent 可先用英文关键词 / tag 兜底",
+    "content": "mnemo Phase 1 虽然有 jieba 分词，仍可能漏长尾短语。Agent 使用技巧：搜中文短语 A 无结果时，尝试它的英文对应词（术语通常有英文原词），或用 tag-search 替代全文搜索。Phase 2 向量语义搜索落地后此 workaround 可废除。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "procedure",
+    "source": "session e8c1e554 L804",
+    "related": [
+      "FTS5 中文分词不完善",
+      "FTS5 用 jieba 做中文分词"
+    ],
+    "search_queries": [
+      "中文搜索兜底",
+      "英文关键词",
+      "workaround"
+    ]
+  },
+  {
+    "title": "重复标题报错信息要包装",
+    "tags": [
+      "risk",
+      "low-risk",
+      "mnemo",
+      "usability"
+    ],
+    "summary": "mnemo MVP 创建同名知识时直接抛 SQLAlchemy 异常，Agent 读不懂",
+    "content": "mnemo 实测发现：重复 title 触发 UNIQUE 约束时直接抛 sqlalchemy.exc.IntegrityError，Agent 读取 traceback 无法理解。应对：service 层捕获后包装为 `Knowledge with title 'xxx' already exists`，Agent 可据此自动改名或改用 update。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "hypothesis",
+    "source": "session e8c1e554 L710",
+    "related": [
+      "FTS5 中文分词不完善"
+    ],
+    "search_queries": [
+      "重复标题",
+      "错误信息包装",
+      "UNIQUE 约束"
+    ]
+  },
+  {
+    "title": "schema 迁移风险预埋字段不走 Alembic",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "mnemo",
+      "migration"
+    ],
+    "summary": "mnemo 选择预埋 Phase 2-3 字段到 Knowledge 表，避免后期 Alembic migration",
+    "content": "mnemo 未来要加 last_used_at、use_count、decay_score、confidence 等字段。风险：若走 Alembic migration，每次升级都要跑迁移脚本，数据量大时有风险。应对：决定 A 方案——现在就预埋 nullable 列，代码不用就放着，后续功能直接用，不走 migration。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "session e8c1e554 L716",
+    "related": [
+      "sqlite-vec pre-v1 不稳定"
+    ],
+    "search_queries": [
+      "Alembic migration",
+      "预埋字段",
+      "schema 迁移"
+    ]
+  },
+  {
+    "title": "种子数据重复提取风险",
+    "tags": [
+      "risk",
+      "low-risk",
+      "mnemo",
+      "data-extraction"
+    ],
+    "summary": "Cursor 和 Claude JSONL 可能记录同一事件，提取 Agent 要打来源 tag 让去重兜底",
+    "content": "12 路 Agent 并行提取种子数据时，同一知识可能从 Cursor bubble 和 Claude JSONL 各被提一次。应对：每条产出必须带 source 字段标明原始来源，mnemo 的去重机制（content_hash / title UNIQUE）再兜一道。类别漂移风险：原子切分时建议每条打 1-2 个主类 + 1-2 个次类 tag。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mnemo/tests/fixtures/CATEGORY_REPORT.md L281-284",
+    "related": [
+      "敏感信息必须脱敏"
+    ],
+    "search_queries": [
+      "重复提取",
+      "去重机制",
+      "类别漂移"
+    ]
+  },
+  {
+    "title": "种子数据时效衰减要打时间戳",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "mnemo",
+      "data-extraction"
+    ],
+    "summary": "类别 7/10/部分 8 时效性强，提取时必须附带 captured_at",
+    "content": "项目状态快照（类别 7）、测试 case（10）、代码审阅结论（8 的一部分）都有强时效性。风险：半年后'当时为真'的事实已过期却被 Agent 当最新信息用。应对：提取时附带 captured_at 时间戳，搜索时可按日期过滤 / 降权。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "procedure",
+    "source": "/Users/zhuqingyu/project/mnemo/tests/fixtures/CATEGORY_REPORT.md L283",
+    "related": [
+      "种子数据重复提取风险"
+    ],
+    "search_queries": [
+      "时效衰减",
+      "captured_at",
+      "时间戳"
+    ]
+  },
+  {
+    "title": "zero-context 新 Agent 评估风险",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "mnemo",
+      "evaluation"
+    ],
+    "summary": "mnemo 验收标准不是 pytest 绿而是新 Agent 能否通过搜索变成'老人'",
+    "content": "mnemo 产品价值风险：如果评估只看单测通过率，可能做出'接口全绿但 Agent 找不到信息'的失败产品。应对：每阶段交付后 spawn 一个零上下文新 Agent，让它只通过 mnemo 查询理解用户+项目+雷区，报告命中率和漏项。这才是端到端产品评估。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "session e8c1e554 L804",
+    "related": [
+      "中文搜索先用英文关键词兜底",
+      "FTS5 中文分词不完善"
+    ],
+    "search_queries": [
+      "zero-context 评估",
+      "新 Agent 上手",
+      "端到端验收"
+    ]
+  },
+  {
+    "title": "NotesMD CLI 误判为官方 Obsidian CLI",
+    "tags": [
+      "risk",
+      "low-risk",
+      "mnemo",
+      "research"
+    ],
+    "summary": "调研报告一度声称 Obsidian 官方 CLI 已发布，事实核查后不存在",
+    "content": "第一轮 competitor-analyst 报告说 'Obsidian 官方 CLI 已存在'（基于 NotesMD CLI README 描述），fact-checker 独立验证发现：obsidianmd/obsidian-cli 仓库非公开或不存在，只有社区 CLI。风险：单一调研员结论不能信，必须交叉验证。应对：关键结论必须二级核实（GitHub API 实测 / 多源比对）。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 L487 + L531 fact-checker 报告",
+    "related": [
+      "引入依赖前先看 License"
+    ],
+    "search_queries": [
+      "调研交叉验证",
+      "官方 CLI 误判",
+      "fact-checker"
+    ]
+  },
+  {
+    "title": "nurture.py 音频依赖 sounddevice",
+    "tags": [
+      "risk",
+      "low-risk",
+      "ai-child",
+      "dependency"
+    ],
+    "summary": "ai-child nurture.py 用 sounddevice 播放，mac 上可能触发权限提示",
+    "content": "ai-child 的 nurture.py 用 sounddevice 播放合成音频。风险：首次运行会触发 macOS 麦克风/音频权限提示；CI 环境无音频设备会崩溃。应对：headless 场景设置 `SD_ENABLE=0` 环境变量跳过播放，只跑合成和评测。",
+    "scope": "project",
+    "project_name": "ai-child",
+    "claim_type": "hypothesis",
+    "source": "ai-child CLAUDE.md 阶段0-3 + TOOLING.md",
+    "related": [
+      "ai-child 禁止绕过 encoder 注入向量"
+    ],
+    "search_queries": [
+      "sounddevice 权限",
+      "音频播放",
+      "nurture.py"
+    ]
+  },
+  {
+    "title": "24h 长期运行 OOM 风险",
+    "tags": [
+      "risk",
+      "high-risk",
+      "ai-child",
+      "stability"
+    ],
+    "summary": "ai-child 阶段5 要求 24h 连续运行不 OOM，长期内存泄漏需排查",
+    "content": "ai-child 阶段5 攻坚项之一：24h 不崩不 OOM。风险：EpisodicMemory / GlobalWorkspace 若有对象积累会线性膨胀。应对：定期快照堆内存、设置 memory ceiling，触发阈值做 episodic pruning；checkpoint 持久化确保断点续跑。",
+    "scope": "project",
+    "project_name": "ai-child",
+    "claim_type": "hypothesis",
+    "source": "/Users/zhuqingyu/project/ai-child/CLAUDE.md 阶段5",
+    "related": [
+      "Checkpoint 持久化缺失导致学习重置"
+    ],
+    "search_queries": [
+      "24h OOM",
+      "长期运行",
+      "内存泄漏"
+    ]
+  },
+  {
+    "title": "Checkpoint 持久化缺失导致学习重置",
+    "tags": [
+      "risk",
+      "high-risk",
+      "ai-child",
+      "persistence"
+    ],
+    "summary": "ai-child 阶段5 发现 checkpoint 未持久化学习状态，重启后跨 session 重置",
+    "content": "ai-child nurture 过程学习状态应跨 session 累积，但实测重启后状态没了。风险：用户看到'学会'的概念下次启动又不会了，等于没学。应对：checkpoint 机制要落盘 VocalLearningSystem 的 syllable vocab、SelfOtherDiscriminator 的判别器权重、EpisodicMemory 的情节。属阶段5 核心攻坚。",
+    "scope": "project",
+    "project_name": "ai-child",
+    "claim_type": "fact",
+    "source": "ai-child CLAUDE.md 阶段5 攻坚 #3",
+    "related": [
+      "24h 长期运行 OOM 风险",
+      "持久化要第一时间做"
+    ],
+    "search_queries": [
+      "Checkpoint 持久化",
+      "学习状态重置",
+      "跨 session"
+    ]
+  },
+  {
+    "title": "不确定 API 必须先查证",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "gmgn-web",
+      "procedure"
+    ],
+    "summary": "GMGN 遇到不确定的 API / 配置 / 第三方用法，必须查证或询问用户，禁止猜",
+    "content": "GMGN 约定：Agent 不确定某个 API 用法 / 配置项 / 第三方库 feature 时，必须 1) 查官方文档；2) 查不到直接问用户。风险：照猜写出的代码可能调用不存在的函数、用过时签名。应对：不确定 ≠ 写出来看看，停下来查证。",
+    "scope": "project",
+    "project_name": "nft-gmgn",
+    "claim_type": "decision",
+    "source": "/Users/zhuqingyu/project/nft-gmgn/CLAUDE.md 重要约束",
+    "related": [
+      "遇到歧义先问不要猜"
+    ],
+    "search_queries": [
+      "API 查证",
+      "不确定用法",
+      "第三方配置"
+    ]
+  },
+  {
+    "title": "M13 predictive coding drive 区分度不达标",
+    "tags": [
+      "risk",
+      "low-risk",
+      "ai-child",
+      "eval"
+    ],
+    "summary": "ai-child 阶段4 M13 曾因 predictive coding drive 区分度不足失败，已修复",
+    "content": "ai-child 阶段4 M13 模块一度 eval 不达标，原因是 predictive coding drive 在不同情境下区分度不够。已修复并全量 eval 4/4 PASS。风险提示：类似的 drive 类模块很容易跌出阈值，新改动要跑对应局部 eval 验证。",
+    "scope": "project",
+    "project_name": "ai-child",
+    "claim_type": "fact",
+    "source": "/Users/zhuqingyu/project/ai-child/CLAUDE.md 阶段4 已修复",
+    "related": [
+      "24h 长期运行 OOM 风险"
+    ],
+    "search_queries": [
+      "M13 predictive coding",
+      "drive 区分度",
+      "eval 不达标"
+    ]
+  },
+  {
+    "title": "trigram tokenizer 未必够用",
+    "tags": [
+      "risk",
+      "medium-risk",
+      "mnemo",
+      "hypothesis"
+    ],
+    "summary": "MVP 一度考虑用 trigram tokenizer 覆盖中文，但未验证是否足够",
+    "content": "FTS5 中文分词备选方案：trigram tokenizer 把中文切成 3 字节组合。属假设：对常见中文短语可能够用，但对专业术语、长复合词可能召回率不够。最终选 jieba + 向量语义作双保险。保留 trigram 作为备份方案。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "hypothesis",
+    "source": "session e8c1e554 L1011 claim_type 示例",
+    "related": [
+      "FTS5 中文分词不完善"
+    ],
+    "search_queries": [
+      "trigram tokenizer",
+      "中文 fallback",
+      "分词方案"
+    ]
+  }
+]

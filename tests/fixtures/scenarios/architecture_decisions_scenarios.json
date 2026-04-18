@@ -1,0 +1,416 @@
+[
+  {
+    "description": "新 Agent 第一次进入 mnemo 项目，想了解产品定位",
+    "query": "mnemo 定位",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 产品定位 Agent-first 知识库"],
+    "expected_not_hits": [],
+    "notes": "对应 EVAL_CRITERIA.md 场景 1 第一个查询，期望找到 Agent-first 定位"
+  },
+  {
+    "description": "新 Agent 想知道 mnemo 的存储架构",
+    "query": "存储格式",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["纯数据库架构不落 markdown 文件", "SQLite 作为单文件零基础设施存储"],
+    "expected_not_hits": [],
+    "notes": "mnemo 的核心存储决策：纯 SQLite 不落文件"
+  },
+  {
+    "description": "新 Agent 发现要 fork basic-memory，想确认协议风险",
+    "query": "basic-memory 协议",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["basic-memory 是 AGPL 协议不是 MIT", "不 fork basic-memory 自研 mnemo"],
+    "expected_not_hits": [],
+    "notes": "协议风险已记录，避免 Agent 再踩同样的坑"
+  },
+  {
+    "description": "新 Agent 问 mnemo 用什么协议",
+    "query": "mnemo License",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mnemo 用 Proprietary 闭源协议"],
+    "expected_not_hits": [],
+    "notes": "mnemo 是 Proprietary，不是 MIT/BSL/AGPL"
+  },
+  {
+    "description": "Agent 想加 UI 被阻止，搜索理由",
+    "query": "UI 冲动",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["headless only 不加 UI"],
+    "expected_not_hits": [],
+    "notes": "scope creep 风险：加 UI 的冲动，严格 headless only"
+  },
+  {
+    "description": "Agent 问数据模型怎么扩展",
+    "query": "数据模型扩展",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["EAV 元数据表 + 事件日志", "mnemo 数据模型冻结"],
+    "expected_not_hits": [],
+    "notes": "向前兼容：用扩展表 + JSON 字段，不 ALTER 主表"
+  },
+  {
+    "description": "Agent 写入知识前想理解 claim_type",
+    "query": "claim_type",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["claim_type 断言类型四分类"],
+    "expected_not_hits": [],
+    "notes": "对应 EVAL_CRITERIA.md 场景 5 黑话查询"
+  },
+  {
+    "description": "Agent 想知道中文搜索怎么做",
+    "query": "中文分词",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["FTS5 用 jieba 做中文分词", "FTS5 中文搜索盲区"],
+    "expected_not_hits": [],
+    "notes": "jieba 是选定方案，trigram 是被放弃的备选"
+  },
+  {
+    "description": "Agent 调试向量搜索，问选了什么 embedding",
+    "query": "embedding 模型",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Ollama embedding 做主 fastembed 做备"],
+    "expected_not_hits": [],
+    "notes": "Ollama 主路径，fastembed 备选"
+  },
+  {
+    "description": "Agent 想知道搜索架构",
+    "query": "检索架构",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["混合检索 FTS + 向量 + 图谱 RRF 融合", "4 层检索管道 FTS 向量 图谱 重排"],
+    "expected_not_hits": [],
+    "notes": "三路混合检索 + 4 层管道"
+  },
+  {
+    "description": "Agent 想了解 write-gate 是什么",
+    "query": "write-gate",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["write-gate 写入门禁"],
+    "expected_not_hits": [],
+    "notes": "对应 EVAL_CRITERIA.md 场景 5 黑话查询"
+  },
+  {
+    "description": "Agent 想了解命名空间机制",
+    "query": "命名空间",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["三级命名空间 global project session"],
+    "expected_not_hits": [],
+    "notes": "三级命名空间是 mnemo 核心差异"
+  },
+  {
+    "description": "Agent 查知识版本管理怎么做",
+    "query": "版本管理",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["不可变版本链 supersede 替代 update", "放弃 git 版本化用 supersede 替代"],
+    "expected_not_hits": [],
+    "notes": "不可变 + supersede 链替代 git 版本化"
+  },
+  {
+    "description": "Agent 想知道矛盾知识怎么处理",
+    "query": "矛盾检测",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["矛盾检测成对暴露不隐藏"],
+    "expected_not_hits": [],
+    "notes": "成对暴露不自动合并，Agent 自判"
+  },
+  {
+    "description": "Agent 查图谱关系类型",
+    "query": "relation_type",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["图谱关系 7 种类型化"],
+    "expected_not_hits": [],
+    "notes": "7 种语义关系：supersedes/contradicts/depends_on/refines/derived_from/alternative_to/example_of"
+  },
+  {
+    "description": "Agent 写入知识要关联已有知识",
+    "query": "wikilink",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["wikilink 语法和反向链接"],
+    "expected_not_hits": [],
+    "notes": "[[]] 语法自动建立 Relation"
+  },
+  {
+    "description": "Agent 想了解 Phase 1 包含什么",
+    "query": "Phase 1",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Phase 路线图 4 阶段", "Phase 1 并行 5 任务拆分"],
+    "expected_not_hits": [],
+    "notes": "对应 EVAL_CRITERIA.md 场景 5 黑话查询"
+  },
+  {
+    "description": "Agent 想了解 mnemo 和 mteam 关系",
+    "query": "mteam",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["mteam 未来集成方向", "项目命名为 mnemo"],
+    "expected_not_hits": [],
+    "notes": "对应 EVAL_CRITERIA.md 场景 1：mteam 是用户的另一个项目，mnemo 未来集成"
+  },
+  {
+    "description": "Agent 想了解 MCP 协议",
+    "query": "MCP 协议",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["MCP 协议是 Agent 外脑的通用接口", "MCP stdio transport 做默认", "FastMCP 做 MCP Server 框架"],
+    "expected_not_hits": [],
+    "notes": "MCP 是 Anthropic 定义，通用 Agent 接口"
+  },
+  {
+    "description": "Agent 问语言为啥选 Python",
+    "query": "Python 语言选型",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["语言选 Python 不选 TypeScript"],
+    "expected_not_hits": [],
+    "notes": "Python 生态优势：SQLAlchemy + FastMCP + fastembed + jieba"
+  },
+  {
+    "description": "Agent 想知道测试怎么写",
+    "query": "测试框架",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["pytest + aiosqlite 内存库做真实测试"],
+    "expected_not_hits": [],
+    "notes": "用户红线'不 mock 测试'在架构层的落地"
+  },
+  {
+    "description": "Agent 第一次看 AionUi 想了解架构",
+    "query": "AionUi 架构",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi 三进程隔离架构", "AionUi 单目录 10 个子项上限"],
+    "expected_not_hits": [],
+    "notes": "AionUi 是 Electron 项目，三进程 + 目录硬约束"
+  },
+  {
+    "description": "Agent 在 nft-gmgn 改样式",
+    "query": "nft-gmgn Tailwind",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["nft-gmgn Tailwind px 规则", "nft-gmgn 禁止 Chakra UI 改 Tailwind"],
+    "expected_not_hits": [],
+    "notes": "GMGN 项目样式规则：p-16 禁用，Chakra UI 正在淘汰"
+  },
+  {
+    "description": "Agent 在 nft-gmgn 接到任务想搜代码",
+    "query": "nft-gmgn 流程",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["nft-gmgn 文档路由表强制"],
+    "expected_not_hits": [],
+    "notes": "nft-gmgn 强制：接到任务先按关键词表读文档，禁止直接搜代码"
+  },
+  {
+    "description": "Agent 想了解 ai-store 团队模型",
+    "query": "ai-store 团队",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-store 常驻三人团队", "ai-store spawn 规则英文拼音"],
+    "expected_not_hits": [],
+    "notes": "ai-store 特殊：三常驻 + spawn 用英文拼音"
+  },
+  {
+    "description": "Agent 在 ai-child 想加 RAG",
+    "query": "ai-child 外部检索",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ai-child 禁止用外部检索假装内部记忆"],
+    "expected_not_hits": [],
+    "notes": "ai-child 产品哲学红线：不能用 RAG 假装记忆"
+  },
+  {
+    "description": "搜 rejected option 看有哪些放弃方案",
+    "query": "放弃方案",
+    "query_type": "tag-search",
+    "scope": null,
+    "expected_hits": ["放弃 fork engram 方案", "放弃 zettelkasten-mcp 双层方案", "放弃 mem0 Zep 向量记忆方案", "放弃 Obsidian + MCP 插件方案", "放弃 mcp-knowledge-graph 玩具方案", "放弃 git 版本化用 supersede 替代", "不引入 LLM 参与 write-gate"],
+    "expected_not_hits": [],
+    "notes": "按 tag=rejected-option 应找到所有被放弃的备选方案"
+  },
+  {
+    "description": "按 architecture tag 获取架构类知识",
+    "query": "architecture",
+    "query_type": "tag-search",
+    "scope": "project",
+    "expected_hits": ["mnemo 产品定位 Agent-first 知识库", "SQLite 作为单文件零基础设施存储", "三级命名空间 global project session"],
+    "expected_not_hits": [],
+    "notes": "架构类标签应命中大量决策"
+  },
+  {
+    "description": "Agent 想知道 mnemo 路线图",
+    "query": "路线图",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Phase 路线图 4 阶段"],
+    "expected_not_hits": [],
+    "notes": "4 阶段：MVP / 语义检索 / 知识生命周期 / 集成 mteam"
+  },
+  {
+    "description": "Agent 问评估标准",
+    "query": "评估标准",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["评估由新 Agent 零上下文验证"],
+    "expected_not_hits": [],
+    "notes": "mnemo 终极检验：新 Agent 零上下文能否通过 mnemo 变'老人'"
+  },
+  {
+    "description": "Agent 想了解竞品 IWE",
+    "query": "竞品",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["IWE 是 mnemo 唯一正面竞品"],
+    "expected_not_hits": [],
+    "notes": "IWE 是唯一直接竞品，定位仍安全"
+  },
+  {
+    "description": "Agent 问 CLAUDE.md 够不够用",
+    "query": "CLAUDE.md 局限",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["CLAUDE.md 200 行硬约束"],
+    "expected_not_hits": [],
+    "notes": "CLAUDE.md 的硬约束正是 mnemo 诞生的动机"
+  },
+  {
+    "description": "Agent 查知识溯源字段",
+    "query": "source 来源",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["知识 source 字段必填"],
+    "expected_not_hits": [],
+    "notes": "每条知识必须有 source 字段"
+  },
+  {
+    "description": "Agent 查包管理工具",
+    "query": "uv 包管理",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["uv 做包管理器"],
+    "expected_not_hits": [],
+    "notes": "选 uv 不选 pip/poetry"
+  },
+  {
+    "description": "Agent 查代码质量工具",
+    "query": "ruff lint",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["ruff 做 lint 和 format"],
+    "expected_not_hits": [],
+    "notes": "ruff 替代 black + flake8 + isort"
+  },
+  {
+    "description": "获取某决策的关联决策",
+    "query": "不 fork basic-memory 自研 mnemo",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": ["basic-memory 是 AGPL 协议不是 MIT", "mnemo 用 Proprietary 闭源协议"],
+    "expected_not_hits": [],
+    "notes": "通过 related 字段建立的决策链：AGPL 事实 → 不 fork 决定 → 闭源协议"
+  },
+  {
+    "description": "获取 SQLite 选型的关联",
+    "query": "SQLite 作为单文件零基础设施存储",
+    "query_type": "related",
+    "scope": "project",
+    "expected_hits": ["纯数据库架构不落 markdown 文件", "sqlite-vec 锁版本 0.1.9", "FTS5 用 jieba 做中文分词"],
+    "expected_not_hits": [],
+    "notes": "SQLite 决策的 3 个相关决策：不落文件 + 锁 sqlite-vec + jieba"
+  },
+  {
+    "description": "Agent 想知道版本锁定策略",
+    "query": "sqlite-vec 版本",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["sqlite-vec 锁版本 0.1.9"],
+    "expected_not_hits": [],
+    "notes": "pre-v1 依赖锁死版本"
+  },
+  {
+    "description": "Agent 问怎么避免 SQL 注入",
+    "query": "SQL 注入",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["输入 sanitize 防 SQL 注入"],
+    "expected_not_hits": [],
+    "notes": "FTS 查询 sanitize 防注入"
+  },
+  {
+    "description": "Agent 搜产品哲学",
+    "query": "Agent-first",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["mnemo 产品定位 Agent-first 知识库"],
+    "expected_not_hits": [],
+    "notes": "Agent-first 是 mnemo 核心关键词"
+  },
+  {
+    "description": "Agent 想看反馈机制",
+    "query": "Agent 反馈",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["Agent 使用反馈闭环"],
+    "expected_not_hits": [],
+    "notes": "Phase 3 的闭环学习机制"
+  },
+  {
+    "description": "Agent 问通知规则",
+    "query": "通知规则",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["不要每步都通知 只通知里程碑", "mcp-notify 做用户通知 MCP"],
+    "expected_not_hits": [],
+    "notes": "用户全局偏好 + mcp-notify 工具"
+  },
+  {
+    "description": "Agent 问 MCP tool 有哪些",
+    "query": "MCP tools 列表",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["MCP Server 暴露 8 个核心 tools"],
+    "expected_not_hits": [],
+    "notes": "8 个 tool 对应 CRUD + search + relation + tag"
+  },
+  {
+    "description": "Agent 在 workspace 进入新项目",
+    "query": "项目登记",
+    "query_type": "search",
+    "scope": null,
+    "expected_hits": ["workspace 多项目注册制"],
+    "expected_not_hits": [],
+    "notes": "未登记项目必须先 /project-register"
+  },
+  {
+    "description": "Agent 查 AionUi i18n 规则",
+    "query": "AionUi 国际化",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["AionUi i18n 硬约束"],
+    "expected_not_hits": [],
+    "notes": "所有文本用 i18n key 禁硬编码"
+  },
+  {
+    "description": "Agent 查 nft-gmgn 状态管理",
+    "query": "nft-gmgn 状态",
+    "query_type": "search",
+    "scope": "project",
+    "expected_hits": ["nft-gmgn 状态管理分工 Jotai+TanStack Query"],
+    "expected_not_hits": [],
+    "notes": "Jotai + TanStack Query + useState 三套分工"
+  }
+]

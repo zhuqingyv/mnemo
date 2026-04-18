@@ -1,0 +1,2503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>mnemo · 知识可视化 v1 (live)</title>
+<link rel="icon" type="image/png" href="/viz/favicon.png">
+<style>
+  :root {
+    --bg-0: #0e1116;
+    --bg-1: #151a21;
+    --bg-2: #1c222b;
+    --bg-3: #252c37;
+    --border: #2a313c;
+    --border-strong: #3a4250;
+    --text-0: #e6edf3;
+    --text-1: #b9c2cd;
+    --text-2: #7d8693;
+    --text-3: #565d68;
+    --accent: #58a6ff;
+    --accent-dim: #1f6feb;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --purple: #a371f7;
+    --gray: #6e7681;
+    --mono: "JetBrains Mono", "Fira Code", "SF Mono", "Menlo", "Consolas", monospace;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100vh;
+    background: var(--bg-0); color: var(--text-0);
+    font-family: var(--mono); font-size: 13px;
+  }
+  button { font-family: inherit; font-size: inherit; cursor: pointer; }
+
+  /* ---------- topbar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; background: var(--bg-1);
+    border-bottom: 1px solid var(--border);
+    height: 52px;
+  }
+  .brand {
+    font-weight: 700; font-size: 14px;
+    color: var(--text-0); letter-spacing: 0.5px;
+  }
+  .brand .dot { color: var(--accent); }
+  .brand .hint { color: var(--text-3); font-size: 11px; margin-left: 4px; }
+
+  .api-state {
+    font-size: 11px; color: var(--text-2);
+    padding: 4px 10px; background: var(--bg-2);
+    border: 1px solid var(--border); border-radius: 4px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .api-state .dot-s { width: 8px; height: 8px; border-radius: 50%; background: var(--gray); }
+  .api-state.ok .dot-s { background: var(--green); }
+  .api-state.err .dot-s { background: var(--red); }
+
+  .search-wrap { flex: 1; max-width: 520px; position: relative; }
+  .search-wrap input {
+    width: 100%; background: var(--bg-2); color: var(--text-0);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 8px 36px 8px 32px; font-family: var(--mono); font-size: 13px;
+    outline: none;
+  }
+  .search-wrap input:focus {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 2px rgba(88,166,255,0.15);
+  }
+  .search-wrap .icon-search {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--text-2); pointer-events: none;
+  }
+  .search-wrap .clear-btn {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--text-3);
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .search-wrap .clear-btn:hover { color: var(--text-0); background: var(--bg-3); }
+
+  .btn {
+    background: var(--bg-2); color: var(--text-0);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 7px 12px;
+  }
+  .btn:hover { background: var(--bg-3); border-color: var(--border-strong); }
+
+  /* ---------- main layout ---------- */
+  main {
+    max-width: 1280px; margin: 0 auto;
+    padding: 24px 24px 48px 24px;
+  }
+  section { margin-bottom: 28px; }
+  section > .sec-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  section > .sec-head h2 {
+    font-size: 12px; font-weight: 700; color: var(--text-2);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin: 0;
+  }
+  section > .sec-head .hint {
+    font-size: 11px; color: var(--text-3);
+  }
+
+  /* ---------- dashboard metric cards ---------- */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .metric {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .metric .m-label {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-3); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .metric .m-value {
+    font-size: 28px; font-weight: 700; color: var(--text-0);
+    line-height: 1.1; font-variant-numeric: tabular-nums;
+  }
+  .metric .m-sub {
+    margin-top: 6px; font-size: 11px; color: var(--text-2);
+    display: flex; flex-wrap: wrap; gap: 4px 10px;
+  }
+  .metric .m-sub .k { color: var(--text-3); }
+  .metric .m-sub .v { color: var(--text-1); font-weight: 600; }
+  .metric .accent-bar {
+    position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    background: var(--accent);
+  }
+  .metric.green .accent-bar { background: var(--green); }
+  .metric.yellow .accent-bar { background: var(--yellow); }
+  .metric.red .accent-bar { background: var(--red); }
+  .metric.purple .accent-bar { background: var(--purple); }
+  .metric.gray .accent-bar { background: var(--gray); }
+
+  .metric .bar-row {
+    margin-top: 10px;
+    display: grid; grid-template-columns: 64px 1fr 36px;
+    gap: 6px; font-size: 10.5px; align-items: center;
+  }
+  .metric .bar-row .bl { color: var(--text-3); }
+  .metric .bar-row .bv { color: var(--text-1); text-align: right; font-weight: 600; }
+  .metric .bar-track {
+    height: 5px; background: var(--bg-3); border-radius: 2px; overflow: hidden;
+  }
+  .metric .bar-fill {
+    height: 100%; border-radius: 2px;
+  }
+
+  /* ---------- tool-call chart row ---------- */
+  .tool-chart {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .tool-chart h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-3); margin: 0 0 12px 0; font-weight: 600;
+  }
+  .tool-chart .t-row {
+    display: grid; grid-template-columns: 160px 1fr 60px;
+    align-items: center; gap: 10px; padding: 4px 0;
+    font-size: 12px;
+  }
+  .tool-chart .t-name { color: var(--text-1); }
+  .tool-chart .t-track {
+    height: 8px; background: var(--bg-3); border-radius: 3px; overflow: hidden;
+  }
+  .tool-chart .t-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+  }
+  .tool-chart .t-val {
+    text-align: right; color: var(--text-0); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- knowledge grid ---------- */
+  .k-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+  }
+  .k-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .k-card:hover { border-color: var(--border-strong); }
+  .k-card.stale { background: #2a2618; color: #a89a6d; }
+  .k-card.superseded, .k-card.archived { opacity: 0.55; }
+  .k-card .scope-bar {
+    position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    background: var(--accent);
+  }
+  .k-card.scope-project .scope-bar { background: var(--green); }
+  .k-card.scope-session .scope-bar { background: var(--gray); }
+  .k-card .k-pills {
+    display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .k-pill {
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 2px 6px; border-radius: 8px; font-weight: 600;
+    border: 1px solid var(--border);
+  }
+  .k-pill.active { color: #7ee787; background: rgba(63,185,80,0.1); border-color: rgba(63,185,80,0.3); }
+  .k-pill.stale { color: #e3b341; background: rgba(210,153,34,0.14); border-color: rgba(210,153,34,0.35); }
+  .k-pill.archived, .k-pill.superseded { color: var(--text-2); background: rgba(110,118,129,0.18); }
+  .k-pill.type { color: var(--text-1); background: var(--bg-3); }
+  .k-pill.scope-global { color: var(--accent); background: rgba(88,166,255,0.1); border-color: rgba(88,166,255,0.3); }
+  .k-pill.scope-project { color: #7ee787; background: rgba(63,185,80,0.08); border-color: rgba(63,185,80,0.3); }
+  .k-pill.scope-session { color: var(--text-2); background: rgba(110,118,129,0.15); }
+
+  .k-card .k-title {
+    font-size: 13px; font-weight: 700; color: var(--text-0);
+    margin-bottom: 6px; line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .k-card.stale .k-title { color: #d8c68a; }
+  .k-card .k-summary {
+    font-size: 11.5px; color: var(--text-1); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical; overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .k-card.stale .k-summary { color: rgba(168,154,109,0.85); }
+  .k-card .k-foot {
+    font-size: 10.5px; color: var(--text-3);
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .k-card .k-foot .tag { color: var(--text-2); }
+  .k-card .k-score {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(88,166,255,0.12);
+    color: var(--accent);
+    padding: 2px 6px; border-radius: 3px;
+    font-size: 10px; font-weight: 700;
+  }
+
+  /* ---------- detail panel ---------- */
+  .panel-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 80;
+    display: none; align-items: flex-start; justify-content: flex-end;
+  }
+  .panel-overlay.show { display: flex; }
+  .panel {
+    width: 460px; max-width: 100vw; height: 100vh;
+    background: var(--bg-1); border-left: 1px solid var(--border);
+    overflow-y: auto; padding: 16px 18px;
+    animation: slideIn 220ms ease-out;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .panel h3 {
+    margin: 0 0 10px 0;
+    font-size: 15px; color: var(--text-0);
+    padding-right: 30px;
+  }
+  .panel .close {
+    position: absolute; top: 12px; right: 16px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-2); padding: 3px 8px; border-radius: 4px;
+  }
+  .panel .close:hover { color: var(--text-0); background: var(--bg-3); }
+  .panel .meta { font-size: 11.5px; color: var(--text-2); margin-bottom: 12px; line-height: 1.7; }
+  .panel .meta .k { color: var(--text-3); min-width: 80px; display: inline-block; }
+  .panel .meta .v { color: var(--text-1); }
+  .panel h4 {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-3); margin: 14px 0 6px 0; font-weight: 600;
+  }
+  .panel .content-box {
+    font-size: 12px; line-height: 1.6; color: var(--text-0);
+    background: var(--bg-0); border: 1px solid var(--border);
+    border-radius: 4px; padding: 10px 12px; white-space: pre-wrap;
+  }
+  .panel .feedback-bar {
+    display: flex; gap: 10px; margin-bottom: 14px;
+    font-size: 11.5px;
+  }
+  .panel .fb-pill {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 12px;
+    background: var(--bg-2); border: 1px solid var(--border);
+  }
+  .panel .fb-pill.helpful { color: var(--green); border-color: rgba(63,185,80,0.3); }
+  .panel .fb-pill.misleading { color: var(--red); border-color: rgba(248,81,73,0.3); }
+  .panel .fb-pill.outdated { color: var(--yellow); border-color: rgba(210,153,34,0.3); }
+  .panel .fb-pill .fb-n { font-weight: 700; }
+  .panel .rel-list { list-style: none; padding: 0; margin: 0; }
+  .panel .rel-list li {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel .rel-list li:last-child { border-bottom: none; }
+  .panel .rel-badge {
+    font-size: 10px; padding: 1px 6px; border-radius: 3px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+  .panel .rel-badge.related { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .panel .rel-badge.contradicts { background: rgba(248,81,73,0.15); color: var(--red); }
+  .panel .rel-badge.supersedes { background: rgba(163,113,247,0.15); color: var(--purple); }
+  .panel .rel-badge.auto_related { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .panel .rel-title {
+    color: var(--text-1); cursor: pointer; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; flex: 1;
+  }
+  .panel .rel-title:hover { color: var(--accent); }
+  .panel .rel-weight { color: var(--text-3); font-size: 10px; flex-shrink: 0; }
+  .panel .rel-dir { color: var(--text-3); font-size: 10px; flex-shrink: 0; width: 14px; text-align: center; }
+  .panel .superseded-banner {
+    background: rgba(163,113,247,0.1); border: 1px solid rgba(163,113,247,0.3);
+    border-radius: 6px; padding: 8px 12px; margin-bottom: 12px;
+    font-size: 11.5px; color: var(--purple);
+  }
+  .panel .superseded-banner a {
+    color: var(--purple); font-weight: 600; cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* ---------- states ---------- */
+  .state-row {
+    padding: 60px 0; text-align: center;
+    color: var(--text-2); font-size: 13px;
+  }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid var(--border-strong);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .err {
+    color: var(--red); background: rgba(248,81,73,0.08);
+    border: 1px solid rgba(248,81,73,0.3);
+    padding: 10px 14px; border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-1) 100%);
+    background-size: 200% 100%;
+    animation: skel 1.2s infinite;
+    border-radius: 4px;
+  }
+  @keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+  /* ---------- view switch ---------- */
+  .view-switch {
+    display: inline-flex; background: var(--bg-2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 2px; gap: 2px;
+  }
+  .view-switch button {
+    background: transparent; color: var(--text-2);
+    border: none; padding: 5px 11px; border-radius: 4px;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .view-switch button.active {
+    background: var(--bg-3); color: var(--text-0);
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+  .view-switch button:hover:not(.active) { color: var(--text-0); }
+
+  /* ---------- graph view ---------- */
+  #graph-view {
+    position: fixed;
+    top: 52px; left: 0; right: 0; bottom: 0;
+    background: var(--bg-0);
+    display: none;
+  }
+  #graph-view.show { display: block; }
+  #graph-canvas {
+    width: 100%; height: 100%;
+    display: block;
+    cursor: grab;
+  }
+  #graph-canvas.dragging { cursor: grabbing; }
+  .graph-hud {
+    position: absolute; top: 12px; left: 12px;
+    background: rgba(21,26,33,0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--text-2);
+    display: flex; gap: 14px; align-items: center;
+  }
+  .graph-hud .k { color: var(--text-3); }
+  .graph-hud .v { color: var(--text-0); font-weight: 600; }
+  .graph-hud .leg { display: inline-flex; align-items: center; gap: 5px; }
+  .graph-hud .leg .sw {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block;
+  }
+  .graph-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg-1);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 6px 9px;
+    font-size: 11px;
+    color: var(--text-0);
+    max-width: 320px;
+    line-height: 1.45;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    z-index: 10;
+    display: none;
+  }
+  .graph-tooltip .tt-title { font-weight: 700; margin-bottom: 3px; font-size: 12px; }
+  .graph-tooltip .tt-meta { color: var(--text-2); font-size: 10.5px; }
+  .graph-tooltip .tt-tags { color: var(--text-3); font-size: 10px; margin-top: 3px; }
+  .graph-loading {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(14,17,22,0.6);
+    color: var(--text-2);
+    font-size: 12px;
+  }
+  .graph-loading.hidden { display: none; }
+  .graph-todo-note {
+    position: absolute; bottom: 12px; left: 12px;
+    font-size: 10px; color: var(--text-3);
+    background: rgba(21,26,33,0.7);
+    padding: 4px 8px; border-radius: 4px;
+    border: 1px dashed var(--border);
+    max-width: 360px;
+    line-height: 1.4;
+  }
+
+  /* ---------- graph floating dashboard ---------- */
+  .graph-panel {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 240px;
+    background: rgba(14,17,22,0.85);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px 10px 14px;
+    font-size: 11.5px;
+    color: var(--text-1);
+    z-index: 5;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    transition: width 200ms ease-out, padding 200ms ease-out;
+  }
+  .graph-panel.collapsed {
+    width: 36px;
+    padding: 8px;
+    cursor: pointer;
+  }
+  .graph-panel.collapsed .gp-body { display: none; }
+  .graph-panel.collapsed .gp-head .gp-title { display: none; }
+  .graph-panel.collapsed .gp-toggle { transform: rotate(180deg); }
+  .graph-panel .gp-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-3);
+  }
+  .graph-panel .gp-head .gp-title { font-weight: 700; }
+  .graph-panel .gp-toggle {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-2);
+    width: 20px; height: 20px; border-radius: 4px;
+    padding: 0; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    transition: transform 200ms ease-out;
+  }
+  .graph-panel .gp-toggle:hover { color: var(--text-0); background: var(--bg-3); }
+
+  .graph-panel .gp-row {
+    display: grid; grid-template-columns: 20px 1fr auto;
+    align-items: center; gap: 6px;
+    padding: 4px 0;
+    border-bottom: 1px dashed rgba(58,66,80,0.35);
+  }
+  .graph-panel .gp-row:last-child { border-bottom: none; }
+  .graph-panel .gp-row .gp-icon { font-size: 12px; opacity: 0.9; }
+  .graph-panel .gp-row .gp-label {
+    color: var(--text-2); font-size: 11px;
+  }
+  .graph-panel .gp-row .gp-value {
+    color: var(--text-0); font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right; min-width: 48px;
+    transition: color 600ms ease-out;
+  }
+  .graph-panel .gp-row .gp-sub {
+    grid-column: 2 / 4;
+    font-size: 10px; color: var(--text-3);
+    margin-top: -2px; margin-bottom: 2px;
+  }
+
+  .graph-panel .gp-divider {
+    margin: 8px 0 6px 0;
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-3);
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+  }
+
+  .graph-panel .gp-tool {
+    display: grid; grid-template-columns: 60px 1fr 34px;
+    align-items: center; gap: 6px;
+    font-size: 10.5px;
+    padding: 2px 0;
+  }
+  .graph-panel .gp-tool .gpt-name {
+    color: var(--text-2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .graph-panel .gp-tool .gpt-track {
+    height: 5px; background: var(--bg-3);
+    border-radius: 2px; overflow: hidden;
+  }
+  .graph-panel .gp-tool .gpt-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    transition: width 500ms ease-out;
+  }
+  .graph-panel .gp-tool .gpt-val {
+    text-align: right;
+    color: var(--text-0); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .graph-panel .gp-empty {
+    font-size: 10.5px; color: var(--text-3);
+    text-align: center; padding: 4px 0;
+  }
+  .graph-panel .gp-collapsed-icon {
+    display: none;
+    font-size: 14px; color: var(--text-1);
+    text-align: center;
+  }
+  .graph-panel.collapsed .gp-collapsed-icon { display: block; }
+
+  /* hide list view via JS by toggling a class on main */
+  main.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot">●</span> mnemo<span class="hint">/viz · live</span></div>
+  <div id="api-state" class="api-state"><span class="dot-s"></span><span id="api-state-text">connecting…</span></div>
+  <div class="search-wrap">
+    <span class="icon-search">⌕</span>
+    <input id="search-input" placeholder="搜索知识库…（走真实 /api/v1/knowledge/search）" />
+    <button class="clear-btn" id="search-clear" title="清除">×</button>
+  </div>
+  <div class="view-switch" id="view-switch">
+    <button id="view-graph" class="active" title="力导向图谱">Graph</button>
+    <button id="view-list" title="列表 + 仪表盘">List</button>
+  </div>
+  <button class="btn" id="refresh-btn" title="重新拉取">⟳ 刷新</button>
+</div>
+
+<!-- ============ GRAPH VIEW ============ -->
+<div id="graph-view" class="show">
+  <canvas id="graph-canvas"></canvas>
+  <div class="graph-hud">
+    <span><span class="k">nodes</span> <span class="v" id="g-nodes">0</span></span>
+    <span><span class="k">edges</span> <span class="v" id="g-edges">0</span></span>
+    <span class="leg"><span class="sw" style="background:#58a6ff"></span><span>active</span></span>
+    <span class="leg"><span class="sw" style="background:#d29922"></span><span>stale</span></span>
+    <span class="leg"><span class="sw" style="background:#6e7681;opacity:0.5"></span><span>superseded</span></span>
+    <span class="leg"><span class="sw" style="background:#a371f7"></span><span>matched</span></span>
+    <span class="leg"><span class="sw" style="background:#fbbf24;box-shadow:0 0 6px #fbbf24"></span><span>search pulse</span></span>
+    <span style="color:var(--text-3);margin:0 4px">|</span>
+    <span class="leg"><span class="sw" style="width:14px;height:2px;border-radius:0;background:#7d8693"></span><span>related</span></span>
+    <span class="leg"><span class="sw" style="width:14px;height:2px;border-radius:0;background:#f85149"></span><span>contradicts</span></span>
+    <span class="leg"><span class="sw" style="width:14px;height:2px;border-radius:0;background:linear-gradient(90deg,#a371f7 50%,transparent 50%);background-size:4px 2px"></span><span>supersedes</span></span>
+  </div>
+  <div class="graph-tooltip" id="graph-tooltip"></div>
+  <div class="graph-loading" id="graph-loading"><span class="spinner"></span>building graph…</div>
+  <div class="graph-todo-note" id="graph-todo-note" style="display:none"></div>
+
+  <!-- ============ FLOATING DASHBOARD (graph mode) ============ -->
+  <div class="graph-panel" id="graph-panel">
+    <div class="gp-collapsed-icon" title="展开">📊</div>
+    <div class="gp-head">
+      <span class="gp-title">Live Metrics</span>
+      <button class="gp-toggle" id="gp-toggle" title="折叠/展开">−</button>
+    </div>
+    <div class="gp-body" id="gp-body">
+      <div class="gp-row">
+        <span class="gp-icon">📚</span>
+        <span class="gp-label">知识</span>
+        <span class="gp-value" data-gp="total">—</span>
+      </div>
+      <div class="gp-row">
+        <span class="gp-icon"></span>
+        <span class="gp-sub">active <b data-gp="active" style="color:#7ee787">—</b> · stale <b data-gp="stale" style="color:#e3b341">—</b></span>
+        <span></span>
+      </div>
+      <div class="gp-row">
+        <span class="gp-icon">🔍</span>
+        <span class="gp-label">搜索</span>
+        <span class="gp-value" data-gp="search-count">—</span>
+      </div>
+      <div class="gp-row">
+        <span class="gp-icon">👍</span>
+        <span class="gp-label">反馈</span>
+        <span class="gp-value" data-gp="fb-total">—</span>
+      </div>
+      <div class="gp-row">
+        <span class="gp-icon"></span>
+        <span class="gp-sub"><b data-gp="helpful-pct" style="color:#7ee787">—</b>% helpful</span>
+        <span></span>
+      </div>
+      <div class="gp-row">
+        <span class="gp-icon">⚡</span>
+        <span class="gp-label">矛盾</span>
+        <span class="gp-value" data-gp="contradictions" style="color:#ffa198">—</span>
+      </div>
+      <div class="gp-row">
+        <span class="gp-icon">🔗</span>
+        <span class="gp-label">关系</span>
+        <span class="gp-value" data-gp="relations-total">—</span>
+      </div>
+
+      <div class="gp-divider">Tool Calls</div>
+      <div id="gp-tools">
+        <div class="gp-empty">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main id="main-view" class="hidden">
+  <!-- ============ DASHBOARD ============ -->
+  <section id="dashboard">
+    <div class="sec-head">
+      <h2>dashboard</h2>
+      <span class="hint" id="dashboard-hint">GET /api/v1/stats</span>
+    </div>
+    <div class="metrics-grid" id="metrics-grid">
+      <!-- Skeletons while loading -->
+      <div class="metric"><div class="accent-bar"></div>
+        <div class="m-label">loading…</div>
+        <div class="skeleton" style="height:32px;width:80%"></div>
+      </div>
+      <div class="metric"><div class="accent-bar"></div>
+        <div class="m-label">loading…</div>
+        <div class="skeleton" style="height:32px;width:60%"></div>
+      </div>
+      <div class="metric"><div class="accent-bar"></div>
+        <div class="m-label">loading…</div>
+        <div class="skeleton" style="height:32px;width:70%"></div>
+      </div>
+      <div class="metric"><div class="accent-bar"></div>
+        <div class="m-label">loading…</div>
+        <div class="skeleton" style="height:32px;width:50%"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TOOL USAGE ============ -->
+  <section id="tool-usage-section">
+    <div class="sec-head">
+      <h2>tool usage</h2>
+      <span class="hint">monitor_event · all-time</span>
+    </div>
+    <div class="tool-chart" id="tool-chart">
+      <div class="state-row"><span class="spinner"></span>loading…</div>
+    </div>
+  </section>
+
+  <!-- ============ KNOWLEDGE GRID ============ -->
+  <section id="knowledge-section">
+    <div class="sec-head">
+      <h2>knowledge <span id="k-count" style="color:var(--text-3);font-weight:400"></span></h2>
+      <span class="hint" id="k-hint">GET /api/v1/knowledge</span>
+    </div>
+    <div class="k-grid" id="k-grid">
+      <div class="state-row"><span class="spinner"></span>loading…</div>
+    </div>
+  </section>
+</main>
+
+<div class="panel-overlay" id="panel-overlay">
+  <div class="panel" id="panel">
+    <button class="close" id="panel-close">ESC ✕</button>
+    <div id="panel-body"></div>
+  </div>
+</div>
+
+<script>
+  /* ========== API helpers ========== */
+  const _origin = (location.protocol === 'file:') ? 'http://127.0.0.1:8787' : location.origin;
+  const API = _origin + '/api/v1';
+  const HEALTH = _origin + '/health';
+
+  async function apiGet(url) {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const body = await resp.text().catch(() => '');
+      throw new Error('HTTP ' + resp.status + (body ? ' · ' + body.slice(0, 120) : ''));
+    }
+    return resp.json();
+  }
+
+  /* ========== state ========== */
+  const state = {
+    stats: null,
+    knowledge: [],
+    searchQuery: '',
+    searchResults: null,     // null = not searching; array = live search hits
+    searching: false,
+    selectedId: null,
+    selectedDetail: null,
+    view: 'graph',           // 'graph' | 'list'
+    graph: {
+      nodes: [],             // [{ id, k, x, y, vx, vy, r, fixed, opacity, enteredAt, removing, removedAt, fill, targetFill }]
+      edges: [],             // [{ s, t, type, opacity, enteredAt, removing, removedAt }]
+      nodeIndex: new Map(),  // id -> node
+      edgeIndex: new Map(),  // "a-b" -> edge  (for diff lookups)
+      cam: { x: 0, y: 0, zoom: 1 },
+      hover: null,
+      drag: null,            // { node, dxOffset, dyOffset } or { pan: true }
+      built: false,
+      rafId: null,
+      matched: new Set(),    // search-hit node ids
+      pulses: [],             // [{ nodeId, startedAt }] — live search-hit pulses from other agents
+      // v1 perf: alpha-decay physics + dirty-driven render loop.
+      // alpha drives the force solver; once it drops below ALPHA_MIN we stop
+      // calling stepPhysics entirely. Any user interaction or incremental diff
+      // kicks alpha back to 1.0. renderDirty gates drawGraph so rAF can idle
+      // all the way to zero CPU once physics *and* all animations are done.
+      alpha: 1.0,
+      physicsActive: true,
+      renderDirty: true,
+      camDirty: true,
+      hoverDirty: false,
+    },
+    // live-update polling
+    pollTimer: null,
+    pollIntervalMs: 5000,
+    pollInFlight: false,
+    // /events/recent polling — tracks which monitor_event ids we've already
+    // turned into pulses so a given search event pulses exactly once, even if
+    // the tail window still contains it on subsequent polls.
+    pulseSeenEventIds: new Set(),
+    pulseLastPollAt: 0,
+  };
+
+  /* ========== health probe ========== */
+  async function probeHealth() {
+    const el = document.getElementById('api-state');
+    const txt = document.getElementById('api-state-text');
+    try {
+      const r = await fetch(HEALTH);
+      if (!r.ok) throw new Error('status ' + r.status);
+      el.classList.remove('err');
+      el.classList.add('ok');
+      txt.textContent = 'connected · ' + API;
+      return true;
+    } catch (e) {
+      el.classList.remove('ok');
+      el.classList.add('err');
+      txt.textContent = 'offline · ' + e.message;
+      return false;
+    }
+  }
+
+  /* ========== dashboard render ========== */
+
+  // Count-up/down tween for metric cells. Stores the shown value on the
+  // element itself so each poll animates between the *previous* render and
+  // the current one (not from 0). One in-flight tween per element.
+  const numberAnimTimers = new Map();
+  function animateNumber(el, toValue, duration) {
+    if (!el) return;
+    const key = el.dataset.metricKey || (el.dataset.metricKey = 'm_' + Math.random().toString(36).slice(2));
+    const fromRaw = parseFloat(el.dataset.lastValue);
+    const from = Number.isFinite(fromRaw) ? fromRaw : Number(toValue);
+    const to = Number(toValue);
+    el.dataset.lastValue = String(to);
+    if (from === to) {
+      el.textContent = Number.isInteger(to) ? String(to) : to.toFixed(1);
+      return;
+    }
+    const prev = numberAnimTimers.get(key);
+    if (prev) cancelAnimationFrame(prev);
+    const startedAt = performance.now();
+    const dur = duration || 500;
+    const isInt = Number.isInteger(from) && Number.isInteger(to);
+    const step = (now) => {
+      const t = Math.min(1, (now - startedAt) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const v = from + (to - from) * eased;
+      el.textContent = isInt ? String(Math.round(v)) : v.toFixed(1);
+      if (t < 1) {
+        numberAnimTimers.set(key, requestAnimationFrame(step));
+      } else {
+        el.textContent = isInt ? String(Math.round(to)) : to.toFixed(1);
+        numberAnimTimers.delete(key);
+        el.style.transition = 'color 600ms ease-out';
+        el.style.color = '#58a6ff';
+        setTimeout(() => { el.style.color = ''; }, 400);
+      }
+    };
+    numberAnimTimers.set(key, requestAnimationFrame(step));
+  }
+
+  function renderDashboard() {
+    const grid = document.getElementById('metrics-grid');
+    const s = state.stats;
+    if (!s) {
+      grid.innerHTML =
+        '<div class="err" style="grid-column:1/-1">' +
+        'stats 未加载。请确认 <code>.venv/bin/mnemo serve --port 8787</code> 已启动。' +
+        '</div>';
+      return;
+    }
+
+    const byStatus = s.knowledge.by_status || {};
+    const active = byStatus.active || 0;
+    const stale = byStatus.stale || 0;
+    const archived = byStatus.archived || 0;
+    const superseded = byStatus.superseded || 0;
+    const total = s.knowledge.total || 0;
+
+    const fb = s.feedback.by_signal || {};
+    const helpful = fb.helpful || 0;
+    const misleading = fb.misleading || 0;
+    const outdated = fb.outdated || 0;
+    const fbTotal = s.feedback.total || 0;
+    const helpfulPct = fbTotal ? ((helpful / fbTotal) * 100).toFixed(0) : 0;
+    const misPct = fbTotal ? ((misleading / fbTotal) * 100).toFixed(0) : 0;
+    const outPct = fbTotal ? ((outdated / fbTotal) * 100).toFixed(0) : 0;
+
+    const toolCalls = s.tool_calls || {};
+    const searchCount = toolCalls.search || 0;
+
+    const contradictions = s.relations.contradictions || 0;
+
+    function statusBar(label, val, total, color) {
+      const pct = total ? ((val / total) * 100).toFixed(0) : 0;
+      return (
+        '<div class="bar-row">' +
+          '<span class="bl">' + label + '</span>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+          '<span class="bv">' + val + '</span>' +
+        '</div>'
+      );
+    }
+
+    // Build the static structure once, then only update numeric cells on
+    // subsequent polls so animateNumber can tween between renders.
+    if (!grid.dataset.built) {
+      grid.innerHTML = [
+        '<div class="metric">' +
+          '<div class="accent-bar"></div>' +
+          '<div class="m-label">📚 总知识数</div>' +
+          '<div class="m-value" data-metric="total">0</div>' +
+          '<div class="m-sub">' +
+            '<span><span class="k">active</span> <span class="v" style="color:#7ee787" data-metric="active">0</span></span>' +
+            '<span><span class="k">stale</span> <span class="v" style="color:#e3b341" data-metric="stale">0</span></span>' +
+            '<span><span class="k">superseded</span> <span class="v" data-metric="superseded">0</span></span>' +
+            '<span><span class="k">archived</span> <span class="v" data-metric="archived">0</span></span>' +
+          '</div>' +
+          '<div class="bar-row"><span class="bl">active</span><div class="bar-track"><div class="bar-fill" data-bar="active" style="background:var(--green);width:0%;transition:width 500ms ease-out"></div></div><span class="bv" data-metric="active2">0</span></div>' +
+          '<div class="bar-row"><span class="bl">stale</span><div class="bar-track"><div class="bar-fill" data-bar="stale" style="background:var(--yellow);width:0%;transition:width 500ms ease-out"></div></div><span class="bv" data-metric="stale2">0</span></div>' +
+          '<div class="bar-row"><span class="bl">archived</span><div class="bar-track"><div class="bar-fill" data-bar="archived-super" style="background:var(--gray);width:0%;transition:width 500ms ease-out"></div></div><span class="bv" data-metric="arch-sup">0</span></div>' +
+        '</div>',
+
+        '<div class="metric purple">' +
+          '<div class="accent-bar"></div>' +
+          '<div class="m-label">🔍 search 调用</div>' +
+          '<div class="m-value" data-metric="search-count">0</div>' +
+          '<div class="m-sub"><span class="k">tool_name=search · monitor_event 全量</span></div>' +
+        '</div>',
+
+        '<div class="metric green">' +
+          '<div class="accent-bar"></div>' +
+          '<div class="m-label">👍 feedback</div>' +
+          '<div class="m-value" data-metric="fb-total">0</div>' +
+          '<div class="m-sub">' +
+            '<span><span class="k">helpful</span> <span class="v" style="color:#7ee787"><span data-metric="helpful">0</span> (<span data-metric="helpfulPct">0</span>%)</span></span>' +
+            '<span><span class="k">misleading</span> <span class="v" style="color:#ffa198"><span data-metric="misleading">0</span> (<span data-metric="misPct">0</span>%)</span></span>' +
+            '<span><span class="k">outdated</span> <span class="v" style="color:#e3b341"><span data-metric="outdated">0</span> (<span data-metric="outPct">0</span>%)</span></span>' +
+          '</div>' +
+          '<div class="bar-row"><span class="bl">helpful</span><div class="bar-track"><div class="bar-fill" data-bar="helpful" style="background:var(--green);width:0%;transition:width 500ms ease-out"></div></div><span class="bv" data-metric="helpful2">0</span></div>' +
+          '<div class="bar-row"><span class="bl">misleading</span><div class="bar-track"><div class="bar-fill" data-bar="misleading" style="background:var(--red);width:0%;transition:width 500ms ease-out"></div></div><span class="bv" data-metric="misleading2">0</span></div>' +
+          '<div class="bar-row"><span class="bl">outdated</span><div class="bar-track"><div class="bar-fill" data-bar="outdated" style="background:var(--yellow);width:0%;transition:width 500ms ease-out"></div></div><span class="bv" data-metric="outdated2">0</span></div>' +
+        '</div>',
+
+        '<div class="metric red">' +
+          '<div class="accent-bar"></div>' +
+          '<div class="m-label">⚡ 矛盾对</div>' +
+          '<div class="m-value" data-metric="contradictions">0</div>' +
+          '<div class="m-sub"><span class="k">relation · relation_type=contradicts</span></div>' +
+        '</div>',
+      ].join('');
+      grid.dataset.built = '1';
+    }
+
+    const set = (metric, val) => animateNumber(grid.querySelector('[data-metric="' + metric + '"]'), val, 500);
+    const bar = (name, val, tot) => {
+      const el = grid.querySelector('[data-bar="' + name + '"]');
+      if (!el) return;
+      const pct = tot ? (val / tot) * 100 : 0;
+      el.style.width = pct + '%';
+    };
+
+    set('total', total);
+    set('active', active); set('active2', active);
+    set('stale', stale);   set('stale2', stale);
+    set('superseded', superseded);
+    set('archived', archived);
+    set('arch-sup', archived + superseded);
+    bar('active', active, total);
+    bar('stale', stale, total);
+    bar('archived-super', archived + superseded, total);
+
+    set('search-count', searchCount);
+
+    set('fb-total', fbTotal);
+    set('helpful', helpful);     set('helpful2', helpful);
+    set('helpfulPct', parseInt(helpfulPct, 10) || 0);
+    set('misleading', misleading); set('misleading2', misleading);
+    set('misPct', parseInt(misPct, 10) || 0);
+    set('outdated', outdated);     set('outdated2', outdated);
+    set('outPct', parseInt(outPct, 10) || 0);
+    bar('helpful', helpful, fbTotal);
+    bar('misleading', misleading, fbTotal);
+    bar('outdated', outdated, fbTotal);
+
+    set('contradictions', contradictions);
+  }
+
+  /* ========== floating graph panel ========== */
+  // Condensed live metrics anchored on top of the graph canvas. Same data source
+  // as the list-view dashboard (state.stats) — just re-rendered in place every
+  // poll, with tween animation on numeric changes.
+  function animateGraphPanelNumber(el, toValue) {
+    if (!el) return;
+    const fromRaw = parseFloat(el.dataset.lastValue);
+    const from = Number.isFinite(fromRaw) ? fromRaw : Number(toValue);
+    const to = Number(toValue);
+    el.dataset.lastValue = String(to);
+    if (from === to) {
+      el.textContent = Number.isInteger(to) ? String(to) : to.toFixed(0);
+      return;
+    }
+    const startedAt = performance.now();
+    const dur = 500;
+    const isInt = Number.isInteger(from) && Number.isInteger(to);
+    const step = (now) => {
+      const t = Math.min(1, (now - startedAt) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const v = from + (to - from) * eased;
+      el.textContent = isInt ? String(Math.round(v)) : v.toFixed(0);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = isInt ? String(Math.round(to)) : to.toFixed(0);
+        el.style.color = '#58a6ff';
+        setTimeout(() => { el.style.color = ''; }, 500);
+      }
+    };
+    requestAnimationFrame(step);
+  }
+
+  function renderGraphPanel() {
+    const panel = document.getElementById('graph-panel');
+    if (!panel) return;
+    const s = state.stats;
+    if (!s) return;
+
+    const byStatus = s.knowledge.by_status || {};
+    const active = byStatus.active || 0;
+    const stale = byStatus.stale || 0;
+    const total = s.knowledge.total || 0;
+
+    const fb = s.feedback.by_signal || {};
+    const helpful = fb.helpful || 0;
+    const fbTotal = s.feedback.total || 0;
+    const helpfulPct = fbTotal ? Math.round((helpful / fbTotal) * 100) : 0;
+
+    const toolCalls = s.tool_calls || {};
+    const searchCount = toolCalls.search || 0;
+
+    const contradictions = s.relations.contradictions || 0;
+    const relationsTotal = Object.values(s.relations.by_type || {}).reduce((a, b) => a + b, 0);
+
+    const q = (k) => panel.querySelector('[data-gp="' + k + '"]');
+    animateGraphPanelNumber(q('total'), total);
+    animateGraphPanelNumber(q('active'), active);
+    animateGraphPanelNumber(q('stale'), stale);
+    animateGraphPanelNumber(q('search-count'), searchCount);
+    animateGraphPanelNumber(q('fb-total'), fbTotal);
+    animateGraphPanelNumber(q('helpful-pct'), helpfulPct);
+    animateGraphPanelNumber(q('contradictions'), contradictions);
+    animateGraphPanelNumber(q('relations-total'), relationsTotal);
+
+    // tool call bars — top 5, normalized to max
+    const entries = Object.entries(toolCalls).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const toolsEl = document.getElementById('gp-tools');
+    if (!entries.length) {
+      toolsEl.innerHTML = '<div class="gp-empty">暂无 tool_call</div>';
+    } else {
+      const max = entries[0][1] || 1;
+      toolsEl.innerHTML = entries.map(([name, n]) => {
+        const pct = (n / max) * 100;
+        const shortName = name.length > 8 ? name.slice(0, 8) : name;
+        return (
+          '<div class="gp-tool">' +
+            '<span class="gpt-name" title="' + escapeAttr(name) + '">' + escapeHtml(shortName) + '</span>' +
+            '<div class="gpt-track"><div class="gpt-fill" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+            '<span class="gpt-val">' + n + '</span>' +
+          '</div>'
+        );
+      }).join('');
+    }
+  }
+
+  function wireGraphPanelToggle() {
+    const panel = document.getElementById('graph-panel');
+    const toggle = document.getElementById('gp-toggle');
+    const icon = panel.querySelector('.gp-collapsed-icon');
+    const go = () => {
+      panel.classList.toggle('collapsed');
+      toggle.textContent = panel.classList.contains('collapsed') ? '+' : '−';
+    };
+    toggle.addEventListener('click', (e) => { e.stopPropagation(); go(); });
+    icon.addEventListener('click', go);
+  }
+
+  /* ========== tool chart ========== */
+  function renderToolChart() {
+    const el = document.getElementById('tool-chart');
+    const tc = (state.stats && state.stats.tool_calls) || {};
+    const entries = Object.entries(tc).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) {
+      el.innerHTML = '<div class="state-row">暂无 tool_call 记录</div>';
+      return;
+    }
+    const max = entries[0][1];
+    el.innerHTML =
+      '<h3>tool_call counts</h3>' +
+      entries.map(([name, n]) => {
+        const pct = max ? (n / max) * 100 : 0;
+        return (
+          '<div class="t-row">' +
+            '<span class="t-name">' + escapeHtml(name) + '</span>' +
+            '<div class="t-track"><div class="t-fill" style="width:' + pct + '%"></div></div>' +
+            '<span class="t-val">' + n + '</span>' +
+          '</div>'
+        );
+      }).join('');
+  }
+
+  /* ========== knowledge list ========== */
+  function renderKnowledgeList() {
+    const grid = document.getElementById('k-grid');
+    const counter = document.getElementById('k-count');
+    const hint = document.getElementById('k-hint');
+
+    const items = state.searchResults !== null ? state.searchResults : state.knowledge;
+    if (state.searching) {
+      grid.innerHTML = '<div class="state-row"><span class="spinner"></span>searching…</div>';
+      counter.textContent = '';
+      return;
+    }
+    if (!items.length) {
+      grid.innerHTML = '<div class="state-row">没有结果</div>';
+      counter.textContent = '· 0';
+      return;
+    }
+    counter.textContent = '· ' + items.length;
+    hint.textContent = state.searchResults !== null
+      ? 'GET /api/v1/knowledge/search?query=' + encodeURIComponent(state.searchQuery)
+      : 'GET /api/v1/knowledge';
+
+    grid.innerHTML = items.map(k => {
+      const tags = (k.tags || []).slice(0, 4).map(t => '<span class="tag">#' + escapeHtml(t) + '</span>').join(' ');
+      const statusCls = k.status || 'active';
+      const scopeCls = 'scope-' + (k.scope || 'global');
+      const score = (k._score != null) ? '<div class="k-score">score ' + k._score.toFixed(2) + '</div>' : '';
+      return (
+        '<div class="k-card ' + escapeAttr(statusCls) + ' ' + escapeAttr(scopeCls) + '" data-id="' + k.id + '">' +
+          '<div class="scope-bar"></div>' +
+          score +
+          '<div class="k-pills">' +
+            '<span class="k-pill ' + escapeAttr(statusCls) + '">' + escapeHtml(statusCls) + '</span>' +
+            (k.claim_type ? '<span class="k-pill type">' + escapeHtml(k.claim_type) + '</span>' : '') +
+            '<span class="k-pill ' + escapeAttr(scopeCls) + '">' + escapeHtml(k.scope || '?') + '</span>' +
+          '</div>' +
+          '<div class="k-title">' + escapeHtml(k.title || '(no title)') + '</div>' +
+          '<div class="k-summary">' + escapeHtml(k.summary || '') + '</div>' +
+          '<div class="k-foot">' + tags + (k.version > 1 ? ' <span class="tag">v' + k.version + '</span>' : '') + '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    grid.querySelectorAll('.k-card').forEach(el => {
+      el.addEventListener('click', () => openDetail(parseInt(el.dataset.id, 10)));
+    });
+  }
+
+  /* ========== detail panel ========== */
+  function renderFeedbackBar(fb) {
+    if (!fb || fb.total === 0) return '<div class="feedback-bar"><span style="color:var(--text-3);font-size:11px">暂无反馈</span></div>';
+    return '<div class="feedback-bar">' +
+      '<div class="fb-pill helpful"><span class="fb-n">' + fb.helpful + '</span> helpful</div>' +
+      '<div class="fb-pill misleading"><span class="fb-n">' + fb.misleading + '</span> misleading</div>' +
+      '<div class="fb-pill outdated"><span class="fb-n">' + fb.outdated + '</span> outdated</div>' +
+    '</div>';
+  }
+
+  function renderRelations(rels, currentId) {
+    if (!rels || rels.length === 0) return '<div style="color:var(--text-3);font-size:11px">无关联</div>';
+    return '<ul class="rel-list">' + rels.map(function(r) {
+      var arrow = r.direction === 'outgoing' ? '→' : '←';
+      var badge = r.relation_type || 'related';
+      var w = r.weight != null ? ('w=' + r.weight) : '';
+      return '<li>' +
+        '<span class="rel-dir">' + arrow + '</span>' +
+        '<span class="rel-badge ' + escapeHtml(badge) + '">' + escapeHtml(badge) + '</span>' +
+        '<span class="rel-title" data-id="' + r.peer_id + '">' + escapeHtml(r.peer_title || ('#' + r.peer_id)) + '</span>' +
+        (w ? '<span class="rel-weight">' + w + '</span>' : '') +
+      '</li>';
+    }).join('') + '</ul>';
+  }
+
+  function formatTimeAgo(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    var now = new Date();
+    var diff = (now - d) / 1000;
+    if (diff < 60) return Math.floor(diff) + '秒前';
+    if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+    if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+    return Math.floor(diff / 86400) + '天前';
+  }
+
+  async function openDetail(id) {
+    state.selectedId = id;
+    const overlay = document.getElementById('panel-overlay');
+    const body = document.getElementById('panel-body');
+    overlay.classList.add('show');
+    body.innerHTML = '<div class="state-row"><span class="spinner"></span>loading…</div>';
+    try {
+      const k = await apiGet(API + '/knowledge/' + id + '/detail');
+      state.selectedDetail = k;
+
+      var supersededHtml = '';
+      if (k.superseded_by) {
+        supersededHtml = '<div class="superseded-banner">已被取代 → <a data-id="' +
+          k.superseded_by.id + '">' + escapeHtml(k.superseded_by.title) + '</a></div>';
+      }
+
+      body.innerHTML =
+        '<h3>' + escapeHtml(k.title) + '</h3>' +
+        supersededHtml +
+        '<div class="meta">' +
+          '<div><span class="k">id</span><span class="v">' + k.id + '</span></div>' +
+          '<div><span class="k">status</span><span class="v">' + escapeHtml(k.status || '') + '</span></div>' +
+          '<div><span class="k">scope</span><span class="v">' + escapeHtml(k.scope || '') + '</span></div>' +
+          (k.claim_type ? '<div><span class="k">claim_type</span><span class="v">' + escapeHtml(k.claim_type) + '</span></div>' : '') +
+          (k.project_name ? '<div><span class="k">project</span><span class="v">' + escapeHtml(k.project_name) + '</span></div>' : '') +
+          '<div><span class="k">version</span><span class="v">v' + k.version + '</span></div>' +
+          '<div><span class="k">created</span><span class="v">' + escapeHtml((k.created_at || '').slice(0, 19)) + '</span></div>' +
+          '<div><span class="k">updated</span><span class="v">' + escapeHtml((k.updated_at || '').slice(0, 19)) + '</span></div>' +
+          (k.last_accessed_at ? '<div><span class="k">last hit</span><span class="v">' + formatTimeAgo(k.last_accessed_at) + '</span></div>' : '') +
+          (k.source ? '<div><span class="k">source</span><span class="v">' + escapeHtml(k.source) + '</span></div>' : '') +
+          '<div><span class="k">tags</span><span class="v">' + (k.tags || []).map(t => '#' + escapeHtml(t)).join(' ') + '</span></div>' +
+        '</div>' +
+        '<h4>feedback</h4>' +
+        renderFeedbackBar(k.feedback) +
+        '<h4>relations (' + (k.relations || []).length + ')</h4>' +
+        renderRelations(k.relations, k.id) +
+        '<h4>summary</h4>' +
+        '<div class="content-box">' + escapeHtml(k.summary || '') + '</div>' +
+        '<h4>content</h4>' +
+        '<div class="content-box">' + escapeHtml(k.content || '(no content)') + '</div>';
+
+      body.querySelectorAll('.rel-title[data-id]').forEach(function(el) {
+        el.addEventListener('click', function() { openDetail(parseInt(el.dataset.id, 10)); });
+      });
+      body.querySelectorAll('.superseded-banner a[data-id]').forEach(function(el) {
+        el.addEventListener('click', function() { openDetail(parseInt(el.dataset.id, 10)); });
+      });
+    } catch (e) {
+      body.innerHTML = '<div class="err">加载失败: ' + escapeHtml(e.message) + '</div>';
+    }
+  }
+
+  function closeDetail() {
+    state.selectedId = null;
+    state.selectedDetail = null;
+    document.getElementById('panel-overlay').classList.remove('show');
+  }
+
+  /* ========== search ========== */
+  let searchDebounce = null;
+  function onSearchInput(e) {
+    const v = e.target.value;
+    state.searchQuery = v;
+    clearTimeout(searchDebounce);
+    if (!v.trim()) {
+      state.searchResults = null;
+      state.searching = false;
+      renderKnowledgeList();
+      updateGraphSearchMatch();
+      return;
+    }
+    searchDebounce = setTimeout(() => runSearch(v), 220);
+  }
+
+  async function runSearch(q) {
+    state.searching = true;
+    renderKnowledgeList();
+    try {
+      const data = await apiGet(API + '/knowledge/search?query=' + encodeURIComponent(q) + '&limit=50');
+      state.searchResults = data.results || [];
+      // attach a score placeholder when server returns rerank score (future);
+      // for now, keep results as summaries.
+    } catch (e) {
+      state.searchResults = [];
+      document.getElementById('k-grid').innerHTML =
+        '<div class="err">搜索失败: ' + escapeHtml(e.message) + '</div>';
+      state.searching = false;
+      return;
+    }
+    state.searching = false;
+    renderKnowledgeList();
+    updateGraphSearchMatch();
+  }
+
+  /* ========== graph view ========== */
+  function setView(view) {
+    state.view = view;
+    const main = document.getElementById('main-view');
+    const gv = document.getElementById('graph-view');
+    const btnG = document.getElementById('view-graph');
+    const btnL = document.getElementById('view-list');
+    if (view === 'graph') {
+      main.classList.add('hidden');
+      gv.classList.add('show');
+      btnG.classList.add('active');
+      btnL.classList.remove('active');
+      if (!state.graph.built && state.knowledge.length) {
+        buildGraph();
+      } else {
+        // ensure animation is running
+        startGraphLoop();
+      }
+      resizeCanvas();
+      if (state.stats) renderGraphPanel();
+    } else {
+      main.classList.remove('hidden');
+      gv.classList.remove('show');
+      btnL.classList.add('active');
+      btnG.classList.remove('active');
+      stopGraphLoop();
+      // Sync list-view content with the poller's most-recent snapshot.
+      if (state.stats) {
+        renderDashboard();
+        renderToolChart();
+      }
+      renderKnowledgeList();
+    }
+  }
+
+  // Relation precedence — stronger type wins when multiple rows share a pair.
+  const TYPE_RANK = { contradicts: 3, supersedes: 2, related: 1 };
+
+  // Compute the deduped "target" edge map from raw relation rows.
+  function buildTargetEdgeMap(relationRows, idSet) {
+    const m = new Map();
+    for (const row of (relationRows || [])) {
+      const src = row.source_id;
+      const tgt = row.target_id;
+      if (!idSet.has(src) || !idSet.has(tgt)) continue;
+      if (src === tgt) continue;
+      const a = Math.min(src, tgt);
+      const b = Math.max(src, tgt);
+      const key = a + '-' + b;
+      const type = row.relation_type || 'related';
+      const existing = m.get(key);
+      if (!existing || (TYPE_RANK[type] || 0) > (TYPE_RANK[existing.type] || 0)) {
+        m.set(key, { s: a, t: b, type });
+      }
+    }
+    return m;
+  }
+
+  // Resolve a node's "target" fill color given its current status/scope.
+  const _projectColorCache = {};
+  const _projectHues = [210, 140, 30, 280, 350, 170, 60, 310, 100, 240, 0, 190, 330, 80, 260];
+  let _projectColorIdx = 0;
+  function _projectColor(name) {
+    if (!name) return null;
+    if (_projectColorCache[name]) return _projectColorCache[name];
+    const hue = _projectHues[_projectColorIdx % _projectHues.length];
+    _projectColorIdx++;
+    _projectColorCache[name] = 'hsl(' + hue + ', 65%, 55%)';
+    return _projectColorCache[name];
+  }
+
+  function nodeFillFor(k) {
+    const status = k.status || 'active';
+    if (status === 'stale') return '#d29922';
+    if (status === 'superseded' || status === 'archived') return '#6e7681';
+    const pc = _projectColor(k.project_name);
+    if (pc) return pc;
+    const scope = k.scope || 'global';
+    return scope === 'global' ? '#58a6ff' : scope === 'session' ? '#6e7681' : '#3fb950';
+  }
+
+  // Spawn position for fresh nodes — just outside the visible canvas so the
+  // spring physics can visibly pull them in. Returns world coords so the drift
+  // works regardless of pan/zoom.
+  function spawnPositionOutside() {
+    const canvas = document.getElementById('graph-canvas');
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    const cam = state.graph.cam;
+    const edge = Math.floor(Math.random() * 4);
+    const margin = 80;
+    let sx, sy;
+    if (edge === 0)      { sx = Math.random() * w; sy = -margin; }
+    else if (edge === 1) { sx = w + margin; sy = Math.random() * h; }
+    else if (edge === 2) { sx = Math.random() * w; sy = h + margin; }
+    else                 { sx = -margin; sy = Math.random() * h; }
+    return { x: (sx - cam.x) / cam.zoom, y: (sy - cam.y) / cam.zoom };
+  }
+
+  async function buildGraph() {
+    const g = state.graph;
+    const loading = document.getElementById('graph-loading');
+    loading.classList.remove('hidden');
+    loading.innerHTML = '<span class="spinner"></span>building graph…';
+
+    // Hard cap the graph size. Beyond MAX_GRAPH_NODES the UX answer is
+    // Search Lens (command+K), not a bigger canvas.
+    const rawItems = state.knowledge;
+    const items = rawItems.length > MAX_GRAPH_NODES ? rawItems.slice(0, MAX_GRAPH_NODES) : rawItems;
+    if (rawItems.length > MAX_GRAPH_NODES) {
+      // eslint-disable-next-line no-console
+      console.warn('[viz] truncated ' + rawItems.length + ' → ' + MAX_GRAPH_NODES + ' nodes (MAX_GRAPH_NODES cap)');
+    }
+    // Position nodes in a tight circle — physics will spread them out.
+    const canvas = document.getElementById('graph-canvas');
+    const cx = canvas.clientWidth / 2;
+    const cy = canvas.clientHeight / 2;
+    const R = Math.min(cx, cy) * 0.6;
+    g.nodes = items.map((k, i) => {
+      const angle = (i / Math.max(1, items.length)) * Math.PI * 2;
+      const jitter = (Math.random() - 0.5) * 40;
+      return {
+        id: k.id,
+        k,
+        x: cx + Math.cos(angle) * R + jitter,
+        y: cy + Math.sin(angle) * R + jitter,
+        vx: 0,
+        vy: 0,
+        r: 6 + Math.min(5, (k.tags || []).length * 0.5),
+        fixed: false,
+        // initial nodes start fully visible and without a halo — halo is only
+        // for nodes that drift in later via diff.
+        opacity: 1,
+        enteredAt: 0,
+        removing: false,
+        removedAt: 0,
+        fill: nodeFillFor(k),
+        targetFill: nodeFillFor(k),
+        fillFromColor: null,
+        fillStartAt: 0,
+      };
+    });
+    g.nodeIndex = new Map(g.nodes.map(n => [n.id, n]));
+
+    const idSet = new Set(g.nodes.map(n => n.id));
+    let edgeMap = new Map();
+    try {
+      const r = await apiGet(API + '/relations?limit=5000');
+      edgeMap = buildTargetEdgeMap(r.results, idSet);
+    } catch (e) {
+      loading.innerHTML = '<span class="err">edges load failed: ' + escapeHtml(e.message) + '</span>';
+    }
+    g.edges = [];
+    g.edgeIndex = new Map();
+    for (const [key, e] of edgeMap) {
+      const ne = { s: e.s, t: e.t, type: e.type, opacity: 1, enteredAt: 0, removing: false, removedAt: 0 };
+      g.edges.push(ne);
+      g.edgeIndex.set(key, ne);
+    }
+
+    document.getElementById('g-nodes').textContent = g.nodes.length;
+    document.getElementById('g-edges').textContent = g.edges.length;
+
+    g.built = true;
+    loading.classList.add('hidden');
+    // Fresh build — nodes still need to spread from the initial circle layout.
+    markPhysicsActive();
+    startGraphLoop();
+  }
+
+  /* ========== incremental diff ==========
+     Compare the latest knowledge/edge snapshot against the live graph and
+     produce a small diff. applyDiff spawns, removes or tweens exactly the
+     nodes/edges that changed — the physics loop keeps running the whole time,
+     so newcomers drift in and departees fade out while the rest stays put. */
+
+  function computeDiff(newKnowledge, newEdgeMap) {
+    const g = state.graph;
+    const addedNodes = [];
+    const removedNodeIds = [];
+    const changedNodes = [];
+    const addedEdges = [];
+    const removedEdgeKeys = [];
+
+    const newById = new Map();
+    for (const k of newKnowledge) newById.set(k.id, k);
+
+    for (const k of newKnowledge) {
+      const existing = g.nodeIndex.get(k.id);
+      if (!existing) {
+        addedNodes.push(k);
+      } else if (!existing.removing) {
+        const a = existing.k;
+        if (
+          a.status !== k.status ||
+          a.title !== k.title ||
+          a.scope !== k.scope ||
+          (a.tags || []).length !== (k.tags || []).length
+        ) {
+          changedNodes.push({ node: existing, next: k });
+        } else {
+          existing.k = k;
+        }
+      }
+    }
+    for (const n of g.nodes) {
+      if (n.removing) continue;
+      if (!newById.has(n.id)) removedNodeIds.push(n.id);
+    }
+
+    for (const [key, e] of newEdgeMap) {
+      const existing = g.edgeIndex.get(key);
+      if (!existing || existing.removing) addedEdges.push(e);
+      else if (existing.type !== e.type) existing.type = e.type;
+    }
+    for (const [key, e] of g.edgeIndex) {
+      if (e.removing) continue;
+      if (!newEdgeMap.has(key)) removedEdgeKeys.push(key);
+    }
+
+    return { addedNodes, removedNodeIds, changedNodes, addedEdges, removedEdgeKeys };
+  }
+
+  function applyDiff(diff) {
+    const g = state.graph;
+    const now = performance.now();
+
+    for (const k of diff.addedNodes) {
+      const p = spawnPositionOutside();
+      const n = {
+        id: k.id,
+        k,
+        x: p.x, y: p.y, vx: 0, vy: 0,
+        r: 6 + Math.min(5, (k.tags || []).length * 0.5),
+        fixed: false,
+        opacity: 0,
+        enteredAt: now,
+        removing: false,
+        removedAt: 0,
+        fill: nodeFillFor(k),
+        targetFill: nodeFillFor(k),
+        fillFromColor: null,
+        fillStartAt: 0,
+      };
+      g.nodes.push(n);
+      g.nodeIndex.set(n.id, n);
+    }
+
+    for (const id of diff.removedNodeIds) {
+      const n = g.nodeIndex.get(id);
+      if (!n || n.removing) continue;
+      n.removing = true;
+      n.removedAt = now;
+    }
+
+    for (const { node, next } of diff.changedNodes) {
+      node.k = next;
+      const newFill = nodeFillFor(next);
+      if (newFill !== node.targetFill) {
+        node.fillFromColor = node.fill;
+        node.targetFill = newFill;
+        node.fillStartAt = now;
+      }
+      node.r = 6 + Math.min(5, (next.tags || []).length * 0.5);
+    }
+
+    for (const e of diff.addedEdges) {
+      const ne = { s: e.s, t: e.t, type: e.type, opacity: 0, enteredAt: now, removing: false, removedAt: 0 };
+      g.edges.push(ne);
+      g.edgeIndex.set(e.s + '-' + e.t, ne);
+    }
+    for (const key of diff.removedEdgeKeys) {
+      const e = g.edgeIndex.get(key);
+      if (!e || e.removing) continue;
+      e.removing = true;
+      e.removedAt = now;
+    }
+
+    document.getElementById('g-nodes').textContent = g.nodes.filter(n => !n.removing).length;
+    document.getElementById('g-edges').textContent = g.edges.filter(e => !e.removing).length;
+
+    // Any diff — adds, removes, recolors — touches layout and/or animations,
+    // so resurrect physics and make sure the render loop is pumping.
+    markPhysicsActive();
+  }
+
+  async function refreshGraphIncremental() {
+    const g = state.graph;
+    if (!g.built) return;
+    if (state.pollInFlight) return;
+    state.pollInFlight = true;
+    try {
+      const [list, rels, stats] = await Promise.all([
+        apiGet(API + '/knowledge?limit=500'),
+        apiGet(API + '/relations?limit=5000'),
+        apiGet(API + '/stats').catch(() => null),
+      ]);
+      const rawItems = list.results || [];
+      const items = rawItems.length > MAX_GRAPH_NODES ? rawItems.slice(0, MAX_GRAPH_NODES) : rawItems;
+      const idSet = new Set(items.map(k => k.id));
+      const edgeMap = buildTargetEdgeMap(rels.results, idSet);
+      const diff = computeDiff(items, edgeMap);
+      const touched =
+        diff.addedNodes.length + diff.removedNodeIds.length +
+        diff.changedNodes.length + diff.addedEdges.length + diff.removedEdgeKeys.length;
+      if (touched > 0) {
+        applyDiff(diff);
+        state.knowledge = items;
+        if (state.view === 'list') renderKnowledgeList();
+      }
+      if (stats) {
+        state.stats = stats;
+        if (state.view === 'list') {
+          renderDashboard();
+          renderToolChart();
+        } else {
+          renderGraphPanel();
+        }
+      }
+    } catch (e) {
+      // Silent: polling must not corrupt the UI. Health probe covers visible state.
+    } finally {
+      state.pollInFlight = false;
+    }
+  }
+
+  /* ========== live search-pulse polling ==========
+     Every poll, ask the server for the last ~5s of search monitor_events, parse
+     the knowledge ids embedded in each result_summary (the `(id: N)` the search
+     tool writes via _format_summary_entry), and spawn a pulse on each matching
+     node. Each monitor_event id pulses exactly once — pulseSeenEventIds dedupes
+     across polls so an event that still sits inside the tail window on the next
+     tick doesn't re-fire. */
+
+  const PULSE_WINDOW_SECONDS = 5;
+  const PULSE_DURATION_MS = 800;
+  const PULSE_MAX_RADIUS = 26;
+  const PULSE_SEEN_CAP = 500;
+
+  function parseHitIdsFromSummary(summary) {
+    if (!summary) return [];
+    const ids = [];
+    const re = /\(id:\s*(\d+)\)/g;
+    let m;
+    while ((m = re.exec(summary)) !== null) {
+      ids.push(parseInt(m[1], 10));
+    }
+    return ids;
+  }
+
+  function spawnPulsesForNodes(ids) {
+    const g = state.graph;
+    const now = performance.now();
+    let any = false;
+    for (const id of ids) {
+      if (!g.nodeIndex.has(id)) continue;
+      g.pulses.push({ nodeId: id, startedAt: now });
+      any = true;
+    }
+    // Pulses are render-only effects — no need to wake physics, but the
+    // render loop has to pump until the last pulse expires.
+    if (any) markRenderDirty();
+  }
+
+  async function pollSearchPulses() {
+    if (!state.graph.built) return;
+    try {
+      const data = await apiGet(
+        API + '/events/recent?tool=search&seconds=' + PULSE_WINDOW_SECONDS
+      );
+      const results = data.results || [];
+      for (const ev of results) {
+        if (state.pulseSeenEventIds.has(ev.id)) continue;
+        state.pulseSeenEventIds.add(ev.id);
+        const ids = parseHitIdsFromSummary(ev.result_summary);
+        if (ids.length) spawnPulsesForNodes(ids);
+      }
+      if (state.pulseSeenEventIds.size > PULSE_SEEN_CAP) {
+        const drop = state.pulseSeenEventIds.size - PULSE_SEEN_CAP;
+        const it = state.pulseSeenEventIds.values();
+        for (let i = 0; i < drop; i++) state.pulseSeenEventIds.delete(it.next().value);
+      }
+    } catch (_) {
+      /* Silent — poll failures must never corrupt UI state. */
+    }
+  }
+
+  function startPolling() {
+    if (state.pollTimer) return;
+    state.pollTimer = setInterval(() => {
+      refreshGraphIncremental();
+      pollSearchPulses();
+    }, state.pollIntervalMs);
+  }
+  function stopPolling() {
+    if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
+  }
+
+  function resizeCanvas() {
+    const c = document.getElementById('graph-canvas');
+    const dpr = window.devicePixelRatio || 1;
+    const w = c.clientWidth;
+    const h = c.clientHeight;
+    c.width = Math.floor(w * dpr);
+    c.height = Math.floor(h * dpr);
+    const ctx = c.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    markRenderDirty();
+  }
+
+  // v1 feature flag: when false, fall back to the always-on rAF from pre-v1.
+  // Default on. `?smartPause=0` disables it for A/B screenshots.
+  const VIZ_SMART_PAUSE = (() => {
+    try {
+      const p = new URLSearchParams(window.location.search).get('smartPause');
+      if (p === '0' || p === 'false') return false;
+    } catch (_) {}
+    return true;
+  })();
+
+  // Alpha-decay tuning. Matches d3-force's defaults closely enough that the
+  // graph settles in ~400-600 ticks from a cold start (1.0 * 0.995^500 ≈ 0.08)
+  // but we cut off at ALPHA_MIN so the last few imperceptible pixels don't
+  // cost a perpetual 60fps tick budget.
+  const ALPHA_DECAY = 0.995;
+  const ALPHA_MIN = 0.001;
+  const ALPHA_RESTART = 1.0;
+
+  // Cap graph size so a runaway library doesn't silently degrade into a
+  // 100%-CPU tarpit. Aligns with tech-researcher v2 / perf-analyst §4 — beyond
+  // 2000 nodes the correct answer is Search Lens, not "render harder".
+  const MAX_GRAPH_NODES = 2000;
+
+  /* ========== glow sprite cache ==========
+     ctx.shadowBlur is the single hottest call in drawGraph. Pre-rendering the
+     halo into an offscreen canvas once and drawing it with drawImage moves
+     the blur from "run every frame, per-node" to "run once at boot". The
+     cache is keyed on (color, radius, blurStrength) so each variant is baked
+     exactly once. */
+  const glowSpriteCache = new Map();
+  function getGlowSprite(color, nodeRadius, blurStrength) {
+    const key = color + '|' + nodeRadius + '|' + blurStrength;
+    const hit = glowSpriteCache.get(key);
+    if (hit) return hit;
+    const pad = blurStrength * 2 + 4;
+    const size = Math.ceil((nodeRadius + pad) * 2);
+    const oc = document.createElement('canvas');
+    oc.width = size;
+    oc.height = size;
+    const octx = oc.getContext('2d');
+    const cx = size / 2;
+    const cy = size / 2;
+    // Radial gradient mimics the soft falloff of shadowBlur much more cheaply
+    // than running a real blur kernel each frame.
+    const grad = octx.createRadialGradient(cx, cy, nodeRadius * 0.6, cx, cy, nodeRadius + blurStrength);
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.5, color);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    octx.fillStyle = grad;
+    octx.beginPath();
+    octx.arc(cx, cy, nodeRadius + blurStrength, 0, Math.PI * 2);
+    octx.fill();
+    const sprite = { canvas: oc, half: size / 2 };
+    glowSpriteCache.set(key, sprite);
+    return sprite;
+  }
+
+  function markRenderDirty() { state.graph.renderDirty = true; ensureRAF(); }
+  function markPhysicsActive() {
+    state.graph.alpha = ALPHA_RESTART;
+    state.graph.physicsActive = true;
+    state.graph.renderDirty = true;
+    ensureRAF();
+  }
+
+  function hasLiveAnimations() {
+    const g = state.graph;
+    if (g.pulses.length) return true;
+    const now = performance.now();
+    for (const n of g.nodes) {
+      if (n.removing) return true;
+      if (n.opacity < 1 && n.enteredAt) return true;
+      if (n.fillFromColor && n.fillStartAt) return true;
+      if (n.enteredAt && !n.removing && (now - n.enteredAt) < HALO_DURATION_MS) return true;
+    }
+    for (const e of g.edges) {
+      if (e.removing) return true;
+      if (e.opacity < 1 && e.enteredAt) return true;
+    }
+    return false;
+  }
+
+  function ensureRAF() {
+    if (state.graph.rafId || !state.graph.built) return;
+    state.graph.rafId = requestAnimationFrame(graphTick);
+  }
+
+  // Lightweight perf counter — avoids needing Chrome DevTools Performance
+  // profile to answer "did v1 actually stop the loop?". Read in console:
+  //   window.__vizPerf.framesLast5s()
+  //   window.__vizPerf.idleStateSince()
+  // A well-tuned v1 should show ~0 frames/5s once the graph settles and
+  // there are no pulses/hovers/diffs.
+  const __vizPerf = {
+    frameTimes: [],
+    _lastActiveAt: performance.now(),
+    framesLast5s() {
+      const now = performance.now();
+      return this.frameTimes.filter(t => now - t < 5000).length;
+    },
+    idleStateSince() {
+      return performance.now() - this._lastActiveAt;
+    },
+  };
+  window.__vizPerf = __vizPerf;
+
+  function graphTick() {
+    const g = state.graph;
+    let needsNextFrame = false;
+    const frameStart = performance.now();
+    __vizPerf.frameTimes.push(frameStart);
+    // keep last ~10s of timestamps only
+    if (__vizPerf.frameTimes.length > 700) __vizPerf.frameTimes.splice(0, 200);
+
+    // physicsLoop — alpha-gated. Pre-v1 this ran unconditionally; now it only
+    // runs while the system still has kinetic energy the user cares about.
+    if (!VIZ_SMART_PAUSE || g.physicsActive) {
+      stepPhysics();
+      if (VIZ_SMART_PAUSE) {
+        g.alpha *= ALPHA_DECAY;
+        if (g.alpha < ALPHA_MIN) g.physicsActive = false;
+      }
+      g.renderDirty = true;
+    }
+
+    // renderLoop — always pumps animation state (fade/color-tween/pulse
+    // expiry) because those are cheap, then only redraws if something visible
+    // actually changed. A static steady-state graph with no hover and no
+    // pulses pays zero drawGraph cost.
+    stepAnimations();
+
+    const animAlive = hasLiveAnimations();
+    if (animAlive || g.camDirty || g.hoverDirty) g.renderDirty = true;
+
+    if (g.renderDirty) {
+      drawGraph();
+      g.renderDirty = false;
+      g.camDirty = false;
+      g.hoverDirty = false;
+    }
+
+    if (!VIZ_SMART_PAUSE) {
+      needsNextFrame = true;
+    } else {
+      needsNextFrame = g.physicsActive || animAlive || g.drag != null;
+    }
+
+    if (needsNextFrame) {
+      g.rafId = requestAnimationFrame(graphTick);
+      __vizPerf._lastActiveAt = frameStart;
+    } else {
+      g.rafId = null;
+    }
+  }
+
+  function startGraphLoop() {
+    if (state.graph.rafId) return;
+    // Don't blindly hot-reset alpha here — buildGraph / applyDiff / drag /
+    // new-node events are the legitimate physics-restart triggers, each of
+    // which already calls markPhysicsActive(). Restarting here too would
+    // re-shake a settled graph every time the user toggles list → graph.
+    state.graph.renderDirty = true;
+    state.graph.rafId = requestAnimationFrame(graphTick);
+  }
+
+  // Per-frame animation: fade nodes/edges in and out, tween status colors,
+  // and splice the fully-faded-out entries. Timings stay short so updates
+  // feel live without being jittery.
+  const FADE_IN_MS = 300;
+  const FADE_OUT_MS = 300;
+  const EDGE_FADE_IN_MS = 500;
+  const COLOR_TWEEN_MS = 300;
+  const HALO_DURATION_MS = 2000;
+
+  function stepAnimations() {
+    const g = state.graph;
+    const now = performance.now();
+
+    for (let i = g.nodes.length - 1; i >= 0; i--) {
+      const n = g.nodes[i];
+      if (n.removing) {
+        const t = (now - n.removedAt) / FADE_OUT_MS;
+        n.opacity = Math.max(0, 1 - t);
+        if (t >= 1) {
+          g.nodes.splice(i, 1);
+          g.nodeIndex.delete(n.id);
+          continue;
+        }
+      } else if (n.opacity < 1 && n.enteredAt) {
+        const t = (now - n.enteredAt) / FADE_IN_MS;
+        n.opacity = Math.min(1, Math.max(0, t));
+      }
+      if (n.fillFromColor && n.fillStartAt) {
+        const t = (now - n.fillStartAt) / COLOR_TWEEN_MS;
+        if (t >= 1) {
+          n.fill = n.targetFill;
+          n.fillFromColor = null;
+          n.fillStartAt = 0;
+        } else {
+          n.fill = lerpColor(n.fillFromColor, n.targetFill, t);
+        }
+      }
+    }
+
+    for (let i = g.edges.length - 1; i >= 0; i--) {
+      const e = g.edges[i];
+      if (e.removing) {
+        const t = (now - e.removedAt) / FADE_OUT_MS;
+        e.opacity = Math.max(0, 1 - t);
+        if (t >= 1) {
+          g.edges.splice(i, 1);
+          g.edgeIndex.delete(e.s + '-' + e.t);
+        }
+      } else if (e.opacity < 1 && e.enteredAt) {
+        const t = (now - e.enteredAt) / EDGE_FADE_IN_MS;
+        e.opacity = Math.min(1, Math.max(0, t));
+      }
+    }
+
+    // Reap expired search pulses. Pulses are cheap (few per second at most)
+    // so an O(n) splice per frame is plenty — no need for a ring buffer.
+    for (let i = g.pulses.length - 1; i >= 0; i--) {
+      if (now - g.pulses[i].startedAt >= PULSE_DURATION_MS) {
+        g.pulses.splice(i, 1);
+      }
+    }
+  }
+
+  function parseColor(c) {
+    if (!c) return [88, 166, 255];
+    if (c[0] === '#') {
+      const hex = c.slice(1);
+      if (hex.length === 3) {
+        return [parseInt(hex[0] + hex[0], 16), parseInt(hex[1] + hex[1], 16), parseInt(hex[2] + hex[2], 16)];
+      }
+      return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
+    }
+    const m = c.match(/rgba?\(([^)]+)\)/);
+    if (m) {
+      const parts = m[1].split(',').map(s => parseFloat(s.trim()));
+      return [parts[0] | 0, parts[1] | 0, parts[2] | 0];
+    }
+    return [88, 166, 255];
+  }
+  function lerpColor(from, to, t) {
+    const a = parseColor(from);
+    const b = parseColor(to);
+    return 'rgb(' +
+      Math.round(a[0] + (b[0] - a[0]) * t) + ',' +
+      Math.round(a[1] + (b[1] - a[1]) * t) + ',' +
+      Math.round(a[2] + (b[2] - a[2]) * t) + ')';
+  }
+  // Blend a color toward white by `t` (0..1) so matched nodes visibly brighten
+  // without losing their scope/status hue.
+  function brightenColor(c, t) {
+    const [r, g, b] = parseColor(c);
+    const nr = Math.round(r + (255 - r) * t);
+    const ng = Math.round(g + (255 - g) * t);
+    const nb = Math.round(b + (255 - b) * t);
+    return 'rgb(' + nr + ',' + ng + ',' + nb + ')';
+  }
+  function stopGraphLoop() {
+    if (state.graph.rafId) {
+      cancelAnimationFrame(state.graph.rafId);
+      state.graph.rafId = null;
+    }
+    state.graph.physicsActive = false;
+  }
+
+  function stepPhysics() {
+    const g = state.graph;
+    if (!g.nodes.length) return;
+    const nodes = g.nodes;
+    const edges = g.edges;
+    const c = document.getElementById('graph-canvas');
+    const cx = c.clientWidth / 2;
+    const cy = c.clientHeight / 2;
+
+    // alpha scales the whole force solver so decay naturally gentles nodes
+    // into place. When smart-pause is off we keep forces at full strength to
+    // match pre-v1 behavior exactly.
+    const aScale = VIZ_SMART_PAUSE ? g.alpha : 1.0;
+
+    // Repulsion (n^2 but capped for count < 500).
+    const KR = 6000 * aScale;
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      if (a.fixed && a !== g.drag?.node) { /* still accumulate */ }
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        let dx = a.x - b.x;
+        let dy = a.y - b.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 0.01) { dx = (Math.random() - 0.5); dy = (Math.random() - 0.5); d2 = dx * dx + dy * dy + 0.01; }
+        const d = Math.sqrt(d2);
+        const f = KR / d2;
+        const fx = (dx / d) * f;
+        const fy = (dy / d) * f;
+        a.vx += fx; a.vy += fy;
+        b.vx -= fx; b.vy -= fy;
+      }
+    }
+    // Spring along edges.
+    const SPRING = 0.005 * aScale;
+    const REST = 120;
+    for (const e of edges) {
+      const a = g.nodeIndex.get(e.s);
+      const b = g.nodeIndex.get(e.t);
+      if (!a || !b) continue;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const delta = d - REST;
+      const fx = (dx / d) * delta * SPRING;
+      const fy = (dy / d) * delta * SPRING;
+      a.vx += fx; a.vy += fy;
+      b.vx -= fx; b.vy -= fy;
+    }
+    // Gentle pull toward center, and damping + integrate.
+    const DAMP = 0.7;
+    const CENTER = 0.003 * aScale;
+    for (const n of nodes) {
+      if (n.fixed) { n.vx = 0; n.vy = 0; continue; }
+      n.vx += (cx - n.x) * CENTER;
+      n.vy += (cy - n.y) * CENTER;
+      n.vx *= DAMP;
+      n.vy *= DAMP;
+      // clamp velocity to prevent explosions
+      const vmax = 15;
+      if (n.vx > vmax) n.vx = vmax; else if (n.vx < -vmax) n.vx = -vmax;
+      if (n.vy > vmax) n.vy = vmax; else if (n.vy < -vmax) n.vy = -vmax;
+      n.x += n.vx;
+      n.y += n.vy;
+    }
+  }
+
+  function drawGraph() {
+    const g = state.graph;
+    const c = document.getElementById('graph-canvas');
+    const ctx = c.getContext('2d');
+    const w = c.clientWidth;
+    const h = c.clientHeight;
+    ctx.clearRect(0, 0, w, h);
+
+    const cam = g.cam;
+    ctx.save();
+    ctx.translate(cam.x, cam.y);
+    ctx.scale(cam.zoom, cam.zoom);
+
+    const searching = state.searchQuery.trim().length > 0 && g.matched.size > 0;
+    const hoverId = g.hover ? g.hover.id : null;
+
+    // edges — per relation_type visual treatment:
+    //   related    → light blue, 1.5px, subtle (rgba(88,166,255,0.3))
+    //   contradicts→ red, 2px, with red glow
+    //   supersedes → purple, 1.5px, dashed
+    // Hover boost: when a node is hovered, its direct edges go opacity 1.0 + 2px
+    // and all other edges dim to ~0.1 so the local neighborhood reads cleanly.
+    for (const e of g.edges) {
+      const a = g.nodeIndex.get(e.s);
+      const b = g.nodeIndex.get(e.t);
+      if (!a || !b) continue;
+      const type = e.type || 'related';
+      let rgb;
+      let baseAlpha;
+      let width;
+      let dash = null;
+      let glow = false;
+      if (type === 'contradicts') {
+        rgb = '248, 81, 73';
+        baseAlpha = 0.85;
+        width = 2;
+        glow = true;
+      } else if (type === 'supersedes') {
+        rgb = '163, 113, 247';
+        baseAlpha = 0.75;
+        width = 1.5;
+        dash = [5, 4];
+      } else {
+        rgb = '88, 166, 255';
+        baseAlpha = 0.3;
+        width = 1.5;
+      }
+
+      let alpha = baseAlpha;
+      let drawWidth = width;
+
+      // search dim: non-matched edges fade hard; edges touching a matched
+      // node stay at baseline.
+      if (searching) {
+        if (g.matched.has(a.id) || g.matched.has(b.id)) {
+          alpha = baseAlpha;
+        } else {
+          alpha = 0.1;
+        }
+      }
+
+      // hover boost overrides search dim — direct edges pop, others dim
+      if (hoverId != null) {
+        if (a.id === hoverId || b.id === hoverId) {
+          alpha = 1.0;
+          drawWidth = Math.max(2, width);
+        } else {
+          alpha = Math.min(alpha, 0.1);
+        }
+      }
+
+      // honor per-edge fade-in/out
+      const eop = (e.opacity == null) ? 1 : e.opacity;
+      alpha *= eop;
+      ctx.strokeStyle = 'rgba(' + rgb + ',' + alpha + ')';
+      ctx.lineWidth = drawWidth;
+      if (dash) ctx.setLineDash(dash); else ctx.setLineDash([]);
+      // v1: contradicts-edge red glow previously used ctx.shadowBlur which
+      // was the single biggest per-frame Canvas 2D cost. A second stroke with
+      // alpha-stacked wide line approximates the halo at 1/10th the CPU.
+      if (glow) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(' + rgb + ',' + Math.min(0.35, alpha * 0.5) + ')';
+        ctx.lineWidth = drawWidth + 4;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // nodes
+    const nowMs = performance.now();
+    for (const n of g.nodes) {
+      const status = n.k.status || 'active';
+      const dim = searching && !g.matched.has(n.id);
+      const op = (n.opacity == null) ? 1 : n.opacity;
+
+      // Fill: the animation layer owns n.fill (color-tweened on status change).
+      // Search hits keep their original color but render slightly brighter
+      // and gain a purple halo (applied below via shadowColor).
+      const isMatched = g.matched.has(n.id);
+      let fill = n.fill || nodeFillFor(n.k);
+      if (isMatched) fill = brightenColor(fill, 0.3);
+
+      // search-dim: non-matched nodes fade to 0.15 so matched ones pop
+      const baseAlpha = dim ? 0.15 : (status === 'superseded' || status === 'archived') ? 0.55 : 1;
+      ctx.globalAlpha = baseAlpha * op;
+
+      // "Just arrived" halo — breathes for ~2s, then fades out.
+      if (n.enteredAt && !n.removing) {
+        const age = nowMs - n.enteredAt;
+        if (age < HALO_DURATION_MS) {
+          const haloT = age / HALO_DURATION_MS;
+          const pulse = 0.5 + 0.5 * Math.sin(age / 180);
+          const haloAlpha = (1 - haloT) * (0.25 + pulse * 0.25) * op;
+          ctx.save();
+          ctx.globalAlpha = haloAlpha;
+          ctx.fillStyle = '#58a6ff';
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r + 6 + pulse * 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // glow: purple halo for matched search results, fill-color glow on hover.
+      // v1: replaced ctx.shadowBlur (per-node per-frame) with a cached
+      // offscreen sprite drawn via drawImage — roughly 10× cheaper and scales
+      // to thousands of nodes without hitting the Canvas 2D blur path.
+      if (isMatched) {
+        const sprite = getGlowSprite('rgba(163,113,247,0.55)', n.r, 18);
+        ctx.drawImage(sprite.canvas, n.x - sprite.half, n.y - sprite.half);
+      } else if (g.hover === n) {
+        const sprite = getGlowSprite(fill, n.r, 10);
+        ctx.save();
+        ctx.globalAlpha = 0.5 * ctx.globalAlpha;
+        ctx.drawImage(sprite.canvas, n.x - sprite.half, n.y - sprite.half);
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.fillStyle = fill;
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // border
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = g.hover === n ? '#e6edf3' : 'rgba(14,17,22,0.6)';
+      ctx.stroke();
+
+      // label (title truncated)
+      if (cam.zoom > 0.55) {
+        ctx.globalAlpha = (dim ? 0.25 : 0.85) * op;
+        ctx.fillStyle = '#b9c2cd';
+        ctx.font = '10px -apple-system, "SF Pro Text", monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const title = truncateTitle(n.k.title || '', 20);
+        ctx.fillText(title, n.x + n.r + 4, n.y);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Live search pulses — yellow expanding rings around nodes that another
+    // agent just hit via /search. Drawn on top of the node so the pulse reads
+    // even when the node is dimmed by the local search filter.
+    if (g.pulses.length) {
+      for (const p of g.pulses) {
+        const node = g.nodeIndex.get(p.nodeId);
+        if (!node) continue;
+        const age = nowMs - p.startedAt;
+        if (age < 0 || age >= PULSE_DURATION_MS) continue;
+        const t = age / PULSE_DURATION_MS;
+        const eased = 1 - Math.pow(1 - t, 2);
+        const radius = node.r + eased * PULSE_MAX_RADIUS;
+        const alpha = (1 - t) * 0.85;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        // Drop the ring's shadowBlur in favor of a double-stroke halo — same
+        // glow feel, none of the blur-kernel cost.
+        ctx.strokeStyle = 'rgba(251,191,36,0.35)';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        // Inner bright dot on the node itself — lifts brightness briefly
+        // so the user sees the node "flash" not just a ring drifting out.
+        if (t < 0.35) {
+          const dotAlpha = (1 - t / 0.35) * 0.9;
+          ctx.globalAlpha = dotAlpha;
+          const sprite = getGlowSprite('rgba(254,243,199,0.9)', node.r * 0.7, 10);
+          ctx.drawImage(sprite.canvas, node.x - sprite.half, node.y - sprite.half);
+          ctx.fillStyle = '#fef3c7';
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.r * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  function truncateTitle(s, maxLen) {
+    if (s.length <= maxLen) return s;
+    return s.slice(0, maxLen) + '…';
+  }
+
+  function screenToWorld(sx, sy) {
+    const cam = state.graph.cam;
+    return { x: (sx - cam.x) / cam.zoom, y: (sy - cam.y) / cam.zoom };
+  }
+
+  function pickNode(sx, sy) {
+    const { x, y } = screenToWorld(sx, sy);
+    const nodes = state.graph.nodes;
+    // iterate reverse so topmost wins
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i];
+      const dx = n.x - x;
+      const dy = n.y - y;
+      if (dx * dx + dy * dy <= (n.r + 3) * (n.r + 3)) return n;
+    }
+    return null;
+  }
+
+  function wireGraphInteractions() {
+    const c = document.getElementById('graph-canvas');
+    const tip = document.getElementById('graph-tooltip');
+
+    c.addEventListener('mousemove', (e) => {
+      const rect = c.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const g = state.graph;
+
+      if (g.drag) {
+        if (g.drag.node) {
+          const { x, y } = screenToWorld(sx, sy);
+          g.drag.node.x = x - g.drag.dxOffset;
+          g.drag.node.y = y - g.drag.dyOffset;
+          g.drag.node.vx = 0;
+          g.drag.node.vy = 0;
+          // Node drag rearranges local neighborhood — restart physics so
+          // springs/repulsions respond to the new position rather than
+          // staying frozen at decay=0.
+          markPhysicsActive();
+        } else if (g.drag.pan) {
+          g.cam.x += (sx - g.drag.lastX);
+          g.cam.y += (sy - g.drag.lastY);
+          g.drag.lastX = sx;
+          g.drag.lastY = sy;
+          // Pan is a pure camera change — do NOT wake physics, only redraw.
+          g.camDirty = true;
+          ensureRAF();
+        }
+        return;
+      }
+
+      const prevHover = g.hover;
+      const n = pickNode(sx, sy);
+      g.hover = n;
+      if (prevHover !== n) { g.hoverDirty = true; ensureRAF(); }
+      if (n) {
+        c.style.cursor = 'pointer';
+        tip.style.display = 'block';
+        const tags = (n.k.tags || []).slice(0, 5).map(t => '#' + t).join(' ');
+        tip.innerHTML =
+          '<div class="tt-title">' + escapeHtml(n.k.title || '') + '</div>' +
+          '<div class="tt-meta">' +
+            'status=<b>' + escapeHtml(n.k.status || '') + '</b> · ' +
+            'scope=<b>' + escapeHtml(n.k.scope || '') + '</b>' +
+            (n.k.claim_type ? ' · type=<b>' + escapeHtml(n.k.claim_type) + '</b>' : '') +
+          '</div>' +
+          (tags ? '<div class="tt-tags">' + escapeHtml(tags) + '</div>' : '');
+        // position tip near cursor but avoid overflow
+        const tw = tip.offsetWidth;
+        const th = tip.offsetHeight;
+        let left = sx + 14;
+        let top = sy + 14;
+        if (left + tw > c.clientWidth) left = sx - tw - 14;
+        if (top + th > c.clientHeight) top = sy - th - 14;
+        tip.style.left = left + 'px';
+        tip.style.top = top + 'px';
+      } else {
+        c.style.cursor = 'grab';
+        tip.style.display = 'none';
+      }
+    });
+
+    c.addEventListener('mouseleave', () => {
+      if (state.graph.hover) { state.graph.hoverDirty = true; ensureRAF(); }
+      state.graph.hover = null;
+      document.getElementById('graph-tooltip').style.display = 'none';
+    });
+
+    c.addEventListener('mousedown', (e) => {
+      const rect = c.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const n = pickNode(sx, sy);
+      c.classList.add('dragging');
+      if (n) {
+        const { x, y } = screenToWorld(sx, sy);
+        state.graph.drag = {
+          node: n,
+          dxOffset: x - n.x,
+          dyOffset: y - n.y,
+          moved: false,
+          startX: sx,
+          startY: sy,
+        };
+        n.fixed = true;
+        // Drag interaction keeps rAF alive via `g.drag != null` in graphTick.
+        markPhysicsActive();
+      } else {
+        state.graph.drag = { pan: true, lastX: sx, lastY: sy, startX: sx, startY: sy };
+        ensureRAF();
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      const d = state.graph.drag;
+      const c2 = document.getElementById('graph-canvas');
+      c2.classList.remove('dragging');
+      if (!d) return;
+      const rect = c2.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const moved = Math.abs(sx - d.startX) + Math.abs(sy - d.startY) > 4;
+      if (d.node) {
+        // Release physics so node floats again.
+        d.node.fixed = false;
+        if (!moved) {
+          // treat as click
+          openDetail(d.node.id);
+        }
+        // Graph topology around the released node needs to resettle.
+        markPhysicsActive();
+      }
+      state.graph.drag = null;
+      ensureRAF();
+    });
+
+    c.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = c.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const cam = state.graph.cam;
+      const prev = cam.zoom;
+      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      cam.zoom = Math.max(0.25, Math.min(3, cam.zoom * factor));
+      // zoom around cursor
+      const k = cam.zoom / prev;
+      cam.x = sx - (sx - cam.x) * k;
+      cam.y = sy - (sy - cam.y) * k;
+      // Camera change — redraw without waking physics.
+      state.graph.camDirty = true;
+      ensureRAF();
+    }, { passive: false });
+
+    window.addEventListener('resize', () => {
+      if (state.view === 'graph') resizeCanvas();
+    });
+  }
+
+  function updateGraphSearchMatch() {
+    const g = state.graph;
+    g.matched.clear();
+    if (state.searchResults && state.searchResults.length) {
+      for (const r of state.searchResults) g.matched.add(r.id);
+    }
+  }
+
+  /* ========== utils ========== */
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+  function escapeAttr(s) { return escapeHtml(s).replace(/\s+/g, '-'); }
+
+  /* ========== boot ========== */
+  async function loadAll() {
+    const ok = await probeHealth();
+    if (!ok) {
+      document.getElementById('metrics-grid').innerHTML =
+        '<div class="err" style="grid-column:1/-1">' +
+        '❌ 连不上 <code>' + API + '</code>。请启动：' +
+        '<code>cd /Users/zhuqingyu/project/mnemo &amp;&amp; .venv/bin/mnemo serve --port 8787</code>' +
+        '</div>';
+      document.getElementById('tool-chart').innerHTML = '';
+      document.getElementById('k-grid').innerHTML = '';
+      return;
+    }
+    try {
+      const [stats, list] = await Promise.all([
+        apiGet(API + '/stats'),
+        apiGet(API + '/knowledge?limit=500'),
+      ]);
+      state.stats = stats;
+      state.knowledge = list.results || [];
+      renderDashboard();
+      renderToolChart();
+      renderGraphPanel();
+      renderKnowledgeList();
+      // rebuild graph (knowledge may have changed on refresh)
+      state.graph.built = false;
+      state.graph.nodes = [];
+      state.graph.edges = [];
+      state.graph.nodeIndex = new Map();
+      state.graph.edgeIndex = new Map();
+      if (state.view === 'graph') {
+        resizeCanvas();
+        await buildGraph();
+      }
+      // Start the live incremental poller — runs in either view so switching
+      // back to Graph always shows a fresh, up-to-date node set.
+      startPolling();
+    } catch (e) {
+      document.getElementById('metrics-grid').innerHTML =
+        '<div class="err" style="grid-column:1/-1">加载失败: ' + escapeHtml(e.message) + '</div>';
+      document.getElementById('tool-chart').innerHTML = '';
+      document.getElementById('k-grid').innerHTML = '';
+    }
+  }
+
+  function wireUI() {
+    document.getElementById('search-input').addEventListener('input', onSearchInput);
+    document.getElementById('search-clear').addEventListener('click', () => {
+      const i = document.getElementById('search-input');
+      i.value = '';
+      onSearchInput({ target: { value: '' } });
+      i.focus();
+    });
+    document.getElementById('refresh-btn').addEventListener('click', loadAll);
+    document.getElementById('view-graph').addEventListener('click', () => setView('graph'));
+    document.getElementById('view-list').addEventListener('click', () => setView('list'));
+    wireGraphInteractions();
+    wireGraphPanelToggle();
+    document.getElementById('panel-close').addEventListener('click', closeDetail);
+    document.getElementById('panel-overlay').addEventListener('click', (e) => {
+      if (e.target.id === 'panel-overlay') closeDetail();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (state.selectedId) { closeDetail(); return; }
+        const i = document.getElementById('search-input');
+        if (i.value) { i.value = ''; onSearchInput({ target: { value: '' } }); i.blur(); }
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('search-input').focus();
+      }
+    });
+  }
+
+  wireUI();
+  loadAll().then(() => {
+    // Dev/QA helper: allow `?q=xxx` in the URL to pre-fill the search box so
+    // headless screenshots can reach the "search hit" visual state without
+    // simulating input events. Runs once after initial load completes.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('q');
+      if (q) {
+        const input = document.getElementById('search-input');
+        input.value = q;
+        onSearchInput({ target: { value: q } });
+      }
+    } catch (_) {}
+  });
+</script>
+
+</body>
+</html>

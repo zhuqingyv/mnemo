@@ -1,0 +1,1180 @@
+[
+  {
+    "title": "多 Agent 协作必须使用 TeamCreate",
+    "tags": [
+      "team-rule",
+      "teamcreate",
+      "coordination"
+    ],
+    "summary": "所有团队协作一律走 TeamCreate 工具组建正式团队，禁止用其他形式（如直接 spawn 多个独立 Agent）模拟团队。",
+    "content": "用户在 2026-04-18 明确要求：从此以后，任何需要多 Agent 协作的场景都必须先调用 TeamCreate 建立团队，再通过 Agent+team_name spawn 成员，用 Task 系统管理工作。TeamCreate 提供正式的任务追踪、成员协调、共享任务列表等结构化团队能力，独立 Agent 没有这些。详见 [[禁止孤立 subAgent]]、[[主 Agent 纯监督调度]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/projects/-Users-zhuqingyu-project/memory/feedback_use_teamcreate.md + session e8c1e554",
+    "related": [
+      "禁止孤立 subAgent",
+      "主 Agent 纯监督调度",
+      "团队成员必须带 team_name"
+    ],
+    "search_queries": [
+      "TeamCreate",
+      "怎么建团队",
+      "多 Agent 协作",
+      "团队规则"
+    ]
+  },
+  {
+    "title": "主 Agent 纯监督调度",
+    "tags": [
+      "team-rule",
+      "leader",
+      "role-boundary"
+    ],
+    "summary": "主 Agent 只负责监督和调度，绝不亲自动手做实质工作，所有执行任务必须派给团队成员。",
+    "content": "用户偏好明确：主 Agent = 纯监督调度，绝不动手。所有实质工作必须通过 TeamCreate → spawn 团队成员 来完成。主 Agent 的职责是分派任务、收集汇报、做综合判断，而不是自己写代码/跑测试/查资料。违反这条就是[[禁止主 Agent 角色扮演多角色]]的前奏。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/memory/USER_PREFERENCES.md",
+    "related": [
+      "多 Agent 协作必须使用 TeamCreate",
+      "禁止主 Agent 角色扮演多角色",
+      "禁止孤立 subAgent"
+    ],
+    "search_queries": [
+      "主 Agent 职责",
+      "leader 能干什么",
+      "监督调度"
+    ]
+  },
+  {
+    "title": "禁止孤立 subAgent",
+    "tags": [
+      "team-rule",
+      "spawn",
+      "anti-pattern"
+    ],
+    "summary": "禁止不带 team_name 的孤立 subAgent，所有成员必须挂在一个明确的 team 下。",
+    "content": "用户明确规定：禁止不带 team_name 的孤立 subAgent。所有通过 Agent 工具 spawn 的成员必须指定 team_name，挂在用 TeamCreate 建立的正式团队下，才能享受 mailbox、任务追踪、统一汇报等能力。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/memory/USER_PREFERENCES.md",
+    "related": [
+      "多 Agent 协作必须使用 TeamCreate",
+      "团队成员必须带 team_name"
+    ],
+    "search_queries": [
+      "孤立 Agent",
+      "team_name 必填",
+      "独立 subAgent"
+    ]
+  },
+  {
+    "title": "禁止主 Agent 角色扮演多角色",
+    "tags": [
+      "team-rule",
+      "role-boundary",
+      "anti-pattern"
+    ],
+    "summary": "主 Agent 不能在一个会话里扮演多个团队角色来伪装多 Agent 协作。",
+    "content": "用户明确禁止主 Agent 在同一会话里 cosplay 多个角色（如假装自己是 architect、又假装是 dev）来模拟团队。多 Agent 协作是真实要求，必须走 TeamCreate + spawn。防伪装见 skill `role-audit`。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/memory/USER_PREFERENCES.md",
+    "related": [
+      "多 Agent 协作必须使用 TeamCreate",
+      "主 Agent 纯监督调度",
+      "role-audit 防伪装多 Agent"
+    ],
+    "search_queries": [
+      "角色扮演",
+      "伪装多 Agent",
+      "cosplay 禁止"
+    ]
+  },
+  {
+    "title": "团队成员必须带 team_name",
+    "tags": [
+      "team-rule",
+      "spawn",
+      "procedure"
+    ],
+    "summary": "用 Agent 工具 spawn 成员时必须传 team_name 参数，让成员挂到团队下。",
+    "content": "配合 [[多 Agent 协作必须使用 TeamCreate]]：先 TeamCreate 建团队拿到 team name，再 Agent(subagent_type=..., team_name=...) 派成员。不带 team_name 的 spawn 会产生[[禁止孤立 subAgent]]，违反规则。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/memory/USER_PREFERENCES.md + team-member.md",
+    "related": [
+      "多 Agent 协作必须使用 TeamCreate",
+      "禁止孤立 subAgent"
+    ],
+    "search_queries": [
+      "team_name 参数",
+      "spawn 成员",
+      "Agent 工具用法"
+    ]
+  },
+  {
+    "title": "mailbox 路径约定",
+    "tags": [
+      "team-rule",
+      "mailbox",
+      "fact"
+    ],
+    "summary": "每个团队成员有专属邮箱文件 ~/.claude/teams/{team}/inboxes/{agent}.json，SendMessage 写入这里。",
+    "content": "Claude Code team mode 的消息系统基于文件邮箱：路径 `~/.claude/teams/{team}/inboxes/{agent}.json`。SendMessage 工具把消息写入对应 agent 的 json 文件，成员通过 500ms 轮询读取。所有跨成员通信都走这个机制，没有实时消息总线。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 源码调查报告 + /Users/zhuqingyu/.claude/teams/*/inboxes/ 实测",
+    "related": [
+      "SendMessage 不是实时中断",
+      "成员 500ms 轮询 mailbox"
+    ],
+    "search_queries": [
+      "mailbox 路径",
+      "inbox 文件位置",
+      "消息存在哪"
+    ]
+  },
+  {
+    "title": "成员 500ms 轮询 mailbox",
+    "tags": [
+      "team-rule",
+      "mailbox",
+      "polling",
+      "fact"
+    ],
+    "summary": "团队成员每 500ms 轮询一次自己的 mailbox 文件，不是实时推送。",
+    "content": "Claude Code 成员的 inbox 读取采用轮询机制，间隔 500ms。关键文件：`src/utils/swarm/inProcessRunner.ts:697-865`。这意味着消息从发送到被感知至少有 500ms 延迟，再加上成员正在执行任务的时间。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 claude 源码调查（/Users/zhuqingyu/Desktop/claude源码）",
+    "related": [
+      "mailbox 路径约定",
+      "SendMessage 不是实时中断",
+      "成员消息优先级顺序"
+    ],
+    "search_queries": [
+      "轮询间隔",
+      "500ms",
+      "消息延迟"
+    ]
+  },
+  {
+    "title": "成员消息优先级顺序",
+    "tags": [
+      "team-rule",
+      "message-priority",
+      "fact"
+    ],
+    "summary": "成员读邮箱时优先级：shutdown_request > team-lead 消息 > peer 消息 > 其他 FIFO。",
+    "content": "Claude Code 成员处理 mailbox 时按固定优先级拉消息：`shutdown_request` 最高，其次是来自 team-lead 的消息，再次是 peer（同级成员）消息，最后是其他消息按 FIFO。leader 的普通消息比 peer 优先一级，但不能跳过正在执行的任务。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 源码调查",
+    "related": [
+      "mailbox 路径约定",
+      "Task 没有 priority 字段",
+      "SendMessage 不是实时中断"
+    ],
+    "search_queries": [
+      "消息优先级",
+      "shutdown_request 优先",
+      "leader 消息优先级"
+    ]
+  },
+  {
+    "title": "Task 没有 priority 字段",
+    "tags": [
+      "team-rule",
+      "task-queue",
+      "fact"
+    ],
+    "summary": "Claude Code 的 Task 没有优先级字段，所有普通消息都是 FIFO 处理，不存在高优任务插队机制。",
+    "content": "源码中 `Task.ts` 无 priority 字段。leader 想给某个成员插个紧急任务是做不到的——必须等成员当前任务结束，按 FIFO 顺序处理。用户抱怨\"修正要等成员前面的事全做完\"的根因就在这里。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 源码调查",
+    "related": [
+      "Claude Team 没有插队机制",
+      "成员消息优先级顺序",
+      "任务颗粒度要拆细"
+    ],
+    "search_queries": [
+      "任务优先级",
+      "priority 字段",
+      "FIFO 队列"
+    ]
+  },
+  {
+    "title": "Claude Team 没有插队机制",
+    "tags": [
+      "team-rule",
+      "limitation",
+      "fact"
+    ],
+    "summary": "Claude Code team mode 没有任何真正的任务插队机制，leader 修正必须等成员做完当前 API 调用。",
+    "content": "用户在 2026-04-18 的调查明确结论：没有插队机制。leader 想中途修正方向的唯一手段是 SendMessage（下一轮 API 调用时生效）或 TaskStop（强制中止）。成员正在执行长 API 调用时，消息要排队等当前调用结束。这是设计限制，不是 bug。缓解办法：[[任务颗粒度要拆细]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029",
+    "related": [
+      "Task 没有 priority 字段",
+      "SendMessage 不是实时中断",
+      "TaskStop 是工具边界中断",
+      "任务颗粒度要拆细"
+    ],
+    "search_queries": [
+      "插队机制",
+      "能否打断成员",
+      "紧急任务插入"
+    ]
+  },
+  {
+    "title": "SendMessage 不是实时中断",
+    "tags": [
+      "team-rule",
+      "send-message",
+      "fact"
+    ],
+    "summary": "SendMessage 通过写入 mailbox 文件投递消息，成员最快 500ms 后感知，且要等当前 API 调用完成才处理。",
+    "content": "SendMessage 实现在 `src/tools/SendMessageTool/SendMessageTool.ts:149-303`。把消息写入对方 mailbox 后就返回——不会中断对方正在执行的任务。如果对方正在 API 调用中，消息进 `pendingMessages[]` 排队，等调用结束作为 attachment 注入下一次请求。所以\"leader 想立即修正\"做不到。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 源码调查",
+    "related": [
+      "mailbox 路径约定",
+      "成员 500ms 轮询 mailbox",
+      "TaskStop 是工具边界中断",
+      "pendingMessages 排队机制"
+    ],
+    "search_queries": [
+      "SendMessage 机制",
+      "消息中断",
+      "实时通信"
+    ]
+  },
+  {
+    "title": "pendingMessages 排队机制",
+    "tags": [
+      "team-rule",
+      "send-message",
+      "fact"
+    ],
+    "summary": "成员执行 API 调用期间收到的消息进 pendingMessages 数组，调用结束后作为 attachment 注入下一次请求。",
+    "content": "关键文件 `src/tasks/LocalAgentTask/LocalAgentTask.tsx:181-192`。成员忙时收到的消息不会丢，但也不会立即处理——先入 pendingMessages[] 队列，等当前 API 调用（可能数秒到数十秒）结束，消息作为 attachment 附加到下一次 LLM 请求的 context 中。这解释了为什么 leader 的修正\"要等一会\"才生效。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 源码调查",
+    "related": [
+      "SendMessage 不是实时中断",
+      "成员 500ms 轮询 mailbox"
+    ],
+    "search_queries": [
+      "pendingMessages",
+      "消息排队",
+      "attachment 注入"
+    ]
+  },
+  {
+    "title": "TaskStop 是工具边界中断",
+    "tags": [
+      "team-rule",
+      "abort",
+      "fact"
+    ],
+    "summary": "TaskStop 通过 abortController 强制中止成员，在下一个工具调用边界生效，不是毫秒级。",
+    "content": "`TaskStop` → `killInProcessTeammate()` → `task.abortController.abort()`。AbortController 在流式消息事件之间被检查（`inProcessRunner.ts:1175-1209`），中断时机是**工具调用边界**，不是 token 级别。成员当前 Bash/API 调用跑完后，下次循环会 break。成员进度全丢，不可拒绝。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 源码调查",
+    "related": [
+      "Claude Team 没有插队机制",
+      "shutdown_request 是礼貌请求退出"
+    ],
+    "search_queries": [
+      "TaskStop 机制",
+      "强制中止",
+      "abortController"
+    ]
+  },
+  {
+    "title": "shutdown_request 是礼貌请求退出",
+    "tags": [
+      "team-rule",
+      "shutdown",
+      "fact"
+    ],
+    "summary": "SendMessage 发 shutdown_request 只在成员 idle 轮询时被检测，不能中断执行中的任务，且成员可以拒绝。",
+    "content": "shutdown_request 只在 `waitForNextPromptOrShutdown()` 里被检测，而这个函数只在成员 idle（空闲等待）时才跑——即每轮 `runAgent()` 完成之后（`inProcessRunner.ts:1048`）。所以发 shutdown_request 等于\"礼貌请求退出\"，成员当前任务继续跑完，而且可以返回 shutdown_rejected 拒绝。要真正强制停就用 [[TaskStop 是工具边界中断]]。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session 991a9029 源码调查",
+    "related": [
+      "TaskStop 是工具边界中断",
+      "成员消息优先级顺序"
+    ],
+    "search_queries": [
+      "shutdown_request 机制",
+      "成员退出",
+      "关停成员"
+    ]
+  },
+  {
+    "title": "任务颗粒度要拆细",
+    "tags": [
+      "team-rule",
+      "best-practice",
+      "task-design"
+    ],
+    "summary": "在 Claude team 架构下，拆细任务是唯一有效规避\"修正不及时\"的手段。",
+    "content": "由于 [[Claude Team 没有插队机制]] 和 [[SendMessage 不是实时中断]]，成员每步任务颗粒度越小，单次 API 调用就越短，消息响应窗口越小，leader 修正越及时。任务颗粒度越大，跑偏越难及时纠正。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "session 991a9029 调查结论",
+    "related": [
+      "Claude Team 没有插队机制",
+      "SendMessage 不是实时中断"
+    ],
+    "search_queries": [
+      "任务拆细",
+      "颗粒度",
+      "如何控制成员跑偏"
+    ]
+  },
+  {
+    "title": "两段式 shutdown 协议",
+    "tags": [
+      "team-rule",
+      "shutdown",
+      "procedure"
+    ],
+    "summary": "Fire 成员是两段式：leader 发 shutdown_request → 成员 LLM 推理 → 成员回 shutdown_approved → 系统才 removeAgent。",
+    "content": "代码在 `TeamMcpServer.ts:464-474`。leader 调用 team_shutdown_agent 只是发送请求，成员必须主动 LLM 推理后回 shutdown_approved，系统才真正 removeAgent 让 UI tab 消失。整个链路需要足够时间，测试超时常来自于此——见 mnemo-phase1 e2e 的 lifecycle 测试把 timeout 从 60s 提到 300s。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session ce32307a e2e 调试",
+    "related": [
+      "shutdown_request 是礼貌请求退出",
+      "lifecycle 测试需要 300s 超时"
+    ],
+    "search_queries": [
+      "两段式 shutdown",
+      "fire 成员",
+      "关停协议"
+    ]
+  },
+  {
+    "title": "lifecycle 测试需要 300s 超时",
+    "tags": [
+      "team-rule",
+      "e2e-test",
+      "aionui"
+    ],
+    "summary": "AionUi team e2e 的 lifecycle 测试需要 test.setTimeout(300_000)，60s 默认超时不够用。",
+    "content": "lifecycle 测试链路：Add leader 推理 + MCP spawn 约 20-30s、Fire leader 推理 + MCP fire 约 20-30s、setup 约 10s，总共 60-70s，默认 60s 必超时。修法：在测试文件加 `test.setTimeout(300_000)`。背景见 [[两段式 shutdown 协议]]。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "session ce32307a e2e 调试",
+    "related": [
+      "两段式 shutdown 协议",
+      "Fire 前必须点回 Leader tab"
+    ],
+    "search_queries": [
+      "lifecycle 超时",
+      "playwright timeout",
+      "team e2e 测试"
+    ]
+  },
+  {
+    "title": "Fire 前必须点回 Leader tab",
+    "tags": [
+      "team-rule",
+      "e2e-test",
+      "aionui"
+    ],
+    "summary": "AionUi e2e 发 Fire 指令前要先点 leader tab，否则 textarea.first() 可能指向新成员的输入框。",
+    "content": "AionUi team UI 里成员被添加后变为 active tab，`page.locator('textarea').first()` 在某些情况下会取到成员的输入框而不是 leader 的。Fire 指令发到成员输入框等于没发。修法：发 Fire 前显式点一下 leader tab 把焦点拉回来。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "procedure",
+    "source": "session ce32307a e2e 调试",
+    "related": [
+      "lifecycle 测试需要 300s 超时"
+    ],
+    "search_queries": [
+      "Fire 测试失败",
+      "textarea first",
+      "leader tab 切换"
+    ]
+  },
+  {
+    "title": "codebuddy leader 不能 spawn 成员",
+    "tags": [
+      "team-rule",
+      "limitation",
+      "aionui"
+    ],
+    "summary": "AionUi 的 codebuddy leader 在 60s 内不能 spawn 成员，是产品能力限制非测试问题。",
+    "content": "session ce32307a 验证：codebuddy leader 收到 \"Add a claude type member\" 指令后 60s 内没有 spawn 成员。不是测试写法问题，是产品行为——codebuddy 可能不认 spawn_agent MCP 调用。测试侧先 skip 该 case，产品侧待定。",
+    "scope": "project",
+    "project_name": "AionUi",
+    "claim_type": "fact",
+    "source": "session ce32307a e2e 调试",
+    "related": [
+      "lifecycle 测试需要 300s 超时"
+    ],
+    "search_queries": [
+      "codebuddy leader",
+      "spawn 失败",
+      "leader 类型对比"
+    ]
+  },
+  {
+    "title": "team-hub 是团队记忆持久化系统",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "mcp",
+      "fact"
+    ],
+    "summary": "team-hub 是 MCP 系统，不创建 agent，而是管理成员的人设模板、工作记忆和工作锁。",
+    "content": "从 /Users/zhuqingyu/.claude/agents/team-member.md：team-hub 三个核心操作：activate（加载记忆工作区，注入持久化记忆到会话）、save_memory（保存工作记忆到仓库）、deactivate（释放工作区，必须在 save_memory 之后）。花名册/规则/persona 都从 team-hub 查询。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "activate 返回什么",
+      "成员启动强制协议",
+      "save_memory 前不能 deactivate"
+    ],
+    "search_queries": [
+      "team-hub",
+      "MCP 团队",
+      "持久化记忆"
+    ]
+  },
+  {
+    "title": "成员启动强制协议",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "procedure"
+    ],
+    "summary": "team-member agent spawn 后第一个工具调用必须是 mcp__team-hub__activate，否则输出被丢弃。",
+    "content": "从 team-member.md：启动协议强制不可跳过。第一步：从 spawn prompt 拿 member name 和 reservation_code，调用 `mcp__team-hub__activate(member=..., reservation_code=...)`。第二步：search_experience(keyword=...) 复用前人经验。第三步：按返回的 persona 工作。违反任何一步输出被丢弃。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "team-hub 是团队记忆持久化系统",
+      "activate 返回什么",
+      "成员名数字后缀是重复实例"
+    ],
+    "search_queries": [
+      "成员启动协议",
+      "activate 第一步",
+      "spawn 后做什么"
+    ]
+  },
+  {
+    "title": "activate 返回什么",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "fact"
+    ],
+    "summary": "activate 返回 persona、memory、current_task、team_rules、peer_pair、project_rules、workflow_hint。",
+    "content": "activate 验证预约码 → 转正式锁 → 返回以下内容加载到工作上下文：persona（你是谁/风格/职责边界）、memory（上次留下的经验）、current_task（当前任务）、team_rules（团队规则）、peer_pair（协作对象）、project_rules（含 forbidden 和 rules）、project_members、workflow_hint（推荐执行顺序）。成员严格按 persona 执行。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "成员启动强制协议",
+      "team-hub 是团队记忆持久化系统"
+    ],
+    "search_queries": [
+      "activate 返回值",
+      "persona 内容",
+      "workflow_hint"
+    ]
+  },
+  {
+    "title": "save_memory 前不能 deactivate",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "procedure"
+    ],
+    "summary": "成员结束工作前必须先 save_memory 再 deactivate，跳步会导致本次经验永久丢失。",
+    "content": "释放顺序不可跳步：1) `save_memory(member=你的name)` 写入本次经验 → 2) 若有团队级经验 `submit_experience(member=..., scope=\"team\")` → 3) `deactivate(member=...)` 释放工作锁清心跳。跳过 save_memory 直接 deactivate 会丢失本次经验。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "成员启动强制协议",
+      "activate 返回什么"
+    ],
+    "search_queries": [
+      "save_memory 顺序",
+      "deactivate 协议",
+      "成员结束工作"
+    ]
+  },
+  {
+    "title": "checkpoint 子任务自查",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "procedure"
+    ],
+    "summary": "成员每完成一个子任务后调用 checkpoint(member=...) 做自查：是否偏离目标、有无遗漏。",
+    "content": "team-hub 提供 checkpoint 工具，用于子任务完成后的自我检查：是否偏离 persona 定义的目标、是否遗漏。这是防止成员跑偏的内置手段，配合 [[任务颗粒度要拆细]] 一起用。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "成员启动强制协议",
+      "任务颗粒度要拆细"
+    ],
+    "search_queries": [
+      "checkpoint",
+      "子任务自查",
+      "成员跑偏"
+    ]
+  },
+  {
+    "title": "peer_pair 同伴复核",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "peer-review"
+    ],
+    "summary": "activate 返回的 peer_pair 是协作对象，完成工作后要找对方 review。",
+    "content": "team-hub 在 activate 时会分配 peer_pair（协作对象）。成员完成工作后要找对方 review。这是结构化的同伴复核机制，用于交叉验证成员产出质量。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "activate 返回什么",
+      "fact-checker 交叉验证模式"
+    ],
+    "search_queries": [
+      "peer_pair",
+      "同伴 review",
+      "交叉验证"
+    ]
+  },
+  {
+    "title": "project_rules 含 forbidden 和 rules",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "fact"
+    ],
+    "summary": "team-hub activate 返回的 project_rules 分两层：forbidden（绝对禁止）和 rules（必须遵循）。",
+    "content": "project_rules 结构化分两层：forbidden 是绝对禁止项（硬约束），rules 是必须遵循项（软约束）。成员工作中要注意 project_rules，不是只看 team_rules。两层机制让项目级红线能压过团队通用规则。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "activate 返回什么",
+      "成员启动强制协议"
+    ],
+    "search_queries": [
+      "forbidden 规则",
+      "project_rules 结构",
+      "绝对禁止项"
+    ]
+  },
+  {
+    "title": "成员名数字后缀是重复实例",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "anti-pattern"
+    ],
+    "summary": "如果 agent name 含数字后缀（xxx-2、xxx-3），说明是重复 spawn，应立即通知 lead 后停止工作。",
+    "content": "team-hub 的防重复机制：agent name 有数字后缀意味着前面已经有同名实例，本次是重复 spawn。成员发现后应立即通知 team lead 然后停止工作，不执行任何任务。避免重复劳动和消息竞争。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "成员启动强制协议"
+    ],
+    "search_queries": [
+      "重复 Agent",
+      "数字后缀",
+      "防重复 spawn"
+    ]
+  },
+  {
+    "title": "search_experience 复用前人经验",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "procedure"
+    ],
+    "summary": "成员 activate 后第二步调用 search_experience(keyword=...) 查前人留下的经验，避免重复踩坑。",
+    "content": "team-hub 提供 search_experience 工具。成员启动第二步必须用任务相关 keyword 查历史经验，复用前人成果，避免重复踩坑。这是团队记忆持久化的主要消费接口。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "成员启动强制协议",
+      "team-hub 是团队记忆持久化系统"
+    ],
+    "search_queries": [
+      "search_experience",
+      "复用经验",
+      "查历史教训"
+    ]
+  },
+  {
+    "title": "submit_experience 共享团队经验",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "procedure"
+    ],
+    "summary": "若有团队级经验，用 submit_experience(scope=\"team\") 提交到共享池让后来成员能查到。",
+    "content": "team-hub 的 submit_experience 工具用于把个人经验升级为团队共享经验，scope=\"team\"。成员在 save_memory 后、deactivate 前调用。后续 search_experience 就能查到这条共享经验。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/agents/team-member.md",
+    "related": [
+      "save_memory 前不能 deactivate",
+      "search_experience 复用前人经验"
+    ],
+    "search_queries": [
+      "submit_experience",
+      "团队经验共享",
+      "跨成员知识"
+    ]
+  },
+  {
+    "title": "团队配置存 ~/.claude/teams/",
+    "tags": [
+      "team-rule",
+      "team-config",
+      "fact"
+    ],
+    "summary": "所有团队的元数据和邮箱存在 ~/.claude/teams/{team}/ 下，有 config.json 和 inboxes/ 目录。",
+    "content": "TeamCreate 建立的团队目录结构：`~/.claude/teams/{team-name}/config.json`（成员列表、leader、createdAt 等）和 `~/.claude/teams/{team-name}/inboxes/{agent}.json`（各成员邮箱）。例：chat-salon、mnemo-phase1-final、mnemo-data-extract 都是这个结构。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "/Users/zhuqingyu/.claude/teams/ 目录实测",
+    "related": [
+      "mailbox 路径约定",
+      "team config.json 字段"
+    ],
+    "search_queries": [
+      "团队目录",
+      "team 配置位置",
+      "inboxes 路径"
+    ]
+  },
+  {
+    "title": "team config.json 字段",
+    "tags": [
+      "team-rule",
+      "team-config",
+      "fact"
+    ],
+    "summary": "config.json 含 name、description、createdAt、leadAgentId、leadSessionId、members[]。",
+    "content": "team 配置文件结构：顶层 name/description/createdAt/leadAgentId/leadSessionId，members[] 每项含 agentId、name、agentType（leader/team-member/general-purpose）、model、joinedAt、tmuxPaneId、cwd、subscriptions、prompt（spawn prompt）、color、planModeRequired、backendType。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "/Users/zhuqingyu/.claude/teams/chat-salon/config.json + mnemo-data-extract/config.json",
+    "related": [
+      "团队配置存 ~/.claude/teams/"
+    ],
+    "search_queries": [
+      "config.json 字段",
+      "team 元数据",
+      "members 结构"
+    ]
+  },
+  {
+    "title": "成员颜色区分",
+    "tags": [
+      "team-rule",
+      "team-config",
+      "fact"
+    ],
+    "summary": "成员在 config.json 里有 color 字段（blue/purple/green/yellow/orange/pink），用于 UI 和消息显示。",
+    "content": "team 成员有 color 字段用于区分身份：chat-salon 里 comedian=blue, philosopher=yellow, critic=green。mnemo-data-extract 里按类别分配不同颜色。这个 color 在 SendMessage 消息和 teammate-message 里也会带上。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "/Users/zhuqingyu/.claude/teams/chat-salon/config.json",
+    "related": [
+      "team config.json 字段"
+    ],
+    "search_queries": [
+      "成员颜色",
+      "color 字段",
+      "区分身份"
+    ]
+  },
+  {
+    "title": "SendMessage 用 to 参数",
+    "tags": [
+      "team-rule",
+      "send-message",
+      "procedure"
+    ],
+    "summary": "SendMessage 通过 to: \"<name>\" 发给指定成员，to: \"*\" 广播（慎用）。",
+    "content": "Agent 团队协作通信规范：用 SendMessage 工具的 `to: \"<name>\"` 发给具体成员，`to: \"*\"` 是团队广播（谨慎使用，避免垃圾消息）。直接在文本里写内容是不会传达给其他成员的——只有写文本不调用 SendMessage，其他人看不到。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "session e8c1e554 team-member prompt + 用户交互系统提示",
+    "related": [
+      "mailbox 路径约定",
+      "SendMessage 不是实时中断"
+    ],
+    "search_queries": [
+      "SendMessage 用法",
+      "to 参数",
+      "团队广播"
+    ]
+  },
+  {
+    "title": "idle_notification 空闲通知",
+    "tags": [
+      "team-rule",
+      "send-message",
+      "fact"
+    ],
+    "summary": "成员任务完成后自动向 leader 发 idle_notification，带 idleReason（available/interrupted）。",
+    "content": "系统机制：成员完成任务进入空闲时，自动向 team-lead 发 `{\"type\":\"idle_notification\",\"from\":\"xxx\",\"timestamp\":\"...\",\"idleReason\":\"available\"}`。leader 收到后可以派新任务或 shutdown。interrupted 表示被中断，available 表示完成可用。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 的 teammate-message 日志",
+    "related": [
+      "shutdown_approved 成员同意退出"
+    ],
+    "search_queries": [
+      "idle_notification",
+      "空闲通知",
+      "成员完成标志"
+    ]
+  },
+  {
+    "title": "shutdown_approved 成员同意退出",
+    "tags": [
+      "team-rule",
+      "shutdown",
+      "fact"
+    ],
+    "summary": "成员收到 shutdown_request 后 LLM 推理决定是否退出，同意则回 shutdown_approved 触发实际关停。",
+    "content": "shutdown 两段式协议的第二段：`{\"type\":\"shutdown_approved\",\"requestId\":\"shutdown-{ts}@{agent}\",\"from\":\"xxx\",\"paneId\":\"in-process\",\"backendType\":\"in-process\"}`。系统收到后才真正 removeAgent、发 teammate_terminated 通知。成员可以选择不同意（shutdown_rejected），这时任务继续。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 teammate-message 日志",
+    "related": [
+      "两段式 shutdown 协议",
+      "shutdown_request 是礼貌请求退出",
+      "idle_notification 空闲通知"
+    ],
+    "search_queries": [
+      "shutdown_approved",
+      "成员同意退出",
+      "teammate_terminated"
+    ]
+  },
+  {
+    "title": "消息回环现象",
+    "tags": [
+      "team-rule",
+      "mailbox",
+      "pitfall"
+    ],
+    "summary": "成员可能收到 assignedBy 是自己的任务重放消息，是消息总线回环，不是新指令，不要重做。",
+    "content": "实战中遇到的现象（mnemo-phase1 storage-dev、product-analyst）：成员收到 task_assignment，但 assignedBy 是自己——是消息总线回环，不是新指令。处理方法：用 TaskGet 确认当前任务 status=completed 就直接回复 \"无需重做\"，等待 lead 指示下一步，不要重复执行。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 storage-dev 和 product-analyst 汇报",
+    "related": [
+      "mailbox 路径约定",
+      "pendingMessages 排队机制"
+    ],
+    "search_queries": [
+      "消息回环",
+      "重复 task_assignment",
+      "重放消息"
+    ]
+  },
+  {
+    "title": "mnemo-phase1-final 开发团队分工",
+    "tags": [
+      "team-rule",
+      "mnemo",
+      "project-team"
+    ],
+    "summary": "mnemo Phase 1 按依赖链分工：骨架（lead 自己）→ storage-dev → mcp-dev + storage-dev 兼 CLI。",
+    "content": "用户明确要求任务 2、3、4 依赖任务 1（骨架），所以 lead 先自己做骨架，再派 storage-dev 做存储层（#3）、architect 做架构、mcp-dev 做 MCP Server（#4）、storage-dev 再做 CLI（#2）和服务层（#5）。按依赖链推进，不是一股脑并行。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "session e8c1e554",
+    "related": [
+      "任务颗粒度要拆细"
+    ],
+    "search_queries": [
+      "mnemo 团队分工",
+      "phase1 开发",
+      "依赖链排期"
+    ]
+  },
+  {
+    "title": "kb-research 调研团队 4 成员",
+    "tags": [
+      "team-rule",
+      "mnemo",
+      "project-team"
+    ],
+    "summary": "mnemo 立项期派了 4 成员并行调研：repo-hunter、code-reviewer、toolchain-scout、product-analyst。",
+    "content": "成员分工：repo-hunter 搜可复用开源项目（推荐 engram + zettelkasten-mcp）、code-reviewer 审 6 个 MCP 知识服务器代码（推荐 basic-memory 工程质量最高）、toolchain-scout 推荐 FastMCP + commander + better-sqlite3 + Ollama、product-analyst 反向推导 P0-P3 需求（确认 Agent-first 定位）。产物放 /Users/zhuqingyu/.claude/teams/kb-research/artifacts/。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "fact",
+    "source": "/Users/zhuqingyu/project/mnemo/.claude/memory/TEAM_NOTES.md + session e8c1e554",
+    "related": [
+      "fact-checker 交叉验证模式"
+    ],
+    "search_queries": [
+      "kb-research 团队",
+      "mnemo 调研分工",
+      "开源选型成员"
+    ]
+  },
+  {
+    "title": "fact-checker 交叉验证模式",
+    "tags": [
+      "team-rule",
+      "best-practice",
+      "validation"
+    ],
+    "summary": "派 fact-checker 独立验证其他成员的结论（GitHub API 实测等），发现夸大和错误，如 basic-memory 实际是 AGPL 不是 MIT。",
+    "content": "实战模式：派一个 fact-checker 独立验证其他成员的结论。case：code-reviewer 报告 basic-memory 是 MIT License → fact-checker 用 GitHub API 实测发现实际是 AGPL-3.0-or-later，改变了技术选型决策。交叉验证发现 1 条夸大 + 4 条部分准确。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "session e8c1e554 fact-checker 汇报",
+    "related": [
+      "peer_pair 同伴复核",
+      "kb-research 调研团队 4 成员"
+    ],
+    "search_queries": [
+      "fact-checker",
+      "交叉验证",
+      "独立核实"
+    ]
+  },
+  {
+    "title": "mnemo-data-extract 12 类别并行提取",
+    "tags": [
+      "team-rule",
+      "mnemo",
+      "project-team"
+    ],
+    "summary": "mnemo 测试数据提取按 12 个类别并行派 12 成员，每人负责一个类别，固定输出路径。",
+    "content": "团队 mnemo-data-extract 的工作模式：按知识类别划分（1 用户偏好 / 2 代码红线 / 3 架构 / 4 风险 / 5 团队规则 / 6 技术调研 / 7 状态快照 / 8 代码审阅 / 9 环境 / 10 测试 case / 11 API 规范 / 12 命令），每个 Agent 负责一类，固定输出到 `tests/fixtures/knowledge/{category}.json` 和 `tests/fixtures/scenarios/{category}_scenarios.json`。统一 DATA_SCHEMA.md 格式。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "/Users/zhuqingyu/.claude/teams/mnemo-data-extract/config.json + session e8c1e554",
+    "related": [
+      "数据工程分两阶段",
+      "kb-research 调研团队 4 成员"
+    ],
+    "search_queries": [
+      "mnemo-data-extract",
+      "12 类别分工",
+      "数据提取团队"
+    ]
+  },
+  {
+    "title": "数据工程分两阶段",
+    "tags": [
+      "team-rule",
+      "best-practice",
+      "workflow"
+    ],
+    "summary": "大型数据工程先让\"总编辑\"做分类框架（阶段一），再按类别并行派 10-15 个 Agent（阶段二）。",
+    "content": "mnemo 数据提取采用的模式：阶段一是总编辑从聊天记录快扫产出分类目录（N 个类别、样本、数据量估算、搜索场景）；阶段二按类别并行派 Agent，每个负责一类，输出 title/tags/summary/content/scope 结构化知识，附带搜索测试场景。避免一个 Agent 面面俱到。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "session e8c1e554",
+    "related": [
+      "mnemo-data-extract 12 类别并行提取",
+      "任务颗粒度要拆细"
+    ],
+    "search_queries": [
+      "数据工程流程",
+      "分类框架",
+      "总编辑模式"
+    ]
+  },
+  {
+    "title": "leader 终极检验标准",
+    "tags": [
+      "team-rule",
+      "mnemo",
+      "product-goal"
+    ],
+    "summary": "mnemo 的终极检验不是 pytest 通过，而是新 Agent 能通过 mnemo 查询立即变成\"老人\"。",
+    "content": "用户定义的验收标准：一个全新 Claude 实例 spawn 到项目目录，它从没见过这个项目和用户，应该通过几次 mnemo 查询就知道：用户是谁、雷区、项目坑、项目黑话（mteam/mnemo/Phase 1）、好用技巧（TeamCreate、两路交叉验证、中文搜索先用英文兜底）、架构决策和为什么。所以每步开发评估是模拟这个场景，不是跑 pytest。",
+    "scope": "project",
+    "project_name": "mnemo",
+    "claim_type": "decision",
+    "source": "session e8c1e554",
+    "related": [
+      "mnemo-data-extract 12 类别并行提取",
+      "数据工程分两阶段"
+    ],
+    "search_queries": [
+      "mnemo 验收标准",
+      "新 Agent 融入",
+      "老人标准"
+    ]
+  },
+  {
+    "title": "chat-salon 四角色沙龙",
+    "tags": [
+      "team-rule",
+      "team-example"
+    ],
+    "summary": "chat-salon 示例团队 4 角色：leader 主持、philosopher 深度、comedian 幽默、critic 犀利。",
+    "content": "示例团队 chat-salon 的角色配置：team-lead 主持话题、philosopher（yellow）深度哲学思考、comedian（blue）幽默活跃气氛、critic（green）犀利反对。每个成员有明确 persona prompt，spawn 后先向 leader 打招呼说已就位。展示角色制衡团队的搭建方式。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "/Users/zhuqingyu/.claude/teams/chat-salon/config.json",
+    "related": [
+      "成员颜色区分",
+      "team config.json 字段"
+    ],
+    "search_queries": [
+      "chat-salon",
+      "四角色团队",
+      "角色制衡示例"
+    ]
+  },
+  {
+    "title": "咱们团队唤醒固定 11 人",
+    "tags": [
+      "team-rule",
+      "workspace"
+    ],
+    "summary": "在 workspace /Users/zhuqingyu/project/ 下说\"咱们团队\"即可唤醒固定 11 人团队。",
+    "content": "project workspace 的团队快捷规则：说\"咱们团队\"唤醒固定 11 人团队。完整说明在 ~/.claude/CLAUDE.md 和 ~/.claude/memory/TEAM_ROSTER.md（TEAM_ROSTER.md 已迁移到 MCP team-hub，通过工具查询）。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "/Users/zhuqingyu/project/CLAUDE.md",
+    "related": [
+      "team-hub 是团队记忆持久化系统"
+    ],
+    "search_queries": [
+      "咱们团队",
+      "11 人团队",
+      "团队唤醒"
+    ]
+  },
+  {
+    "title": "teammate-message 格式",
+    "tags": [
+      "team-rule",
+      "send-message",
+      "fact"
+    ],
+    "summary": "SendMessage 到 leader 的消息在 lead 会话呈现为 <teammate-message teammate_id=\"...\" color=\"...\" summary=\"...\">。",
+    "content": "消息呈现格式：`<teammate-message teammate_id=\"xxx\" color=\"blue\" summary=\"一句话摘要\">正文</teammate-message>`。summary 字段对 leader 很重要——让 leader 不读全文就能判断消息重要性。成员发消息时应主动提供 summary。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 消息日志",
+    "related": [
+      "SendMessage 用 to 参数",
+      "成员颜色区分"
+    ],
+    "search_queries": [
+      "teammate-message 格式",
+      "消息呈现",
+      "summary 字段"
+    ]
+  },
+  {
+    "title": "role-audit 防伪装多 Agent",
+    "tags": [
+      "team-rule",
+      "skill",
+      "anti-pattern"
+    ],
+    "summary": "skill role-audit 用于记录本次实际调用了哪些角色，谁提异议，谁确认通过，防止伪装多 Agent。",
+    "content": "用户提供的 skill `role-audit`：记录本次任务实际调用了哪些角色、谁提出异议、谁确认通过。配合 [[禁止主 Agent 角色扮演多角色]] 使用——强行把角色调用事实化，让主 Agent 无法偷偷自扮多角色。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "skill 列表",
+    "related": [
+      "禁止主 Agent 角色扮演多角色",
+      "主 Agent 纯监督调度"
+    ],
+    "search_queries": [
+      "role-audit",
+      "防伪装",
+      "角色审计"
+    ]
+  },
+  {
+    "title": "成员任务结束流程",
+    "tags": [
+      "team-rule",
+      "team-hub",
+      "procedure"
+    ],
+    "summary": "成员完成任务后先 save_memory → submit_experience（可选）→ deactivate，然后 idle_notification 给 leader。",
+    "content": "完整收尾流程：1) save_memory(member=...) 保存经验 2) 若团队级经验 submit_experience(scope=\"team\") 3) deactivate(member=...) 释放锁 4) 自动 idle_notification 通知 leader available。漏任一步 leader 无法判断成员状态。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "~/.claude/agents/team-member.md + session e8c1e554",
+    "related": [
+      "save_memory 前不能 deactivate",
+      "submit_experience 共享团队经验",
+      "idle_notification 空闲通知"
+    ],
+    "search_queries": [
+      "成员收尾",
+      "任务结束流程",
+      "deactivate 顺序"
+    ]
+  },
+  {
+    "title": "用 Task 系统管理团队工作",
+    "tags": [
+      "team-rule",
+      "task-system",
+      "procedure"
+    ],
+    "summary": "TeamCreate 建团队后用 TaskCreate/TaskList/TaskUpdate/TaskGet 管理工作，每个任务有 id 和 status。",
+    "content": "团队工作通过 Task 工具管理：TaskCreate 创建任务、TaskList 列所有任务、TaskUpdate 更新状态（pending/in_progress/completed）、TaskGet 查单个任务详情。任务有 id（如 #3、#5），任务分派给成员时带 task id，成员完成用 TaskUpdate 标 completed。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "procedure",
+    "source": "session e8c1e554 + USER_PREFERENCES.md",
+    "related": [
+      "多 Agent 协作必须使用 TeamCreate",
+      "Task 没有 priority 字段"
+    ],
+    "search_queries": [
+      "Task 系统",
+      "任务管理",
+      "TaskCreate 用法"
+    ]
+  },
+  {
+    "title": "任务依赖链显式声明",
+    "tags": [
+      "team-rule",
+      "task-design",
+      "best-practice"
+    ],
+    "summary": "有依赖的任务要显式画依赖链，依赖项先串行，完成后独立任务再并行。",
+    "content": "mnemo Phase 1 的做法：\"#1 项目骨架 → #3 存储层 → #5 服务层 → #4 MCP Server / #2 CLI\"。骨架 lead 自己做，存储层和服务层串行，MCP Server 和 CLI 无依赖可并行。画出依赖链让并行不再盲目。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "session e8c1e554",
+    "related": [
+      "mnemo-phase1-final 开发团队分工",
+      "任务颗粒度要拆细"
+    ],
+    "search_queries": [
+      "任务依赖",
+      "依赖链",
+      "并行规划"
+    ]
+  },
+  {
+    "title": "成员汇报带文件绝对路径",
+    "tags": [
+      "team-rule",
+      "communication",
+      "delivery"
+    ],
+    "summary": "成员汇报交付物必须用绝对路径，便于 leader 和用户直接跳转。",
+    "content": "实战规范（mnemo-phase1 storage-dev/mcp-dev 的汇报都遵循）：交付文件列表全部用绝对路径（`/Users/zhuqingyu/project/mnemo/src/...`），不用相对路径。附加测试结果（N/N 通过）、端到端验证证据、ruff 等工具状态。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "decision",
+    "source": "session e8c1e554 成员汇报格式",
+    "related": [
+      "teammate-message 格式"
+    ],
+    "search_queries": [
+      "成员汇报格式",
+      "绝对路径",
+      "交付规范"
+    ]
+  },
+  {
+    "title": "shutdown 流程三步",
+    "tags": [
+      "team-rule",
+      "shutdown",
+      "fact"
+    ],
+    "summary": "成员收到 shutdown → teammate_terminated → shutdown_approved，三条消息依次出现表示完整关停。",
+    "content": "实战日志顺序：1) `idle_notification` 成员空闲 → 2) `<teammate-message teammate_id=\"system\">{\"type\":\"teammate_terminated\",\"message\":\"xxx has shut down.\"}</teammate-message>` → 3) `shutdown_approved` 带 requestId。三条齐了才算干净关停。",
+    "scope": "global",
+    "project_name": null,
+    "claim_type": "fact",
+    "source": "session e8c1e554 mcp-dev/storage-dev/architect-b 关停日志",
+    "related": [
+      "两段式 shutdown 协议",
+      "shutdown_approved 成员同意退出"
+    ],
+    "search_queries": [
+      "teammate_terminated",
+      "关停日志",
+      "shutdown 三步"
+    ]
+  }
+]
