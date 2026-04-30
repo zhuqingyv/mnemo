@@ -566,6 +566,20 @@ def serve(
     )
 
 
+@app.command("setup")
+def setup(
+    port: int = typer.Option(8787, "--port", "-p", help="mnemo server port."),
+    skip_prompt: bool = typer.Option(
+        False, "--skip-prompt", help="Skip system prompt injection."
+    ),
+) -> None:
+    """Detect AI clients and configure mnemo MCP server + system prompts."""
+    from mnemo.setup.command import setup_command
+
+    # Invoke the setup_command callback with the typer context
+    setup_command(port=port, skip_prompt=skip_prompt)
+
+
 @app.command("tag-search")
 def tag_search(
     tags_csv: str = typer.Argument(..., help="Comma-separated tags, intersection match."),
