@@ -46,7 +46,7 @@
       }
     });
     watch(() => state.knowledge.length, (n) => {
-      if (state.view === '2d' && n > 0 && !state.graph.built) {
+      if (state.view === '2d' && n > 0 && !state.graph.built && state._rawRelations && state._rawRelations.length > 0) {
         window.__viz.g2d.build.buildGraph();
       }
     });
@@ -55,6 +55,10 @@
       const { probeHealth, loadStats, loadKnowledge, loadRelations } = window.__viz.loader;
       await probeHealth();
       await Promise.all([loadStats(), loadKnowledge(), loadRelations()]);
+      // All data loaded — trigger graph build if in 2D view
+      if (state.view === '2d' && state.knowledge.length > 0 && !state.graph.built) {
+        window.__viz.g2d.build.buildGraph();
+      }
       window.__viz.polling.startPolling();
 
       const urlParams = new URLSearchParams(location.search);
