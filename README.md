@@ -160,6 +160,12 @@ The 2D graph makes the agent-maintained memory network visible: entries cluster 
   <img src="images/readme-graph.jpg" alt="mnemo 2D knowledge graph with live metrics" width="900">
 </p>
 
+The search interface provides hybrid full-text + semantic + graph search with real-time result ranking and maintenance task dispatch.
+
+<p align="center">
+  <img src="images/2-compressed.jpg" alt="mnemo search interface with hybrid results and maintenance tasks" width="900">
+</p>
+
 The detail panel keeps each memory inspectable. Status, scope, source, tags, feedback, lifecycle events, and related entries stay close to the content, so agents and humans can audit why a memory should still be trusted.
 
 <p align="center">
