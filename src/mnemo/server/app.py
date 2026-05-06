@@ -10,6 +10,7 @@ opt into the newer transport via config.
 from __future__ import annotations
 
 import os
+import sys
 from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
 
@@ -26,7 +27,29 @@ from mnemo.monitor.collector import configure as configure_monitor
 from mnemo.server.routes import router as api_router
 from mnemo.services.knowledge_service import KnowledgeService
 
-VIZ_DIR = Path(__file__).resolve().parent.parent.parent.parent / "docs" / "demo"
+
+def _resolve_viz_dir() -> Path:
+    """Locate the bundled viz directory across all run modes.
+
+    Resolution order:
+      1. PyInstaller onefile bundle: extracted under sys._MEIPASS/mnemo_viz/
+      2. Source / editable install:   <repo>/docs/demo/
+      3. Env override (MNEMO_VIZ_DIR) for debug or custom front-ends.
+    """
+    override = os.environ.get("MNEMO_VIZ_DIR")
+    if override:
+        return Path(override).expanduser().resolve()
+
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        bundled = Path(meipass) / "mnemo_viz"
+        if bundled.is_dir():
+            return bundled
+
+    return Path(__file__).resolve().parent.parent.parent.parent / "docs" / "demo"
+
+
+VIZ_DIR = _resolve_viz_dir()
 
 
 def create_app() -> FastAPI:
@@ -77,12 +100,16 @@ def create_app() -> FastAPI:
 
     if viz_enabled and VIZ_DIR.is_dir():
         viz_v2_dir = VIZ_DIR / "viz_v2"
+        viz_v1_file = VIZ_DIR / "viz_v1_live.html"
 
-        @app.get("/viz/v1")
-        async def viz_v1():
-            return FileResponse(VIZ_DIR / "viz_v1_live.html")
+        if viz_v1_file.is_file():
 
-        app.mount("/viz", StaticFiles(directory=str(viz_v2_dir), html=True), name="viz")
+            @app.get("/viz/v1")
+            async def viz_v1():
+                return FileResponse(viz_v1_file)
+
+        if viz_v2_dir.is_dir():
+            app.mount("/viz", StaticFiles(directory=str(viz_v2_dir), html=True), name="viz")
 
     return app
 

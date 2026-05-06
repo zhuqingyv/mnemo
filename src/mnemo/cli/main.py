@@ -23,6 +23,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from mnemo import __version__
 from mnemo.config import MnemoConfig, Scope
 from mnemo.db import get_session_factory, init_db
 from mnemo.services import feedback_service
@@ -36,6 +37,27 @@ app = typer.Typer(
 
 console = Console()
 err_console = Console(stderr=True)
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"mnemo {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def _root(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        help="Print mnemo version and exit.",
+        callback=_version_callback,
+        is_eager=True,
+    ),
+) -> None:
+    """mnemo — agent-first knowledge base (SQLite backed)."""
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -568,16 +590,46 @@ def serve(
 
 @app.command("setup")
 def setup(
-    port: int = typer.Option(8787, "--port", "-p", help="mnemo server port."),
+    port: int = typer.Option(8787, "--port", "-p", help="mnemo server port (HTTP mode only)."),
+    mode: str = typer.Option(
+        "stdio",
+        "--mode",
+        help="MCP transport: 'stdio' (default, zero background process) or 'http'.",
+    ),
     skip_prompt: bool = typer.Option(
         False, "--skip-prompt", help="Skip system prompt injection."
+    ),
+    no_project_prompts: bool = typer.Option(
+        False,
+        "--no-project-prompts",
+        help="Skip injecting .cursorrules / AGENTS.md into the current directory.",
+    ),
+    auto: bool = typer.Option(
+        True,
+        "--auto/--no-auto",
+        help="Auto-write to every detected client (default).",
+    ),
+    uninstall: bool = typer.Option(
+        False,
+        "--uninstall",
+        help="Remove mnemo entries (MCP config + prompt block) from every detected client.",
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Show what would change without writing files."
     ),
 ) -> None:
     """Detect AI clients and configure mnemo MCP server + system prompts."""
     from mnemo.setup.command import setup_command
 
-    # Invoke the setup_command callback with the typer context
-    setup_command(port=port, skip_prompt=skip_prompt)
+    setup_command(
+        port=port,
+        mode=mode,
+        skip_prompt=skip_prompt,
+        no_project_prompts=no_project_prompts,
+        auto=auto,
+        uninstall=uninstall,
+        dry_run=dry_run,
+    )
 
 
 @app.command("tag-search")

@@ -25,6 +25,7 @@ from mnemo.monitor.collector import configure as configure_monitor
 from mnemo.monitor.collector import monitor_tool, record_payload
 from mnemo.services import feedback_service
 from mnemo.services.knowledge_service import KnowledgeService
+from mnemo.setup.prompt_template import get_mcp_instructions
 
 
 logger = logging.getLogger(__name__)
@@ -85,40 +86,7 @@ def _validate_task_id(task_id: str | None) -> tuple[str | None, str]:
 # ============================================================================
 mcp: FastMCP = FastMCP(
     "mnemo",
-    instructions=(
-        "mnemo — shared knowledge base for your team.\n\n"
-        "search(query, scope?, project_name?, mode?, sort_by?, limit?)\n"
-        "  Search before starting any task or answering any question.\n\n"
-        "create_knowledge(title, summary, content, tags, claim_type, scope?, "
-        "project_name?, source?, related?)\n"
-        "  Before finishing any task, store new facts, decisions, procedures, "
-        "or hypotheses you discovered — record user requirements/preferences "
-        "as facts so future agents answer better.\n\n"
-        "get_knowledge(id_or_title)\n"
-        "  Fetch full content when search results need more detail.\n\n"
-        "update_knowledge(knowledge_id, title?, summary?, content?, tags?, "
-        "claim_type?)\n"
-        "  When existing knowledge is inaccurate or incomplete, update it. "
-        "Old version becomes superseded.\n\n"
-        "delete_knowledge(knowledge_id)\n"
-        "  Remove an entry that should never have existed.\n\n"
-        "feedback_knowledge(knowledge_id, signal, reason?, actor?)\n"
-        "  After finishing a task where you used search results, rate each "
-        "entry used: helpful | misleading | outdated.\n\n"
-        "archive_knowledge(knowledge_id)\n"
-        "  Hide outdated entries from search without deleting them.\n\n"
-        "unarchive_knowledge(knowledge_id)\n"
-        "  Restore an archived entry back to search.\n\n"
-        "get_related(id_or_title, depth?)\n"
-        "  Explore connections when you need context around a knowledge entry.\n\n"
-        "list_tags(scope?)\n"
-        "  Browse available tags to find relevant topic areas.\n\n"
-        "search_by_tag(tags, scope?)\n"
-        "  Find all entries matching specific tags.\n\n"
-        "FACT TYPES: fact | decision | procedure | hypothesis\n"
-        "SCOPES: global | project | session\n"
-        "SIGNALS: helpful | misleading | outdated"
-    ),
+    instructions=get_mcp_instructions(),
 )
 
 _service: KnowledgeService | None = None

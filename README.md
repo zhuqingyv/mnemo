@@ -53,61 +53,58 @@ It runs on one SQLite file, with no cloud service and no LLM token cost for stor
 
 ## Quick Start
 
-### Prerequisites
+mnemo ships as a single prebuilt binary — no Python, no pip, no npm.
 
-- Python 3.11+
-- (Optional) [Ollama](https://ollama.ai) with `qwen3-embedding:0.6b` for vector search
-
-### Install
+### macOS / Linux
 
 ```bash
-pip install m-nemo
+curl -fsSL https://github.com/zhuqingyv/mnemo/releases/latest/download/install.sh | sh
 ```
 
-Or install from source:
+### Windows (PowerShell)
 
-```bash
-git clone https://github.com/zhuqingyv/mnemo.git
-cd mnemo
-pip install -e .
+```powershell
+irm https://github.com/zhuqingyv/mnemo/releases/latest/download/install.ps1 | iex
 ```
 
-### Run as HTTP server
+The installer drops the binary into `~/.mnemo/bin` (POSIX) or
+`%LOCALAPPDATA%\mnemo\bin` (Windows), adds it to your PATH, and runs
+`mnemo setup --auto` so every detected AI client gets the mnemo MCP server
+and the agent system prompt configured automatically.
+
+Supported clients: **Claude Code**, **Claude Desktop**, **Cursor**, **Codex CLI**.
+
+After installation, restart your AI client. Verify:
 
 ```bash
+mnemo --version
+```
+
+### Hand the repo to your local agent
+
+If you want a coding agent to install mnemo for you, just clone this repo
+and tell it to follow [AGENTS.md](AGENTS.md) — it has the one-liner and the
+"do not pip install" rules baked in.
+
+### Re-run / uninstall
+
+```bash
+mnemo setup --auto       # idempotent, safe to run any time
+mnemo setup --dry-run    # preview what would change
+mnemo setup --uninstall  # remove every mnemo entry from every client
+```
+
+### Optional: HTTP transport for multi-client / visualization
+
+By default `mnemo setup` writes stdio MCP entries (clients spawn
+`mnemo mcp` directly, zero background process). To share one mnemo across
+multiple clients or to use the live visualization, switch to HTTP:
+
+```bash
+mnemo setup --mode http --port 8787
 mnemo serve --port 8787
+open http://127.0.0.1:8787/viz/
 ```
-
-### Connect to Claude Code
-
-Add to `~/.claude.json`:
-
-```json
-{
-  "mcpServers": {
-    "mnemo": {
-      "command": "mnemo-mcp"
-    }
-  }
-}
-```
-
-Or connect via HTTP (streamable-http transport):
-
-```json
-{
-  "mcpServers": {
-    "mnemo": {
-      "type": "http",
-      "url": "http://127.0.0.1:8787/mcp/http/mcp"
-    }
-  }
-}
-```
-
-### Connect to Cursor
-
-Add to `~/.cursor/mcp.json` using the same format as above.
 
 ## Usage
 
@@ -200,6 +197,12 @@ All default to `true` (except context-aware rank). Set any to `false` to disable
 
 ## Development
 
+End users do **not** install mnemo from source — see [Quick Start](#quick-start)
+for the binary path. The instructions below are for contributors.
+
+Prerequisites: Python 3.11+ and (optionally) [Ollama](https://ollama.ai)
+with `qwen3-embedding:0.6b` for vector search.
+
 ```bash
 git clone https://github.com/zhuqingyv/mnemo.git
 cd mnemo
@@ -212,6 +215,14 @@ Regression gate (must pass before merge):
 
 ```bash
 MNEMO_HYBRID=1 python scripts/phase3_regression_gate.py
+```
+
+Build a local binary:
+
+```bash
+pip install pyinstaller
+scripts/build.sh        # macOS / Linux
+# Windows: python -m PyInstaller mnemo.spec --noconfirm --clean
 ```
 
 ## Contributing
