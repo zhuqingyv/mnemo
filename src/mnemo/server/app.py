@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from mnemo import __version__
 from mnemo.config import MnemoConfig
 from mnemo.db import get_session_factory, init_db, reset_engine
 from mnemo.mcp.server import mcp, set_service
@@ -57,7 +58,7 @@ def create_app() -> FastAPI:
             finally:
                 await reset_engine()
 
-    app = FastAPI(title="mnemo", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="mnemo", version=__version__, lifespan=lifespan)
 
     app.add_middleware(
         CORSMiddleware,
@@ -72,7 +73,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok"}
+        return {"status": "ok", "version": __version__}
 
     if viz_enabled and VIZ_DIR.is_dir():
         viz_v2_dir = VIZ_DIR / "viz_v2"

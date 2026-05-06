@@ -16,7 +16,6 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -356,6 +355,48 @@ async def test_list_knowledge_returns_all(
     assert set(titles) == {"item-0", "item-1", "item-2"}
 
 
+async def test_list_relations_returns_newest_rows_first(
+    api_client: tuple[AsyncClient, KnowledgeService],
+) -> None:
+    """Viz uses a capped relation window; it must not get oldest edges first."""
+    client, service = api_client
+    from mnemo.models.knowledge import Knowledge, Relation
+
+    async with service._session_factory() as session:
+        rows = [
+            Knowledge(title=f"k{i}", summary="s", content="c", scope="global")
+            for i in range(4)
+        ]
+        session.add_all(rows)
+        await session.flush()
+        session.add_all(
+            [
+                Relation(
+                    source_id=rows[0].id,
+                    target_id=rows[1].id,
+                    relation_type="related",
+                ),
+                Relation(
+                    source_id=rows[1].id,
+                    target_id=rows[2].id,
+                    relation_type="related",
+                ),
+                Relation(
+                    source_id=rows[2].id,
+                    target_id=rows[3].id,
+                    relation_type="related",
+                ),
+            ]
+        )
+        await session.commit()
+
+    resp = await client.get("/api/v1/relations", params={"limit": 2})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["count"] == 2
+    assert [r["source_id"] for r in body["results"]] == [3, 2]
+
+
 async def test_stats_empty_db(
     api_client: tuple[AsyncClient, KnowledgeService],
 ) -> None:
@@ -580,7 +621,7 @@ async def test_events_recent_rejects_out_of_range_seconds(
 async def test_detail_returns_feedback_and_relations(
     api_client: tuple[AsyncClient, KnowledgeService],
 ) -> None:
-    client, svc = api_client
+    client, _ = api_client
     r1 = await client.post(
         "/api/v1/knowledge",
         json={
@@ -624,8 +665,8 @@ async def test_detail_404_for_missing(
 async def test_detail_includes_relation_peer_titles(
     api_client: tuple[AsyncClient, KnowledgeService],
 ) -> None:
-    client, svc = api_client
-    r1 = await client.post(
+    client, _ = api_client
+    await client.post(
         "/api/v1/knowledge",
         json={
             "title": "node A",
@@ -645,7 +686,6 @@ async def test_detail_includes_relation_peer_titles(
             "related": ["node A"],
         },
     )
-    kid_a = r1.json()["id"]
     kid_b = r2.json()["id"]
 
     resp = await client.get(f"/api/v1/knowledge/{kid_b}/detail")

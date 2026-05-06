@@ -46,7 +46,7 @@
       }
     });
     watch(() => state.knowledge.length, (n) => {
-      if (state.view === '2d' && n > 0 && !state.graph.built && state._rawRelations && state._rawRelations.length > 0) {
+      if (state.view === '2d' && n > 0 && !state.graph.built && Array.isArray(state._rawRelations)) {
         window.__viz.g2d.build.buildGraph();
       }
     });

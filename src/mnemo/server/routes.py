@@ -192,7 +192,12 @@ async def list_relations(
 
     service = _get_service(request)
     async with service._session_factory() as session:
-        stmt = select(Relation).limit(limit)
+        # The viz node list is ordered by recently updated knowledge. Once a
+        # database has more relations than this endpoint's cap, SQLite's
+        # natural order returns the oldest edges first, which often leaves the
+        # current node window with no matching links. Prefer recent relation
+        # rows so graph edges stay aligned with the default knowledge window.
+        stmt = select(Relation).order_by(Relation.id.desc()).limit(limit)
         rows = (await session.execute(stmt)).scalars().all()
         result = {
             "count": len(rows),

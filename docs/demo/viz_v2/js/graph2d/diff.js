@@ -136,16 +136,19 @@
       const rawItems = list.results || [];
       const items = rawItems.length > MAX_GRAPH_NODES ? rawItems.slice(0, MAX_GRAPH_NODES) : rawItems;
       let touched = 0;
+      let relationsChanged = false;
+      const nextRelations = rels.results || [];
 
       // 2D graph: incremental diff (only if 2D graph is built)
       if (g.built) {
         const { buildTargetEdgeMap } = window.__viz.g2d.build;
         const idSet = new Set(items.map(k => k.id));
-        const edgeMap = buildTargetEdgeMap(rels.results, idSet);
+        const edgeMap = buildTargetEdgeMap(nextRelations, idSet);
         const diff = computeDiff(items, edgeMap);
         touched =
           diff.addedNodes.length + diff.removedNodeIds.length +
           diff.changedNodes.length + diff.addedEdges.length + diff.removedEdgeKeys.length;
+        relationsChanged = diff.addedEdges.length > 0 || diff.removedEdgeKeys.length > 0;
         if (touched > 0) {
           applyDiff(diff);
         }
@@ -156,9 +159,9 @@
         if (!touched && items.length !== state.knowledge.length) touched = 1;
       }
 
-      if (touched > 0 || !g.built) {
+      if (touched > 0 || relationsChanged || !g.built) {
         state.knowledge = items;
-        state._rawRelations = rels.results || [];
+        state._rawRelations = nextRelations;
       }
       if (stats) state.stats = stats;
       // 3D: diff persistent nodes/links in place to preserve positions; re-read same-ref;

@@ -39,7 +39,9 @@
           'bg-gradient-to-r from-brand-blue via-brand-glow to-brand-purple ' +
           'bg-clip-text text-transparent'
         )('mnemo'),
-        span().class('text-text-3 text-[11px] font-mono')('v1.2'),
+        span().class('text-text-3 text-[11px] font-mono')(() =>
+          state.mnemoVersion ? 'v' + state.mnemoVersion : ''
+        ),
         span().class('text-text-3 text-[11px] select-none')('›'),
       ),
 

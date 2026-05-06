@@ -126,7 +126,11 @@
     if (typeof stopGraphLoop === 'function') stopGraphLoop();
     if (_3dMaps.G) return;  // already built (re-entry guard)
     _clearLoadError();
-    _ensure3DLibs().then(() => {
+    _ensure3DLibs().then(async () => {
+      if (state.view !== '3d' || _3dMaps.G) return;
+      if (!Array.isArray(state._rawRelations)) {
+        await window.__viz.loader.loadRelations();
+      }
       if (state.view !== '3d' || _3dMaps.G) return;
       const init3DGraph = window.__viz.g3d.initGraph;
       const { build3DGraphData } = window.__viz.g3d.data;

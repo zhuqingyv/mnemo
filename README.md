@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">mnemo</h1>
-<p align="center">Agent-first local knowledge base — zero infrastructure, infinite memory.</p>
+<p align="center">Agent-first local memory for MCP agents.</p>
 
 <p align="center">
   <a href="#features">Features</a> •
@@ -17,30 +17,39 @@
 <p align="center">
   <a href="https://www.python.org"><img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+"></a>
   <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/protocol-MCP-green" alt="Protocol: MCP"></a>
-  <img src="https://img.shields.io/badge/tests-passing-brightgreen" alt="tests: passing">
 </p>
 
 ---
 
 ## What is mnemo?
 
-Every time you start a new AI agent session, your agent forgets everything — the conventions, the decisions, the bugs you burned hours on. `CLAUDE.md` handles the first page of stable rules but can't hold anything that evolves. Vector memory services (mem0, Zep) store embeddings behind an opaque wall: you can't see what's stored, can't tell why a result ranked first, and can't correct a wrong entry without re-embedding everything.
+Every new agent session starts with a blank operational memory. It does not know the decisions from the last session, the local conventions, the broken approach that already cost you an afternoon, or the user's correction from yesterday.
 
-mnemo is a local knowledge base that your agent writes to, searches, and maintains autonomously. One SQLite file, no cloud, no LLM token costs. Knowledge ages naturally, feedback moves rankings visibly, and contradictions surface together instead of being silently resolved. It works with any MCP-compatible client — Claude Code, Cursor, or your own tooling.
+mnemo is a local memory layer built for agents as first-class users. Agents search it before work, write back what they learn, rate the knowledge they used, and receive small maintenance tasks during search. The MCP instructions and tool contracts are part of the product: they tell agents how to keep the knowledge base useful instead of treating memory as a passive storage API.
+
+It runs on one SQLite file, with no cloud service and no LLM token cost for storage. Knowledge can age, be corrected, be superseded, be archived, and surface contradictions instead of hiding them behind an opaque embedding result. It works with any MCP-compatible client, including Claude Code, Cursor, and custom tooling.
+
+## Why mnemo is different
+
+- **Agent-first by design**: the primary user is the agent, not a human clicking through a note app.
+- **MCP behavior is explicit**: the server ships instructions and tool descriptions that define when agents should search, write, update, archive, and give feedback.
+- **Search is also a maintenance surface**: search results can include a small optional task, such as archiving stale knowledge or cleaning up duplicates, so the knowledge base improves while agents do real work.
+- **Memory stays inspectable**: entries, relations, feedback, events, and lifecycle state live in local SQLite tables instead of a remote black box.
+- **Corrections are part of the loop**: feedback, write-gate checks, superseding, contradiction links, and archival are normal operations, not afterthoughts.
 
 ## Features
 
-- **MCP protocol** — works with Claude Code, Cursor, and any MCP client out of the box
-- **Hybrid search** — FTS5 full-text + sqlite-vec embeddings + knowledge graph, fused via Reciprocal Rank Fusion
-- **Knowledge lifecycle** — active → stale → superseded → archived; time decay sinks unused entries
-- **Auto-linking** — vector similarity + keyword edges + feedback-driven weight evolution
-- **Write gate** — near-duplicate detection before every write; suggests updating instead of creating redundancies
-- **Contradiction surfacing** — conflicting entries appear together with `contradicts_with` instead of silent resolution
-- **Health check system** — P1/P2 problem detection + search-time task dispatch
-- **Real-time visualization** — 2D Canvas + 3D WebGL force-directed knowledge graph
-- **Timeline API** — replay knowledge growth over time
-- **i18n** — English, 简体中文, 繁體中文
-- **Zero infrastructure** — single SQLite file, runs entirely locally
+- **MCP-native agent contract**: works with Claude Code, Cursor, and any MCP client, with agent-facing instructions built into the server.
+- **Hybrid search**: FTS5 full-text search + sqlite-vec semantic search + typed knowledge graph, fused via Reciprocal Rank Fusion.
+- **Search-time maintenance tasks**: P1/P2 health checks can dispatch one relevant cleanup task at the end of a search result.
+- **Knowledge lifecycle**: entries move through `active`, `stale`, `superseded`, and `archived`; unused knowledge decays instead of staying equally trusted forever.
+- **Feedback-aware ranking**: agents record `helpful`, `misleading`, or `outdated` after using knowledge, and that signal feeds future ranking.
+- **Write gate**: near-duplicate, weak-evidence, and potential contradiction checks run before writes so agents update existing knowledge instead of creating noise.
+- **Auto-linking**: vector similarity, keyword edges, wikilinks, manual links, and feedback-driven edge weights build a local knowledge graph over time.
+- **Contradiction surfacing**: conflicting entries are returned together with `contradicts_with` rather than silently choosing one answer.
+- **Local visualization**: list, 2D Canvas, and 3D WebGL views show entries, relations, and recent agent activity.
+- **Timeline API**: replay knowledge and agent activity over time.
+- **Zero infrastructure**: one local SQLite database, optional Ollama embeddings, no hosted service required.
 
 ## Quick Start
 
@@ -134,6 +143,8 @@ mnemo tags
 
 - **Claim types** — `fact` | `decision` | `procedure` | `hypothesis`
 - **Scopes** — `global` | `project` | `session`
+- **Agent workflow** — search first, use or inspect results, do the work, write back non-obvious knowledge, then give feedback on entries that affected the result
+- **Search dispatch** — search may append one optional maintenance task for the agent to handle when it matches the current context
 - **Feedback loop** — agents call `feedback_knowledge` with `helpful`, `misleading`, or `outdated` after using a result
 
 ## Visualization
@@ -144,9 +155,19 @@ mnemo serve --port 8787
 open http://127.0.0.1:8787/viz/
 ```
 
-The visualization provides a real-time force-directed graph of your knowledge base, showing connections between entries and highlighting recent agent activity.
+The visualization provides list, 2D graph, and 3D graph views of your knowledge base, showing entries, typed relations, feedback activity, and recent agent events.
 
-![viz](docs/screenshots/viz-list.png)
+The 2D graph makes the agent-maintained memory network visible: entries cluster through typed relations, feedback, and recent activity instead of appearing as a flat note list.
+
+<p align="center">
+  <img src="images/readme-graph.jpg" alt="mnemo 2D knowledge graph with live metrics" width="900">
+</p>
+
+The detail panel keeps each memory inspectable. Status, scope, source, tags, feedback, lifecycle events, and related entries stay close to the content, so agents and humans can audit why a memory should still be trusted.
+
+<p align="center">
+  <img src="images/readme-detail.jpg" alt="mnemo knowledge detail panel with metadata and related entries" width="900">
+</p>
 
 ## Architecture
 

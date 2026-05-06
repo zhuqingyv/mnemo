@@ -40,8 +40,9 @@
 
   async function probeHealth() {
     try {
-      await apiGet(HEALTH);
+      const data = await apiGet(HEALTH);
       state.serverOnline = true;
+      state.mnemoVersion = data.version || null;
     } catch (e) {
       state.serverOnline = false;
     }

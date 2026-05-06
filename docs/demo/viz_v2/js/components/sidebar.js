@@ -89,8 +89,10 @@
         })
       ),
 
-      // version
-      span().class('text-text-3 text-[9px] tracking-wider')('v2'),
+      // product version
+      span().class('text-text-3 text-[9px] tracking-wider')(() =>
+        state.mnemoVersion ? 'v' + state.mnemoVersion : ''
+      ),
     );
   }
 

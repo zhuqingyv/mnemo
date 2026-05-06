@@ -20,10 +20,11 @@
   const state = reactive({
     // 网络 / 整体
     serverOnline: false,
+    mnemoVersion: null,
     stats: null,
     knowledge: [],
     loaded: false,
-    _rawRelations: [],
+    _rawRelations: null,
 
     // 搜索
     searchQuery: '',

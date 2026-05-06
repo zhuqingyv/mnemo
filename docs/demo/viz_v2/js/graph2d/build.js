@@ -108,10 +108,15 @@
     const idSet = new Set(g.nodes.map(n => n.id));
     let edgeMap = new Map();
     try {
-      const r = state._rawRelations
-        ? { results: state._rawRelations }
-        : await apiGet(API + '/relations?limit=5000');
-      edgeMap = buildTargetEdgeMap(r.results, idSet);
+      let relationRows;
+      if (Array.isArray(state._rawRelations)) {
+        relationRows = state._rawRelations;
+      } else {
+        const r = await apiGet(API + '/relations?limit=5000');
+        relationRows = r.results || [];
+        state._rawRelations = relationRows;
+      }
+      edgeMap = buildTargetEdgeMap(relationRows, idSet);
     } catch (e) {
       if (loading) loading.textContent = 'edges load failed: ' + e.message;
     }
