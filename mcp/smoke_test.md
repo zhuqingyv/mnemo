@@ -4,23 +4,24 @@ Three layers. L1 + L2 run in the **current** session. L3 requires a **new** IDE 
 
 Rule: if any layer fails, do not report "installed". Go to Troubleshooting in `mcp/README.md`.
 
-Preconditions: you have installed mnemo from source (`git clone https://github.com/zhuqingyv/mnemo.git && cd mnemo && pip install -e .`), so that the `mnemo-mcp` entry point is on PATH.
+Preconditions: you installed mnemo from GitHub Releases using the installer in the root `README.md` or `AGENTS.md`.
 
 ---
 
 ## L1 · Binary runs
 
-Proves the package is installed, entry point resolves, native deps load.
+Proves the binary is installed, resolves on PATH, and native deps load.
 
 ```bash
-mnemo-mcp --version
+mnemo --version
+mnemo --help
 ```
 
-Expected: prints a version string (e.g. `mnemo-mcp 0.x.y`) and exits 0.
+Expected: both commands exit 0 and print version / help text.
 
 Failure modes:
-- `command not found: mnemo-mcp` → re-run `pip install -e .` from the repo root, or invoke the module form instead: `python -m mnemo.mcp.server --version`.
-- `No module named mnemo` → packaging bug, file an issue.
+- `command not found: mnemo` → open a new shell, restart the AI client, or re-run the release installer.
+- Non-zero exit → install failed; do not try to fix it with `pip install`. Open an issue or use the manual recovery path in `AGENTS.md`.
 
 ---
 
@@ -32,10 +33,10 @@ Proves the server speaks MCP over stdio (not just that the binary starts). This 
 
 ```bash
 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}' \
-  | mnemo-mcp 2>/tmp/mnemo-mcp.stderr
+  | mnemo mcp 2>/tmp/mnemo.stderr
 ```
 
-Expected: stdout contains a single JSON-RPC response with `"result"` and `"serverInfo":{"name":"mnemo",...}`. The server may not exit cleanly on EOF — that is fine, only the response matters. Inspect `/tmp/mnemo-mcp.stderr` if nothing shows up.
+Expected: stdout contains a single JSON-RPC response with `"result"` and `"serverInfo":{"name":"mnemo",...}`. The server may not exit cleanly on EOF — that is fine, only the response matters. Inspect `/tmp/mnemo.stderr` if nothing shows up.
 
 ### Option B — fastmcp client (if available)
 
@@ -45,7 +46,7 @@ import asyncio
 from fastmcp import Client
 
 async def main():
-    async with Client(command="mnemo-mcp") as c:
+    async with Client(command="mnemo", args=["mcp"]) as c:
         tools = await c.list_tools()
         assert len(tools) == 11, f"expected 11 tools, got {len(tools)}"
         print("OK:", sorted(t.name for t in tools))
@@ -67,7 +68,7 @@ Failure modes:
 Proves the end user's client (Claude Code / Cursor / Claude Desktop) picked up the config and mounted the server. MCP is **not** hot-reloaded.
 
 Preconditions:
-- Config added in L0.
+- Config written by `mnemo setup --auto`.
 - User has restarted the IDE / opened a new agent session.
 
 Verification (in the new session):

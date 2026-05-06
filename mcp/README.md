@@ -1,56 +1,79 @@
 # mnemo MCP Server
 
-Local knowledge base for AI agents. Zero cloud, one SQLite file.
+Local memory for AI agents today. Trainable local model memory tomorrow.
+
+mnemo is distributed to end users **only as prebuilt binaries from GitHub Releases**. There is no PyPI package, no `pipx` package, and no npm package.
+
+For normal installation, use the root [README.md](../README.md) or the agent-facing [AGENTS.md](../AGENTS.md).
 
 ## Quick Install
 
-### 1. Install from source
+### macOS / Linux
+
 ```bash
-git clone https://github.com/zhuqingyv/mnemo.git
-cd mnemo
-pip install -e .
+curl -fsSL https://github.com/zhuqingyv/mnemo/releases/latest/download/install.sh | sh
 ```
 
-### 2. Add to your MCP client
+### Windows PowerShell
 
-Config file locations:
-- Claude Code: `~/.claude.json`
-- Cursor: `~/.cursor/mcp.json`
-- Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
+```powershell
+irm https://github.com/zhuqingyv/mnemo/releases/latest/download/install.ps1 | iex
+```
 
-Using the installed entry point (simplest):
+The installer downloads the matching binary, verifies SHA256, installs `mnemo`, and runs:
+
+```bash
+mnemo setup --auto
+```
+
+That command writes the MCP config and agent prompt into every detected supported client.
+
+Supported clients:
+
+- Claude Code
+- Claude Desktop
+- Cursor
+- Codex CLI
+
+After installation, **restart your IDE / AI client**. MCP config is not hot-reloaded.
+
+## Default MCP mode
+
+By default, `mnemo setup --auto` writes a stdio MCP entry. Clients spawn `mnemo mcp` directly, so no background server is required.
+
+The generated config looks like:
+
 ```json
 {
   "mcpServers": {
     "mnemo": {
-      "command": "mnemo-mcp"
+      "command": "/absolute/path/to/mnemo",
+      "args": ["mcp"]
     }
   }
 }
 ```
 
-Or run as a module against a specific checkout (recommended for development):
-```json
-{
-  "mcpServers": {
-    "mnemo": {
-      "command": "/ABS/PATH/mnemo/.venv/bin/python",
-      "args": ["-m", "mnemo.mcp.server"],
-      "cwd": "/ABS/PATH/mnemo"
-    }
-  }
-}
-```
+Do not hand-edit client config files unless you are intentionally debugging a client-specific issue. Prefer `mnemo setup --auto`, `mnemo setup --dry-run`, and `mnemo setup --uninstall`.
 
-More templates: see `mcp/config.examples.json`.
+## HTTP mode
+
+Use HTTP mode when multiple clients need to share one mnemo backend, or when you want the live visualization page:
+
+```bash
+mnemo setup --mode http --port 8787
+mnemo serve --port 8787
+open http://127.0.0.1:8787/viz/
+```
 
 ## Verify Installation
-```bash
-mnemo-mcp --version
-```
-Full smoke test (binary + MCP handshake): see `mcp/smoke_test.md`.
 
-After verifying, **restart your IDE / open a new session** — MCP config is not hot-reloaded.
+```bash
+mnemo --version
+mnemo --help
+```
+
+Full smoke test: see [mcp/smoke_test.md](smoke_test.md).
 
 ## Available Tools (11)
 - `search` — hybrid full-text + vector search across stored knowledge.
@@ -66,7 +89,8 @@ After verifying, **restart your IDE / open a new session** — MCP config is not
 - `feedback_knowledge` — record `helpful` / `misleading` / `outdated` on a used entry.
 
 ## Troubleshooting
-- Python 3.11+ required.
-- If `mnemo-mcp` not found on PATH: reinstall with `pip install -e .` from the repo root, or use the module form (`python -m mnemo.mcp.server` with `cwd` pointing at the checkout).
-- After any config change: restart the IDE / open a new session.
-- Connection silently fails: check `~/.claude/logs/` or run `claude mcp list`.
+- If `mnemo` is not found after install, open a new shell or restart the AI client so PATH changes apply.
+- If the MCP server is missing, run `mnemo setup --dry-run`, then `mnemo setup --auto`.
+- After any config change, restart the IDE / open a new agent session.
+- Connection silently fails: check the client MCP logs, for example `~/.claude/logs/` for Claude Code.
+- Do not try to fix end-user installs with `pip install`, `pipx`, `uvx`, `brew`, or `npm`. They are not supported install paths.

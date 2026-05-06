@@ -3,57 +3,108 @@
 </p>
 
 <h1 align="center">mnemo</h1>
-<p align="center">Agent-first local memory for MCP agents.</p>
+<p align="center"><strong>Memory should not live in prompts forever.</strong></p>
+<p align="center">Let agents evolve from retrieving memory to remembering by themselves.</p>
 
 <p align="center">
+  <a href="#why-mnemo">Why</a> •
+  <a href="#what-is-mnemo">What</a> •
   <a href="#features">Features</a> •
   <a href="#quick-start">Quick Start</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#visualization">Visualization</a> •
-  <a href="#contributing">Contributing</a> •
+  <a href="#watch-your-agents-brain-form">Visualization</a> •
+  <a href="#the-endgame-memory-without-tool-calls">Endgame</a> •
   <a href="README.zh.md">中文</a>
 </p>
 
 <p align="center">
-  <a href="https://www.python.org"><img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+"></a>
   <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/protocol-MCP-green" alt="Protocol: MCP"></a>
+  <img src="https://img.shields.io/badge/local--first-SQLite-blue" alt="Local-first SQLite">
+  <img src="https://img.shields.io/badge/install-prebuilt_binary-purple" alt="Prebuilt binary">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License">
 </p>
 
 ---
 
+## Why mnemo
+
+Every new agent session wakes up almost blank.
+
+It does not remember what you corrected last time, what this project refuses to do, which workaround already failed, or which path already cost you an afternoon.
+
+Most memory tools answer with: store it, search it later.
+
+That helps, but it is not enough.
+
+Real memory should not need to be stuffed into prompts forever. It should not cost another tool call every time. An agent that truly evolves should turn repeated project rules, user preferences, tool habits, failure lessons, and successful workflows into long-term behavior.
+
+That is what mnemo is for:
+
+```text
+Not to make agents call memory tools forever.
+But to help agents evolve memory from experience.
+```
+
 ## What is mnemo?
 
-Every new agent session starts with a blank operational memory. It does not know the decisions from the last session, the local conventions, the broken approach that already cost you an afternoon, or the user's correction from yesterday.
+mnemo is an agent-first local memory system.
 
-mnemo is a local memory layer built for agents as first-class users. Agents search it before work, write back what they learn, rate the knowledge they used, and receive small maintenance tasks during search. The MCP instructions and tool contracts are part of the product: they tell agents how to keep the knowledge base useful instead of treating memory as a passive storage API.
+Today, it gives agents a local hippocampus through MCP:
 
-It runs on one SQLite file, with no cloud service and no LLM token cost for storage. Knowledge can age, be corrected, be superseded, be archived, and surface contradictions instead of hiding them behind an opaque embedding result. It works with any MCP-compatible client, including Claude Code, Cursor, and custom tooling.
+- **Searchable**: hybrid full-text, semantic, and graph search.
+- **Feedback-aware**: agents can mark used knowledge as helpful, misleading, or outdated.
+- **Correctable**: stale, contradictory, duplicate, and weak memories do not pollute results forever.
+- **Observable**: knowledge, relations, feedback, lifecycle state, and agent activity stay visible locally.
+- **Installable**: shipped as prebuilt binaries; no PyPI, no npm, no source install for end users.
+
+Tomorrow, mnemo will distill stable, valuable, repeatedly validated memories into training samples and train local LoRA / Adapter layers during idle time.
+
+In short:
+
+```text
+Today: MCP lets agents retrieve memory.
+Tomorrow: LoRA lets the model remember.
+Endgame: agents evolve through every experience.
+```
 
 ## Why mnemo is different
 
-- **Agent-first by design**: the primary user is the agent, not a human clicking through a note app.
-- **MCP behavior is explicit**: the server ships instructions and tool descriptions that define when agents should search, write, update, archive, and give feedback.
-- **Search is also a maintenance surface**: search results can include a small optional task, such as archiving stale knowledge or cleaning up duplicates, so the knowledge base improves while agents do real work.
-- **Memory stays inspectable**: entries, relations, feedback, events, and lifecycle state live in local SQLite tables instead of a remote black box.
-- **Corrections are part of the loop**: feedback, write-gate checks, superseding, contradiction links, and archival are normal operations, not afterthoughts.
+- **Memory is a lifecycle, not a note**
+  - Memories are created, used, rated, corrected, superseded, and archived instead of piling up forever.
+
+- **Agents are first-class users**
+  - mnemo is not just a human-facing knowledge base. It ships agent-facing contracts that tell agents when to search, write, update, archive, and give feedback.
+
+- **Search is also maintenance**
+  - Search can return a small cleanup task, so the memory base improves while agents do real work.
+
+- **Correction is not an afterthought**
+  - `feedback`, `write gate`, `supersede`, `contradiction`, and `archive` are normal operations.
+
+- **Memory can be trained**
+  - The endgame is not to keep memories in context forever, but to turn high-quality experience into local model behavior.
+
+- **Agents can keep evolving**
+  - Every correction, successful task, and tool habit can become raw material for the next behavior upgrade.
 
 ## Features
 
-- **MCP-native agent contract**: works with Claude Code, Cursor, and any MCP client, with agent-facing instructions built into the server.
+- **MCP-native agent contract**: works with Claude Code, Claude Desktop, Cursor, Codex CLI, and any MCP client.
 - **Hybrid search**: FTS5 full-text search + sqlite-vec semantic search + typed knowledge graph, fused via Reciprocal Rank Fusion.
-- **Search-time maintenance tasks**: P1/P2 health checks can dispatch one relevant cleanup task at the end of a search result.
-- **Knowledge lifecycle**: entries move through `active`, `stale`, `superseded`, and `archived`; unused knowledge decays instead of staying equally trusted forever.
-- **Feedback-aware ranking**: agents record `helpful`, `misleading`, or `outdated` after using knowledge, and that signal feeds future ranking.
-- **Write gate**: near-duplicate, weak-evidence, and potential contradiction checks run before writes so agents update existing knowledge instead of creating noise.
-- **Auto-linking**: vector similarity, keyword edges, wikilinks, manual links, and feedback-driven edge weights build a local knowledge graph over time.
-- **Contradiction surfacing**: conflicting entries are returned together with `contradicts_with` rather than silently choosing one answer.
+- **Search-time maintenance tasks**: search results can include one relevant cleanup task, such as archiving stale knowledge or cleaning duplicates.
+- **Knowledge lifecycle**: entries move through `active`, `stale`, `superseded`, and `archived`.
+- **Feedback-aware ranking**: agents record `helpful`, `misleading`, or `outdated` after using knowledge, and that signal feeds future trust.
+- **Write gate**: near-duplicate, weak-evidence, and potential contradiction checks run before writes.
+- **Auto-linking**: vector similarity, keywords, wikilinks, manual links, and feedback-driven weights build a local knowledge graph over time.
+- **Contradiction surfacing**: conflicting entries are returned together with `contradicts_with` instead of being hidden behind an embedding result.
 - **Local visualization**: list, 2D Canvas, and 3D WebGL views show entries, relations, and recent agent activity.
 - **Timeline API**: replay knowledge and agent activity over time.
 - **Zero infrastructure**: one local SQLite database, optional Ollama embeddings, no hosted service required.
 
 ## Quick Start
 
-mnemo ships as a single prebuilt binary — no Python, no pip, no npm.
+mnemo ships only as prebuilt binaries from GitHub Releases.
+
+**End users do not need Python, pip, npm, or a source checkout.**
 
 ### macOS / Linux
 
@@ -78,6 +129,7 @@ After installation, restart your AI client. Verify:
 
 ```bash
 mnemo --version
+mnemo --help
 ```
 
 ### Hand the repo to your local agent
@@ -108,7 +160,7 @@ open http://127.0.0.1:8787/viz/
 
 ## Usage
 
-### MCP Tools (11)
+mnemo provides 11 MCP tools:
 
 | Tool | Description |
 |------|-------------|
@@ -124,7 +176,7 @@ open http://127.0.0.1:8787/viz/
 | `list_tags` | List all tags, optionally filtered by scope |
 | `search_by_tag` | Find entries matching all given tags |
 
-### CLI
+The CLI is also available:
 
 ```bash
 mnemo search "websocket heartbeat"
@@ -136,7 +188,7 @@ mnemo get 42
 mnemo tags
 ```
 
-### Core Concepts
+Core concepts:
 
 - **Claim types** — `fact` | `decision` | `procedure` | `hypothesis`
 - **Scopes** — `global` | `project` | `session`
@@ -144,37 +196,132 @@ mnemo tags
 - **Search dispatch** — search may append one optional maintenance task for the agent to handle when it matches the current context
 - **Feedback loop** — agents call `feedback_knowledge` with `helpful`, `misleading`, or `outdated` after using a result
 
-## Visualization
+## Watch your agent's brain form
+
+mnemo does not just store memory in a database. It makes memory visible before it becomes internalized.
+
+You can watch agent experience cluster into a graph, see search blend full-text, semantic, and relational signals, and inspect why each memory should still be trusted.
 
 ```bash
-# Start server then open in browser
 mnemo serve --port 8787
 open http://127.0.0.1:8787/viz/
 ```
 
-The visualization provides list, 2D graph, and 3D graph views of your knowledge base, showing entries, typed relations, feedback activity, and recent agent events.
+### Memory graph: experience grows connections
 
-The 2D graph makes the agent-maintained memory network visible: entries cluster through typed relations, feedback, and recent activity instead of appearing as a flat note list.
+The 2D graph shows the memory network agents maintain: entries cluster through typed relations, feedback, and recent activity instead of becoming a flat note list.
 
 <p align="center">
-  <img src="images/readme-graph.jpg" alt="mnemo 2D knowledge graph with live metrics" width="900">
+  <img src="images/1-compressed.jpg" alt="mnemo large-scale 2D memory graph with live metrics" width="900">
 </p>
 
-The search interface provides hybrid full-text + semantic + graph search with real-time result ranking and maintenance task dispatch.
+### Search interface: not notes, memory activation
+
+The search interface combines full-text, semantic, and graph signals with real-time ranking and maintenance task dispatch. Agents do not just get answers; they can improve the memory base while working.
 
 <p align="center">
   <img src="images/2-compressed.jpg" alt="mnemo search interface with hybrid results and maintenance tasks" width="900">
 </p>
 
+### Detail panel: every memory has a trust file
+
 The detail panel keeps each memory inspectable. Status, scope, source, tags, feedback, lifecycle events, and related entries stay close to the content, so agents and humans can audit why a memory should still be trusted.
 
 <p align="center">
-  <img src="images/readme-detail.jpg" alt="mnemo knowledge detail panel with metadata and related entries" width="900">
+  <img src="images/3-compressed.jpg" alt="mnemo memory detail panel with metadata and related entries" width="900">
 </p>
+
+### 3D graph: memory grows from a plane into space
+
+The 3D view turns the memory network into a spatial structure you can rotate, explore, and inspect by cluster. It shows which experiences have formed a stable core and which memories are still waiting for stronger evidence.
+
+<p align="center">
+  <img src="images/4-compressed.jpg" alt="mnemo 3D memory graph with spatial clusters" width="900">
+</p>
+
+mnemo makes memory visible, then internalizes it, then helps agents evolve.
+
+First, you watch the graph grow. Then, you watch agents use it. Eventually, the best parts are distilled into the model itself and become the next smarter reaction.
+
+## The endgame: memory without tool calls
+
+MCP memory is the first layer.
+
+It gives agents a local hippocampus they can search, update, and correct. But retrieval is not the final form of memory.
+
+mnemo's goal is to turn repeated experience into model behavior.
+
+When an agent keeps seeing the same project rule, user preference, tool pattern, or correction, mnemo should not keep returning it as another search result forever.
+
+mnemo should distill it, evaluate it, version it, and train it into a local LoRA / Adapter.
+
+Eventually, your agent should not call a tool to remember how you work.
+
+It should just know.
+
+This is the evolution path mnemo is aiming for:
+
+```text
+External retrieval
+  ↓
+Local memory
+  ↓
+Rumination distillation
+  ↓
+Model internalization
+  ↓
+Agent behavior evolution
+```
+
+```text
+External experience
+  ↓
+Short-term memory
+  ↓
+Rumination distillation
+  ↓
+Training samples
+  ↓
+LoRA / Adapter
+  ↓
+Long-term behavior bias
+```
+
+The fuller pipeline:
+
+```text
+Event Log
+  ↓
+Working Memory
+  ↓
+Memory Candidate Pool
+  ↓
+Distiller
+  ↓
+Training Dataset Registry
+  ↓
+Rumination Job
+  ↓
+Eval Gate
+  ↓
+LoRA Registry
+  ↓
+Runtime Loader
+```
+
+This does not mean using LoRA to memorize every fact.
+
+Concrete docs, logs, numbers, and history still belong in RAG / MCP retrieval. LoRA is better for internalizing user preferences, behavior style, stable project rules, agent work habits, and repeated correction patterns.
+
+In one line:
+
+```text
+RAG remembers facts. mnemo trains habits.
+```
 
 ## Architecture
 
-```
+```text
 MCP client ──┐                         ┌── FTS5 (BM25)
              ├──▶ mnemo service ──┬──▶──┼── sqlite-vec (semantic)
 CLI ─────────┘                    │     └── relation graph (typed edges)
@@ -182,7 +329,13 @@ CLI ─────────┘                    │     └── relation
                           SQLite single file
 ```
 
-Six tables — `knowledge`, `relation`, `knowledge_meta`, `knowledge_event`, `knowledge_vec`, `knowledge_fts` — all in one `.db` file. No external services.
+The current system keeps core data in one local SQLite file. Knowledge, relations, feedback, events, lifecycle state, and vector indexes stay inspectable, portable, and backup-friendly.
+
+The long-term roadmap moves toward rumination-based memory internalization:
+
+```text
+mnemo = an agent's hippocampus + sleep rumination system + memory distiller + LoRA training factory + memory version registry
+```
 
 ## Configuration
 
@@ -195,9 +348,16 @@ All settings are environment variables prefixed with `MNEMO_`:
 | `MNEMO_OLLAMA_URL` | `http://localhost:11434` | Ollama endpoint |
 | `MNEMO_DEFAULT_SCOPE` | `global` | Default scope for new entries |
 
-**Feature flags** — every lifecycle capability can be toggled independently:
+Feature flags:
 
-`MNEMO_WRITE_GATE_ENABLED`, `MNEMO_FRESHNESS_ENABLED`, `MNEMO_STATE_MACHINE_ENABLED`, `MNEMO_FEEDBACK_LOOP_ENABLED`, `MNEMO_CONTRADICTION_PAIR_ENABLED`, `MNEMO_CONTEXT_AWARE_RANK_ENABLED`
+```text
+MNEMO_WRITE_GATE_ENABLED
+MNEMO_FRESHNESS_ENABLED
+MNEMO_STATE_MACHINE_ENABLED
+MNEMO_FEEDBACK_LOOP_ENABLED
+MNEMO_CONTRADICTION_PAIR_ENABLED
+MNEMO_CONTEXT_AWARE_RANK_ENABLED
+```
 
 All default to `true` (except context-aware rank). Set any to `false` to disable without code changes.
 
