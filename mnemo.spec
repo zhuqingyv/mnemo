@@ -21,6 +21,7 @@ from pathlib import Path
 from PyInstaller.utils.hooks import (
     collect_data_files,
     collect_dynamic_libs,
+    copy_metadata,
 )
 
 PROJECT_ROOT = Path(SPECPATH).resolve()
@@ -41,6 +42,11 @@ datas += collect_data_files("jieba")
 
 # fastmcp ships JSON schemas / templates — needed at runtime
 datas += collect_data_files("fastmcp")
+
+# fastmcp and mcp both call importlib.metadata.version() at import time;
+# without the dist-info metadata PyInstaller binaries crash on startup.
+datas += copy_metadata("fastmcp")
+datas += copy_metadata("mcp")
 
 # Bundled prompt markdown — single source of truth for setup + MCP instructions
 datas += collect_data_files(
