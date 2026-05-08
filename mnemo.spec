@@ -87,6 +87,8 @@ a = Analysis(
         # Async SQLite stack
         "aiosqlite",
         "sqlite_vec",
+        "sqlite3",
+        "sqlite3.dbapi2",
         # uvicorn dynamic dispatch chain
         "uvicorn",
         "uvicorn.logging",
