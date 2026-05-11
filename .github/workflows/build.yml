@@ -323,6 +323,8 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
+    env:
+      HAS_APPLE_SIGNING: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' && secrets.APPLE_SIGNING_IDENTITY != '' && secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' && secrets.KEYCHAIN_PASSWORD != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -442,6 +444,16 @@ jobs:
 
       # ── Tauri build ──
       - name: Tauri build
+        if: env.HAS_APPLE_SIGNING != 'true' || runner.os != 'macOS'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktop
+          args: --target ${{ matrix.target }}
+
+      - name: Tauri build signed and notarized
+        if: env.HAS_APPLE_SIGNING == 'true' && runner.os == 'macOS'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

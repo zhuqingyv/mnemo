@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::process::Command;
-use std::sync::OnceLock;
+use std::net::TcpStream;
+use std::process::{Child, Command, Stdio};
+use std::sync::{Mutex, OnceLock};
+use std::time::Duration;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
@@ -8,6 +10,7 @@ use tauri::{
 };
 
 static RESOURCE_DIR: OnceLock<Option<std::path::PathBuf>> = OnceLock::new();
+static MNEMO_SERVER: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
 
 #[derive(Serialize, Deserialize, Clone)]
 struct AgentStatus {
@@ -68,6 +71,7 @@ fn detect_agents() -> Vec<AgentStatus> {
 #[tauri::command]
 async fn link_agent(name: String) -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        ensure_mnemo_server_running()?;
         run_mnemo_setup(&["setup", "--no-project-prompts"], Some(&name))
     })
     .await
@@ -86,6 +90,7 @@ async fn unlink_agent(name: String) -> Result<String, String> {
 #[tauri::command]
 async fn link_all() -> Result<String, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        ensure_mnemo_server_running()?;
         run_mnemo_setup(&["setup", "--no-project-prompts"], None)
     })
         .await
@@ -99,6 +104,76 @@ async fn unlink_all() -> Result<String, String> {
     })
     .await
     .map_err(|e| format!("Task join error: {}", e))?
+}
+
+#[tauri::command]
+async fn ensure_mnemo_server() -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(ensure_mnemo_server_running)
+        .await
+        .map_err(|e| format!("Task join error: {}", e))?
+}
+
+fn ensure_mnemo_server_running() -> Result<String, String> {
+    if server_responds() {
+        return Ok("mnemo server already running".to_string());
+    }
+
+    let server = MNEMO_SERVER.get_or_init(|| Mutex::new(None));
+    let mut guard = server
+        .lock()
+        .map_err(|_| "Failed to lock mnemo server state".to_string())?;
+
+    if let Some(child) = guard.as_mut() {
+        if child.try_wait().map_err(|e| e.to_string())?.is_none() {
+            drop(guard);
+            wait_for_server()?;
+            return Ok("mnemo server started".to_string());
+        }
+    }
+
+    let mnemo = find_mnemo_binary();
+    let child = Command::new(&mnemo)
+        .args(["serve", "--host", "127.0.0.1", "--port", "8787"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| format!("Failed to start mnemo server with {mnemo}: {e}"))?;
+
+    *guard = Some(child);
+    drop(guard);
+    wait_for_server()?;
+    Ok("mnemo server started".to_string())
+}
+
+fn server_responds() -> bool {
+    TcpStream::connect_timeout(
+        &"127.0.0.1:8787".parse().expect("valid socket address"),
+        Duration::from_millis(150),
+    )
+    .is_ok()
+}
+
+fn wait_for_server() -> Result<(), String> {
+    for _ in 0..40 {
+        if server_responds() {
+            return Ok(());
+        }
+        std::thread::sleep(Duration::from_millis(250));
+    }
+    Err("mnemo server did not start on 127.0.0.1:8787".to_string())
+}
+
+fn stop_mnemo_server() {
+    if let Some(server) = MNEMO_SERVER.get() {
+        if let Ok(mut guard) = server.lock() {
+            if let Some(child) = guard.as_mut() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+            *guard = None;
+        }
+    }
 }
 
 fn run_mnemo_setup(args: &[&str], agent: Option<&str>) -> Result<String, String> {
@@ -284,7 +359,12 @@ fn check_mnemo_installed(config_path: &str, name: &str) -> bool {
     if data
         .get("mcpServers")
         .and_then(|s| s.get("mnemo"))
-        .is_some()
+        .is_some_and(|server| {
+            !server
+                .get("disabled")
+                .and_then(|disabled| disabled.as_bool())
+                .unwrap_or(false)
+        })
     {
         return true;
     }
@@ -295,7 +375,12 @@ fn check_mnemo_installed(config_path: &str, name: &str) -> bool {
             if proj_val
                 .get("mcpServers")
                 .and_then(|s| s.get("mnemo"))
-                .is_some()
+                .is_some_and(|server| {
+                    !server
+                        .get("disabled")
+                        .and_then(|disabled| disabled.as_bool())
+                        .unwrap_or(false)
+                })
             {
                 return true;
             }
@@ -329,6 +414,9 @@ pub fn run() {
             // Store resource path for finding bundled mnemo binary
             let res_path = app.path().resource_dir().ok();
             let _ = RESOURCE_DIR.set(res_path);
+            tauri::async_runtime::spawn_blocking(|| {
+                let _ = ensure_mnemo_server_running();
+            });
 
             // Build tray menu
             let show = MenuItem::with_id(app, "show", "打开面板", true, None::<&str>)?;
@@ -348,6 +436,7 @@ pub fn run() {
                         }
                     }
                     "quit" => {
+                        stop_mnemo_server();
                         app.exit(0);
                     }
                     _ => {}
@@ -375,6 +464,7 @@ pub fn run() {
             unlink_agent,
             link_all,
             unlink_all,
+            ensure_mnemo_server,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

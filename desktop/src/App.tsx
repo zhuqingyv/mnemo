@@ -197,7 +197,15 @@ function App() {
   }
 
   async function handleOpenViz() {
-    await openUrl("http://127.0.0.1:8787/viz");
+    setLoading("viz");
+    setMessage(null);
+    try {
+      await invoke("ensure_mnemo_server");
+      await openUrl("http://127.0.0.1:8787/viz");
+    } catch (e) {
+      setMessage(`打开可视化页面失败: ${toMessage(e)}`);
+    }
+    setLoading(null);
   }
 
   return (
@@ -289,8 +297,8 @@ function App() {
           >
             {loading === "all" ? copy.linking : copy.linkAll}
           </button>
-          <button className="btn-secondary" onClick={handleOpenViz}>
-            {copy.openViz}
+          <button className="btn-secondary" disabled={loading !== null} onClick={handleOpenViz}>
+            {loading === "viz" ? "..." : copy.openViz}
           </button>
         </div>
       </div>

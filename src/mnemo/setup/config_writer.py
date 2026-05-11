@@ -164,6 +164,7 @@ def _http_block(port: int, client_name: str = "") -> dict:
     block: dict = {
         "type": "http",
         "url": url,
+        "disabled": False,
     }
     if client_name == "github-copilot-cli":
         block["tools"] = ["*"]
