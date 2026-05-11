@@ -38,7 +38,7 @@
       "resources/*"
     ],
     "macOS": {
-      "signingIdentity": null
+      "signingIdentity": "-"
     }
   }
 }
