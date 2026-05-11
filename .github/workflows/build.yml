@@ -206,7 +206,11 @@ jobs:
           "./out/${{ matrix.artifact_name }}" search --help > /dev/null
           "./out/${{ matrix.artifact_name }}" setup --help | grep -- --mcp-only
           "./out/${{ matrix.artifact_name }}" serve --help > /dev/null
-          "./out/${{ matrix.artifact_name }}" setup --dry-run --no-project-prompts --mcp-only 2>&1 | tee "$RUNNER_TEMP/setup-dry-run.log"
+          DRY_RUN_OUT=$("./out/${{ matrix.artifact_name }}" setup --dry-run --no-project-prompts --mcp-only 2>&1) && echo "$DRY_RUN_OUT" || {
+            echo "=== setup --dry-run FAILED (exit $?) ===" >&2
+            echo "$DRY_RUN_OUT" >&2
+            exit 1
+          }
 
       - name: Smoke test (Windows)
         if: runner.os == 'Windows'
