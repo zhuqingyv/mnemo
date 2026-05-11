@@ -74,6 +74,99 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Build sqlite-vec for Windows ARM64
+        if: matrix.target == 'windows-arm64'
+        shell: bash
+        run: |
+          # Checkout sqlite-vec v0.1.9
+          git clone --depth 1 --branch v0.1.9 https://github.com/asg017/sqlite-vec.git sqlite-vec-src
+          cd sqlite-vec-src
+
+          # Vendor dependencies
+          ./scripts/vendor.sh
+
+          # Generate header - try make first, fall back to manual generation
+          if command -v make >/dev/null 2>&1; then
+            make sqlite-vec.h
+          else
+            echo "make not found, attempting to generate sqlite-vec.h manually"
+            # Try using python to generate the header if there's a script
+            if [ -f "scripts/generate_header.py" ]; then
+              python scripts/generate_header.py
+            elif [ -f "generate.py" ]; then
+              python generate.py
+            else
+              echo "Warning: Could not generate sqlite-vec.h, may cause compilation issues"
+            fi
+          fi
+
+          # Setup MSVC environment for Windows ARM64
+          # The windows-11-arm runner should have MSVC pre-installed for ARM64
+          # Try to compile with MSVC for ARM64 architecture
+          echo "Compiling with MSVC for ARM64 architecture..."
+          # Note: /fPIC may not be valid for MSVC, but upstream uses it
+          # Add /arch:ARM64 for ARM64 target
+          # Try to compile - if cl.exe is not in PATH, this will fail
+          cl.exe /fPIC -shared /W4 /Ivendor/ /O2 /LD /arch:ARM64 sqlite-vec.c -o vec0.dll || {
+            echo "First compilation attempt failed, trying without /arch:ARM64 flag..."
+            # Try without /arch:ARM64 flag
+            cl.exe /fPIC -shared /W4 /Ivendor/ /O2 /LD sqlite-vec.c -o vec0.dll
+          }
+
+          # Create local sqlite_vec package
+          mkdir -p ../sqlite_vec_pkg/sqlite_vec
+          cp vec0.dll ../sqlite_vec_pkg/sqlite_vec/
+
+          # Create __init__.py (compatible with original)
+          cat > ../sqlite_vec_pkg/sqlite_vec/__init__.py << 'EOF'
+          from os import path
+          import sqlite3
+
+          __version__ = "0.1.9"
+          __version_info__ = tuple(__version__.split("."))
+
+          def loadable_path():
+              loadable_path = path.join(path.dirname(__file__), "vec0")
+              return path.normpath(loadable_path)
+
+          def load(conn: sqlite3.Connection) -> None:
+              conn.load_extension(loadable_path())
+
+          from typing import List
+          from struct import pack
+
+          def serialize_float32(vector: List[float]) -> bytes:
+              return pack("%sf" % len(vector), *vector)
+
+          def serialize_int8(vector: List[int]) -> bytes:
+              return pack("%sb" % len(vector), *vector)
+
+          # Optional numpy support (stub)
+          try:
+              import numpy.typing as npt
+              def register_numpy(db: sqlite3.Connection, name: str, array: npt.NDArray):
+                  raise NotImplementedError("numpy support not compiled for Windows ARM64")
+          except ImportError:
+              def register_numpy(db: sqlite3.Connection, name: str, array):
+                  raise Exception("numpy package is required for register_numpy")
+          EOF
+
+          # Create setup.py for local package
+          cat > ../sqlite_vec_pkg/setup.py << 'EOF'
+          from setuptools import setup, find_packages
+          setup(
+              name="sqlite-vec",
+              version="0.1.9",
+              packages=find_packages(),
+              package_data={"sqlite_vec": ["vec0.dll"]},
+              include_package_data=True,
+          )
+          EOF
+
+          # Install the local package
+          cd ../sqlite_vec_pkg
+          pip install .
+
       - name: Install build deps
         shell: bash
         run: |
