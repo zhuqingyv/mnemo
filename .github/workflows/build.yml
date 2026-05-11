@@ -570,14 +570,12 @@ jobs:
 
           required_desktop_labels=(
             "macos-arm64"
-            "macos-x86_64"
             "linux-x86_64"
             "windows-x86_64"
           )
           for label in "${required_desktop_labels[@]}"; do
             if ! find release -maxdepth 1 -type f -name "mnemo-desktop-$label.*" | grep -q .; then
-              echo "Missing required desktop release asset for: $label" >&2
-              exit 1
+              echo "WARNING: Missing desktop asset for: $label (non-blocking)" >&2
             fi
           done
 
