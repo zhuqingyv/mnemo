@@ -220,15 +220,16 @@ jobs:
           "$BIN" search --help > /dev/null 2>&1 || { echo "FAIL: search --help exit=$?"; FAIL=1; }
 
           echo "--- [4/6] setup --help (checking --mcp-only) ---"
-          SETUP_HELP=$("$BIN" setup --help 2>&1)
+          SETUP_HELP_RAW=$("$BIN" setup --help 2>&1)
           SETUP_HELP_EXIT=$?
+          SETUP_HELP=$(printf '%s' "$SETUP_HELP_RAW" | sed $'s/\x1b\\[[0-9;]*m//g')
           if [ $SETUP_HELP_EXIT -ne 0 ]; then
             echo "FAIL: setup --help exit=$SETUP_HELP_EXIT"
-            echo "$SETUP_HELP"
+            echo "$SETUP_HELP_RAW"
             FAIL=1
           elif ! echo "$SETUP_HELP" | grep -q -- "--mcp-only"; then
             echo "FAIL: --mcp-only not found in setup --help output:"
-            echo "$SETUP_HELP"
+            echo "$SETUP_HELP_RAW"
             FAIL=1
           else
             echo "OK: found --mcp-only"
@@ -398,7 +399,7 @@ jobs:
           chmod +x "$BIN"
           "$BIN" --help > /dev/null
           "$BIN" --version
-          "$BIN" setup --help | grep -- --mcp-only
+          "$BIN" setup --help 2>&1 | sed $'s/\x1b\\[[0-9;]*m//g' | grep -- --mcp-only
           "$BIN" serve --help > /dev/null
 
       - name: Validate bundled mnemo resource (Windows)
