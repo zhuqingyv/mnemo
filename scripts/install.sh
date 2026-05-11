@@ -42,11 +42,6 @@ case "$arch_raw" in
   *) fail "unsupported architecture: $arch_raw" ;;
 esac
 
-# Linux-arm64 builds aren't shipped (yet) — fail with a clear message.
-if [ "$os" = "linux" ] && [ "$arch" = "arm64" ]; then
-  fail "no prebuilt linux-arm64 binary yet. Build from source or open an issue."
-fi
-
 asset="mnemo-${os}-${arch}"
 
 # --- pick download URL ------------------------------------------------------

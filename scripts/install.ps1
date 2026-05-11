@@ -3,7 +3,7 @@
 mnemo installer for Windows.
 
 .DESCRIPTION
-Downloads the prebuilt mnemo binary for Windows x86_64, verifies its SHA256,
+Downloads the prebuilt mnemo binary for Windows (x86_64 or arm64), verifies its SHA256,
 installs it under %LOCALAPPDATA%\mnemo\bin\, ensures that directory is on
 the user's PATH, and runs `mnemo setup --auto` to configure detected AI
 clients (Claude Code, Cursor, Codex CLI, Claude Desktop).
@@ -43,12 +43,15 @@ function Write-Info($msg)  { Write-Host "==> $msg" -ForegroundColor Green }
 function Write-Warn2($msg) { Write-Host "warn: $msg" -ForegroundColor Yellow }
 function Fail($msg)        { Write-Host "error: $msg" -ForegroundColor Red; exit 1 }
 
-# -- detect ARCH (Windows is x86_64-only for now) ----------------------------
-$arch = "x86_64"
+# -- detect ARCH (x86_64 or arm64) -----------------------------------------
 if ([Environment]::Is64BitOperatingSystem -eq $false) {
-    Fail "32-bit Windows is not supported. mnemo requires x86_64."
+    Fail "32-bit Windows is not supported. mnemo requires a 64-bit OS."
 }
-# ARM64 Windows runs x86_64 binaries through emulation; we ship x86_64 only.
+$arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq [System.Runtime.InteropServices.Architecture]::Arm64) {
+    "arm64"
+} else {
+    "x86_64"
+}
 
 $asset = "mnemo-windows-$arch.exe"
 

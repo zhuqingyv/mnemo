@@ -2,8 +2,16 @@ name: build
 
 # Build prebuilt mnemo binaries for macOS / Linux / Windows on every push to
 # main (artifacts kept 14 days for PR validation), and publish a GitHub
-# Release with all four binaries + SHA256SUMS + install scripts whenever a
-# v*.*.* tag is pushed.
+# Release with all six binaries + SHA256SUMS + install scripts + desktop
+# installers whenever a v*.*.* tag is pushed.
+#
+# Supported platforms (6):
+#   - darwin-arm64   (macOS Apple Silicon)
+#   - darwin-x86_64  (macOS Intel)
+#   - linux-x86_64   (Linux x86_64)
+#   - linux-arm64    (Linux ARM64)
+#   - windows-x86_64 (Windows x86_64)
+#   - windows-arm64  (Windows ARM64)
 
 on:
   push:
@@ -14,15 +22,18 @@ on:
     branches: [main]
 
 permissions:
-  contents: write  # needed for the release job to upload assets
+  contents: write
 
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: build (${{ matrix.target }})
+  # ─────────────────────────────────────────────────────────────
+  # Stage 1: Build CLI binaries via PyInstaller (6 platforms)
+  # ─────────────────────────────────────────────────────────────
+  build-cli:
+    name: cli (${{ matrix.target }})
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -40,9 +51,17 @@ jobs:
             runner: ubuntu-22.04
             artifact_name: mnemo-linux-x86_64
             binary_path: dist/mnemo
+          - target: linux-arm64
+            runner: ubuntu-22.04-arm
+            artifact_name: mnemo-linux-arm64
+            binary_path: dist/mnemo
           - target: windows-x86_64
             runner: windows-latest
             artifact_name: mnemo-windows-x86_64.exe
+            binary_path: dist/mnemo.exe
+          - target: windows-arm64
+            runner: windows-11-arm
+            artifact_name: mnemo-windows-arm64.exe
             binary_path: dist/mnemo.exe
 
     steps:
@@ -66,14 +85,13 @@ jobs:
         shell: bash
         run: python -m PyInstaller mnemo.spec --noconfirm --clean
 
-      - name: Rename artifact
+      - name: Stage artifact
         shell: bash
         run: |
           mkdir -p out
           cp "${{ matrix.binary_path }}" "out/${{ matrix.artifact_name }}"
           ls -lh out/
 
-      # ---- smoke test: prove the binary actually starts ------------------
       - name: Smoke test (POSIX)
         if: runner.os != 'Windows'
         shell: bash
@@ -114,9 +132,184 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  # ─────────────────────────────────────────────────────────────
+  # Stage 2: Build Tauri desktop installers (6 targets)
+  # Depends on Stage 1 for the platform-matching mnemo binary
+  # ─────────────────────────────────────────────────────────────
+  build-desktop:
+    name: desktop (${{ matrix.target }})
+    needs: build-cli
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS Apple Silicon
+          - target: aarch64-apple-darwin
+            runner: macos-14
+            cli_artifact: mnemo-darwin-arm64
+            binary_name: mnemo
+            desktop_label: macos-arm64
+          # macOS Intel
+          - target: x86_64-apple-darwin
+            runner: macos-13
+            cli_artifact: mnemo-darwin-x86_64
+            binary_name: mnemo
+            desktop_label: macos-x86_64
+          # Linux x86_64
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-22.04
+            cli_artifact: mnemo-linux-x86_64
+            binary_name: mnemo
+            desktop_label: linux-x86_64
+          # Linux ARM64
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-22.04-arm
+            cli_artifact: mnemo-linux-arm64
+            binary_name: mnemo
+            desktop_label: linux-arm64
+          # Windows x86_64
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            cli_artifact: mnemo-windows-x86_64.exe
+            binary_name: mnemo.exe
+            desktop_label: windows-x86_64
+          # Windows ARM64
+          - target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+            cli_artifact: mnemo-windows-arm64.exe
+            binary_name: mnemo.exe
+            desktop_label: windows-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # Download the matching CLI binary from Stage 1
+      - name: Download CLI binary
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ matrix.cli_artifact }}
+          path: cli-artifacts
+
+      # Inject the platform-specific mnemo binary into resources/
+      # Clean first to avoid shipping wrong-platform binaries in the bundle.
+      - name: Inject mnemo binary for target platform
+        shell: bash
+        run: |
+          mkdir -p desktop/src-tauri/resources
+          rm -f desktop/src-tauri/resources/*
+          cp "cli-artifacts/${{ matrix.cli_artifact }}" "desktop/src-tauri/resources/${{ matrix.binary_name }}"
+          chmod +x "desktop/src-tauri/resources/${{ matrix.binary_name }}" 2>/dev/null || true
+          ls -lh "desktop/src-tauri/resources/"
+
+      # ── Frontend: pnpm ──
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          package_json_file: desktop/package.json
+
+      - name: Install frontend deps
+        working-directory: desktop
+        run: pnpm install --frozen-lockfile
+
+      # ── Rust toolchain ──
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+          key: ${{ matrix.target }}
+
+      # ── Linux system deps (required by Tauri / webkit2gtk) ──
+      - name: Install Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl wget file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      # ── Tauri build ──
+      - name: Tauri build
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktop
+          args: --target ${{ matrix.target }}
+
+      # ── Collect & rename desktop artifacts ──
+      # tauri-action drops bundles into target/${target}/release/bundle/
+      # We rename them to a unified scheme so the Release page is clean.
+      - name: Collect desktop artifacts
+        shell: bash
+        run: |
+          mkdir -p desktop-out
+          BUNDLE_DIR="desktop/src-tauri/target/${{ matrix.target }}/release/bundle"
+
+          # macOS — .dmg
+          if [ -d "$BUNDLE_DIR/dmg" ]; then
+            find "$BUNDLE_DIR/dmg" -name "*.dmg" -exec cp {} desktop-out/ \;
+          fi
+          # macOS — .app.tar.gz
+          if [ -d "$BUNDLE_DIR/macos" ]; then
+            find "$BUNDLE_DIR/macos" -name "*.app.tar.gz" -exec cp {} desktop-out/ \;
+          fi
+
+          # Linux — .deb
+          if [ -d "$BUNDLE_DIR/deb" ]; then
+            find "$BUNDLE_DIR/deb" -name "*.deb" -exec cp {} desktop-out/ \;
+          fi
+          # Linux — .AppImage
+          if [ -d "$BUNDLE_DIR/appimage" ]; then
+            find "$BUNDLE_DIR/appimage" -name "*.AppImage" -exec cp {} desktop-out/ \;
+          fi
+          # Linux — .rpm
+          if [ -d "$BUNDLE_DIR/rpm" ]; then
+            find "$BUNDLE_DIR/rpm" -name "*.rpm" -exec cp {} desktop-out/ \;
+          fi
+
+          # Windows — .exe (NSIS installer)
+          if [ -d "$BUNDLE_DIR/nsis" ]; then
+            find "$BUNDLE_DIR/nsis" -name "*.exe" -exec cp {} desktop-out/ \;
+          fi
+          # Windows — .msi
+          if [ -d "$BUNDLE_DIR/msi" ]; then
+            find "$BUNDLE_DIR/msi" -name "*.msi" -exec cp {} desktop-out/ \;
+          fi
+
+          # Rename to unified naming: mnemo-desktop-{label}.{ext}
+          cd desktop-out
+          for f in *; do
+            ext="${f##*.}"
+            mv "$f" "mnemo-desktop-${{ matrix.desktop_label }}.${ext}"
+          done
+          ls -lh desktop-out/
+
+      - name: Upload desktop artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: mnemo-desktop-${{ matrix.desktop_label }}
+          path: desktop-out/*
+          retention-days: 14
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────────────────────
+  # Stage 3: Publish GitHub Release (only on v*.*.* tags)
+  # ─────────────────────────────────────────────────────────────
   release:
     name: release
-    needs: build
+    needs: [build-cli, build-desktop]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-22.04
     permissions:
@@ -134,16 +327,25 @@ jobs:
         shell: bash
         run: |
           mkdir -p release
-          # Move every binary + its sha256 into the release dir
-          find artifacts -type f \( -name "mnemo-*" \) -exec cp -v {} release/ \;
+
+          # ── CLI binaries + SHA256SUMS ──
+          find artifacts -type f \( -name "mnemo-darwin-*" -o -name "mnemo-linux-*" -o -name "mnemo-windows-*" \) -exec cp -v {} release/ \;
+
           # Combine per-asset .sha256 files into one SHA256SUMS
-          (cd release && cat mnemo-*.sha256 > SHA256SUMS && rm mnemo-*.sha256)
-          # Install scripts go in the release too so install.sh / install.ps1
-          # can be downloaded by URL alongside the binaries.
+          (cd release && cat mnemo-*.sha256 > SHA256SUMS 2>/dev/null && rm -f mnemo-*.sha256 || true)
+
+          # ── Install scripts ──
           cp scripts/install.sh release/install.sh
           cp scripts/install.ps1 release/install.ps1
+
+          # ── Desktop installers ──
+          find artifacts -type f \( -name "mnemo-desktop-*" \) -exec cp -v {} release/ \;
+
+          # Summary
+          echo "=== Release contents ==="
           ls -lh release/
-          cat release/SHA256SUMS
+          echo "========================"
+          [ -f release/SHA256SUMS ] && cat release/SHA256SUMS
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
