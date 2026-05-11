@@ -201,6 +201,7 @@ jobs:
           chmod +x "$BIN"
           export HOME="$RUNNER_TEMP/mnemo-home"
           export MNEMO_DATA_DIR="$RUNNER_TEMP/mnemo-data"
+          export NO_COLOR=1
           mkdir -p "$HOME" "$MNEMO_DATA_DIR"
           FAIL=0
 
