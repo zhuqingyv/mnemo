@@ -196,21 +196,60 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          set -euo pipefail
-          chmod +x "out/${{ matrix.artifact_name }}"
+          set -uo pipefail
+          BIN="./out/${{ matrix.artifact_name }}"
+          chmod +x "$BIN"
           export HOME="$RUNNER_TEMP/mnemo-home"
           export MNEMO_DATA_DIR="$RUNNER_TEMP/mnemo-data"
           mkdir -p "$HOME" "$MNEMO_DATA_DIR"
-          "./out/${{ matrix.artifact_name }}" --help > /dev/null
-          "./out/${{ matrix.artifact_name }}" --version
-          "./out/${{ matrix.artifact_name }}" search --help > /dev/null
-          "./out/${{ matrix.artifact_name }}" setup --help | grep -- --mcp-only
-          "./out/${{ matrix.artifact_name }}" serve --help > /dev/null
-          DRY_RUN_OUT=$("./out/${{ matrix.artifact_name }}" setup --dry-run --no-project-prompts --mcp-only 2>&1) && echo "$DRY_RUN_OUT" || {
-            echo "=== setup --dry-run FAILED (exit $?) ===" >&2
-            echo "$DRY_RUN_OUT" >&2
+          FAIL=0
+
+          echo "::group::env diagnostics"
+          echo "COLUMNS=${COLUMNS:-<unset>} TERM=${TERM:-<unset>}"
+          echo "HOME=$HOME MNEMO_DATA_DIR=$MNEMO_DATA_DIR"
+          echo "::endgroup::"
+
+          echo "--- [1/6] --help ---"
+          "$BIN" --help > /dev/null 2>&1 || { echo "FAIL: --help exit=$?"; FAIL=1; }
+
+          echo "--- [2/6] --version ---"
+          "$BIN" --version 2>&1 || { echo "FAIL: --version exit=$?"; FAIL=1; }
+
+          echo "--- [3/6] search --help ---"
+          "$BIN" search --help > /dev/null 2>&1 || { echo "FAIL: search --help exit=$?"; FAIL=1; }
+
+          echo "--- [4/6] setup --help (checking --mcp-only) ---"
+          SETUP_HELP=$("$BIN" setup --help 2>&1)
+          SETUP_HELP_EXIT=$?
+          if [ $SETUP_HELP_EXIT -ne 0 ]; then
+            echo "FAIL: setup --help exit=$SETUP_HELP_EXIT"
+            echo "$SETUP_HELP"
+            FAIL=1
+          elif ! echo "$SETUP_HELP" | grep -q -- "--mcp-only"; then
+            echo "FAIL: --mcp-only not found in setup --help output:"
+            echo "$SETUP_HELP"
+            FAIL=1
+          else
+            echo "OK: found --mcp-only"
+          fi
+
+          echo "--- [5/6] serve --help ---"
+          "$BIN" serve --help > /dev/null 2>&1 || { echo "FAIL: serve --help exit=$?"; FAIL=1; }
+
+          echo "--- [6/6] setup --dry-run ---"
+          DRYRUN_OUT=$("$BIN" setup --dry-run --no-project-prompts --mcp-only 2>&1)
+          DRYRUN_EXIT=$?
+          echo "$DRYRUN_OUT"
+          if [ $DRYRUN_EXIT -ne 0 ]; then
+            echo "FAIL: setup --dry-run exit=$DRYRUN_EXIT"
+            FAIL=1
+          fi
+
+          if [ $FAIL -ne 0 ]; then
+            echo "::error::Smoke test failed — see logs above for details"
             exit 1
-          }
+          fi
+          echo "All smoke tests passed."
 
       - name: Smoke test (Windows)
         if: runner.os == 'Windows'

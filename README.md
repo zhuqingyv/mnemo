@@ -3,12 +3,12 @@
 </p>
 
 <h1 align="center">mnemo</h1>
-<p align="center"><strong>Memory should not live in prompts forever.</strong></p>
-<p align="center">Let agents evolve from retrieving memory to remembering by themselves.</p>
+<p align="center"><strong>The desktop client for giving AI agents local memory.</strong></p>
+<p align="center">Install the client, link your agent tools, and keep your memory as your own local asset.</p>
 
 <p align="center">
   <a href="#why-mnemo">Why</a> •
-  <a href="#what-is-mnemo">What</a> •
+  <a href="#start-with-the-desktop-client">Client</a> •
   <a href="#features">Features</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#watch-your-agents-brain-form">Visualization</a> •
@@ -24,6 +24,25 @@
 </p>
 
 ---
+
+## Start with the desktop client
+
+mnemo is now easiest to use as a desktop client.
+
+Install the app, open it, and link the AI tools you already use. The desktop client bundles the `mnemo` CLI, so installing the client also gives agents the local MCP server they need.
+
+<p align="center">
+  <img src="images/client-preview-en.png" alt="mnemo desktop client linking Claude Code, Qwen Code, CodeBuddy, Codex CLI, Gemini CLI, Cursor, Windsurf, and GitHub Copilot CLI" width="900">
+</p>
+
+The client is the control surface:
+
+- **Install once**: the app ships with the local `mnemo` CLI inside it.
+- **Link agents**: connect Claude Code, Claude Desktop, Cursor, Codex CLI, Qwen Code, Gemini CLI, CodeBuddy, Windsurf, and GitHub Copilot CLI.
+- **Own your data**: memories live locally in your mnemo database instead of being locked inside one vendor's chat history.
+- **Use the CLI when needed**: advanced users and agents can still call `mnemo` directly.
+
+mnemo is not trying to be another hosted note app. It is an agent-first memory layer where your project rules, corrections, preferences, and lessons remain a user-owned asset that agents can reuse.
 
 ## Why mnemo
 
@@ -54,7 +73,7 @@ Today, it gives agents a local hippocampus through MCP:
 - **Feedback-aware**: agents can mark used knowledge as helpful, misleading, or outdated.
 - **Correctable**: stale, contradictory, duplicate, and weak memories do not pollute results forever.
 - **Observable**: knowledge, relations, feedback, lifecycle state, and agent activity stay visible locally.
-- **Installable**: shipped as prebuilt binaries; no PyPI, no npm, no source install for end users.
+- **Client-first**: shipped as a desktop app with the CLI bundled inside; no Python, pip, npm, or source install for end users.
 
 Tomorrow, mnemo will distill stable, valuable, repeatedly validated memories into training samples and train local LoRA / Adapter layers during idle time.
 
@@ -88,7 +107,9 @@ Endgame: agents evolve through every experience.
 
 ## Features
 
-- **MCP-native agent contract**: works with Claude Code, Claude Desktop, Cursor, Codex CLI, and any MCP client.
+- **Desktop client first**: install mnemo as an app, then link or unlink agent clients from one place.
+- **Bundled CLI**: the desktop client includes the `mnemo` CLI, so agents can still use stdio MCP and local commands.
+- **MCP-native agent contract**: works with Claude Code, Claude Desktop, Cursor, Codex CLI, Qwen Code, Gemini CLI, CodeBuddy, Windsurf, GitHub Copilot CLI, and MCP-compatible clients.
 - **Hybrid search**: FTS5 full-text search + sqlite-vec semantic search + typed knowledge graph, fused via Reciprocal Rank Fusion.
 - **Search-time maintenance tasks**: search results can include one relevant cleanup task, such as archiving stale knowledge or cleaning duplicates.
 - **Knowledge lifecycle**: entries move through `active`, `stale`, `superseded`, and `archived`.
@@ -102,30 +123,53 @@ Endgame: agents evolve through every experience.
 
 ## Quick Start
 
-mnemo ships only as prebuilt binaries from GitHub Releases.
+mnemo ships through GitHub Releases as prebuilt desktop clients and CLI binaries.
 
 **End users do not need Python, pip, npm, or a source checkout.**
 
-### macOS / Linux
+### Recommended: install the desktop client
+
+Download the package for your platform from the latest release:
+
+| Platform | Recommended package |
+|----------|---------------------|
+| macOS Apple Silicon | [`mnemo-desktop-macos-arm64.dmg`](https://github.com/zhuqingyv/mnemo/releases/latest/download/mnemo-desktop-macos-arm64.dmg) |
+| macOS Intel | [`mnemo-desktop-macos-x86_64.dmg`](https://github.com/zhuqingyv/mnemo/releases/latest/download/mnemo-desktop-macos-x86_64.dmg) |
+| Linux x86_64 | [`mnemo-desktop-linux-x86_64.AppImage`](https://github.com/zhuqingyv/mnemo/releases/latest/download/mnemo-desktop-linux-x86_64.AppImage) |
+| Windows x86_64 | [`mnemo-desktop-windows-x86_64.exe`](https://github.com/zhuqingyv/mnemo/releases/latest/download/mnemo-desktop-windows-x86_64.exe) |
+
+After opening the app:
+
+1. Let mnemo detect your installed AI clients.
+2. Click **Link** for the agents you want to connect.
+3. Restart the linked AI client if it was already open.
+4. Ask the agent to use mnemo memory.
+
+The desktop app includes the local `mnemo` CLI resource, so the linked agent can start `mnemo mcp` without you installing Python or building from source.
+
+### CLI-only fallback
+
+If you only want the standalone CLI binary, use the install script.
+
+#### macOS / Linux
 
 ```bash
 curl -fsSL https://github.com/zhuqingyv/mnemo/releases/latest/download/install.sh | sh
 ```
 
-### Windows (PowerShell)
+#### Windows (PowerShell)
 
 ```powershell
 irm https://github.com/zhuqingyv/mnemo/releases/latest/download/install.ps1 | iex
 ```
 
-The installer drops the binary into `~/.mnemo/bin` (POSIX) or
+The CLI installer drops the binary into `~/.mnemo/bin` (POSIX) or
 `%LOCALAPPDATA%\mnemo\bin` (Windows), adds it to your PATH, and runs
-`mnemo setup --auto` so every detected AI client gets the mnemo MCP server
-and the agent system prompt configured automatically.
+`mnemo setup --auto` so every detected AI client gets the mnemo MCP server and the agent system prompt configured automatically.
 
-Supported clients: **Claude Code**, **Claude Desktop**, **Cursor**, **Codex CLI**.
+Supported clients: **Claude Code**, **Claude Desktop**, **Cursor**, **Codex CLI**, **Qwen Code**, **Gemini CLI**, **CodeBuddy**, **Windsurf**, and **GitHub Copilot CLI**.
 
-After installation, restart your AI client. Verify:
+After installation, restart your AI client. If you installed the CLI-only path, verify:
 
 ```bash
 mnemo --version
@@ -134,9 +178,7 @@ mnemo --help
 
 ### Hand the repo to your local agent
 
-If you want a coding agent to install mnemo for you, just clone this repo
-and tell it to follow [AGENTS.md](AGENTS.md) — it has the one-liner and the
-"do not pip install" rules baked in.
+If you want a coding agent to install mnemo for you, just clone this repo and tell it to follow [AGENTS.md](AGENTS.md) — it has the release-only install rules and the "do not pip install" guardrails baked in.
 
 ### Re-run / uninstall
 
@@ -160,7 +202,9 @@ open http://127.0.0.1:8787/viz/
 
 ## Usage
 
-mnemo provides 11 MCP tools:
+Most users should start from the desktop client: link the agents you use, then let the agent call mnemo through MCP.
+
+For agent and advanced CLI workflows, mnemo provides 11 MCP tools:
 
 | Tool | Description |
 |------|-------------|
@@ -176,7 +220,7 @@ mnemo provides 11 MCP tools:
 | `list_tags` | List all tags, optionally filtered by scope |
 | `search_by_tag` | Find entries matching all given tags |
 
-The CLI is also available:
+The CLI is available because it is bundled with the client and also published as a standalone binary:
 
 ```bash
 mnemo search "websocket heartbeat"
@@ -322,11 +366,12 @@ RAG remembers facts. mnemo trains habits.
 ## Architecture
 
 ```text
-MCP client ──┐                         ┌── FTS5 (BM25)
-             ├──▶ mnemo service ──┬──▶──┼── sqlite-vec (semantic)
-CLI ─────────┘                    │     └── relation graph (typed edges)
-                                  ▼
-                          SQLite single file
+Desktop client ─┐
+MCP client ─────┼──▶ mnemo service ──┬──▶ FTS5 (BM25)
+CLI ────────────┘                    ├──▶ sqlite-vec (semantic)
+                                     └──▶ relation graph (typed edges)
+                                      ▼
+                              SQLite single file
 ```
 
 The current system keeps core data in one local SQLite file. Knowledge, relations, feedback, events, lifecycle state, and vector indexes stay inspectable, portable, and backup-friendly.

@@ -3,12 +3,13 @@
 </p>
 
 <h1 align="center">mnemo</h1>
-<p align="center"><strong>记忆不该永远塞在提示词里。</strong></p>
-<p align="center">让 Agent 从检索记忆，进化到自己记得。</p>
+<p align="center"><strong>给 AI Agent 本地记忆的桌面客户端。</strong></p>
+<p align="center">安装客户端，链接你正在使用的 Agent 工具，让记忆成为属于用户自己的本地资产。</p>
 
 <p align="center">
   <a href="#为什么需要-mnemo">为什么需要</a> •
-  <a href="#mnemo-是什么">是什么</a> •
+  <a href="#先从桌面客户端开始">客户端</a> •
+  <a href="#特性">特性</a> •
   <a href="#快速开始">快速开始</a> •
   <a href="#看见-agent-的大脑正在形成">可视化</a> •
   <a href="#未来终局不需要工具调用的记忆">未来终局</a> •
@@ -23,6 +24,25 @@
 </p>
 
 ---
+
+## 先从桌面客户端开始
+
+mnemo 现在最推荐的使用方式是桌面客户端。
+
+安装客户端，打开它，然后把你已经在使用的 AI 工具链接到 mnemo。客户端内置 `mnemo` CLI，所以安装好客户端，也就顺便给 Agent 准备好了本地 MCP 服务。
+
+<p align="center">
+  <img src="images/client-preview.png" alt="mnemo 桌面客户端链接 Claude Code、Qwen Code、CodeBuddy、Codex CLI、Gemini CLI、Cursor、Windsurf 和 GitHub Copilot CLI" width="900">
+</p>
+
+客户端是 mnemo 的控制台：
+
+- **安装一次**：桌面客户端内置本地 `mnemo` CLI。
+- **链接 Agent**：连接 Claude Code、Claude Desktop、Cursor、Codex CLI、Qwen Code、Gemini CLI、CodeBuddy、Windsurf 和 GitHub Copilot CLI。
+- **记忆归用户所有**：记忆留在本地 mnemo 数据库里，而不是被锁在某一个厂商的聊天历史中。
+- **需要时继续用 CLI**：高级用户和 Agent 仍然可以直接调用 `mnemo`。
+
+mnemo 不是另一个托管笔记应用。它是 agent-first 的记忆层，让项目规则、纠错、用户偏好和踩坑经验成为用户自己的资产，并能被不同 Agent 复用。
 
 ## 为什么需要 mnemo
 
@@ -53,7 +73,7 @@ mnemo 是一个 agent-first 的本地记忆系统。
 - **可反馈**：Agent 用过的知识可以标记 helpful / misleading / outdated。
 - **可纠错**：过时、矛盾、重复、低质量记忆不会永远污染结果。
 - **可观察**：知识、关系、反馈、生命周期和 Agent 活动都能在本地看见。
-- **可安装**：预编译二进制发布，不需要 PyPI、不需要 npm、不需要从源码安装。
+- **客户端优先**：以桌面客户端发布，CLI 内置其中；终端用户不需要 Python、pip、npm 或源码安装。
 
 明天，它会把真正稳定、有价值、反复验证过的记忆蒸馏成训练样本，在本地空闲时训练 LoRA / Adapter。
 
@@ -87,7 +107,9 @@ mnemo 是一个 agent-first 的本地记忆系统。
 
 ## 特性
 
-- **MCP-native agent contract**：兼容 Claude Code、Claude Desktop、Cursor、Codex CLI 和所有 MCP 客户端。
+- **桌面客户端优先**：把 mnemo 当作 App 安装，在一个地方链接或断开 Agent 客户端。
+- **内置 CLI**：桌面客户端包含 `mnemo` CLI，Agent 仍然可以使用 stdio MCP 和本地命令。
+- **MCP-native agent contract**：兼容 Claude Code、Claude Desktop、Cursor、Codex CLI、Qwen Code、Gemini CLI、CodeBuddy、Windsurf、GitHub Copilot CLI 和所有 MCP 客户端。
 - **混合搜索**：FTS5 全文搜索 + sqlite-vec 语义搜索 + typed knowledge graph，通过 RRF 融合排序。
 - **搜索时维护任务**：search 结果可附带一个相关清理任务，比如归档过时知识或清理重复条目。
 - **知识生命周期**：条目可在 `active`、`stale`、`superseded`、`archived` 之间流转。
@@ -101,23 +123,47 @@ mnemo 是一个 agent-first 的本地记忆系统。
 
 ## 快速开始
 
-mnemo 只通过 GitHub Releases 发布预编译二进制。
+mnemo 通过 GitHub Releases 发布预编译桌面客户端和 CLI 二进制。
 
 **终端用户不需要 Python，不需要 pip，不需要 npm，也不需要从源码构建。**
 
-### macOS / Linux
+### 推荐：安装桌面客户端
+
+从最新 release 下载适合你平台的安装包：
+
+| 平台 | 推荐安装包 |
+|------|------------|
+| macOS Apple Silicon | [`mnemo-desktop-macos-arm64.dmg`](https://github.com/zhuqingyv/mnemo/releases/latest/download/mnemo-desktop-macos-arm64.dmg) |
+| macOS Intel | [`mnemo-desktop-macos-x86_64.dmg`](https://github.com/zhuqingyv/mnemo/releases/latest/download/mnemo-desktop-macos-x86_64.dmg) |
+| Linux x86_64 | [`mnemo-desktop-linux-x86_64.AppImage`](https://github.com/zhuqingyv/mnemo/releases/latest/download/mnemo-desktop-linux-x86_64.AppImage) |
+| Windows x86_64 | [`mnemo-desktop-windows-x86_64.exe`](https://github.com/zhuqingyv/mnemo/releases/latest/download/mnemo-desktop-windows-x86_64.exe) |
+
+打开客户端后：
+
+1. 让 mnemo 检测你已经安装的 AI 客户端。
+2. 对需要接入的 Agent 点击 **链接**。
+3. 如果对应 AI 客户端已经打开，重启它。
+4. 让 Agent 使用 mnemo 记忆。
+
+桌面客户端内置本地 `mnemo` CLI，因此链接后的 Agent 可以直接启动 `mnemo mcp`，不需要你安装 Python 或从源码构建。
+
+### 备用：只安装 CLI
+
+如果你只想使用独立 CLI 二进制，可以使用安装脚本。
+
+#### macOS / Linux
 
 ```bash
 curl -fsSL https://github.com/zhuqingyv/mnemo/releases/latest/download/install.sh | sh
 ```
 
-### Windows PowerShell
+#### Windows PowerShell
 
 ```powershell
 irm https://github.com/zhuqingyv/mnemo/releases/latest/download/install.ps1 | iex
 ```
 
-安装器会：
+CLI 安装器会：
 
 1. 自动识别系统和 CPU 架构。
 2. 下载匹配的预编译二进制。
@@ -131,8 +177,13 @@ irm https://github.com/zhuqingyv/mnemo/releases/latest/download/install.ps1 | ie
 - **Claude Desktop**
 - **Cursor**
 - **Codex CLI**
+- **Qwen Code**
+- **Gemini CLI**
+- **CodeBuddy**
+- **Windsurf**
+- **GitHub Copilot CLI**
 
-安装完成后，重启你的 AI 客户端，然后验证：
+安装完成后，重启你的 AI 客户端。如果你走的是 CLI-only 路径，可以验证：
 
 ```bash
 mnemo --version
@@ -167,7 +218,9 @@ open http://127.0.0.1:8787/viz/
 
 ## 使用
 
-mnemo 提供 11 个 MCP 工具：
+大多数用户应该从桌面客户端开始：链接你使用的 Agent，然后让 Agent 通过 MCP 调用 mnemo。
+
+对于 Agent 和高级 CLI 工作流，mnemo 提供 11 个 MCP 工具：
 
 | 工具 | 用途 |
 |------|------|
@@ -183,7 +236,7 @@ mnemo 提供 11 个 MCP 工具：
 | `list_tags` | 浏览标签体系 |
 | `search_by_tag` | 按标签过滤搜索 |
 
-CLI 也可以直接使用：
+CLI 会随客户端一起安装，也会作为独立二进制发布：
 
 ```bash
 mnemo search "websocket heartbeat"
@@ -329,11 +382,12 @@ RAG 记事实，mnemo 训练习惯。
 ## 架构
 
 ```text
-MCP client ──┐                         ┌── FTS5 (BM25)
-             ├──▶ mnemo service ──┬──▶──┼── sqlite-vec (semantic)
-CLI ─────────┘                    │     └── relation graph (typed edges)
-                                  ▼
-                          SQLite single file
+Desktop client ─┐
+MCP client ─────┼──▶ mnemo service ──┬──▶ FTS5 (BM25)
+CLI ────────────┘                    ├──▶ sqlite-vec (semantic)
+                                     └──▶ relation graph (typed edges)
+                                      ▼
+                              SQLite single file
 ```
 
 当前版本的核心数据都在一个本地 SQLite 文件里。知识、关系、反馈、事件、生命周期和向量索引都可检查、可迁移、可备份。
