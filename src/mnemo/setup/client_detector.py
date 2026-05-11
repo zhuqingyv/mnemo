@@ -127,8 +127,12 @@ _CLIENTS = [
         "prompt_target": "copilot_instructions",
         "format": "json",
         "mcp_field": "mcpServers",
+        # Detect via binary name or the path where `gh` installs the extension.
+        # Do NOT use detect_commands with ["gh", "copilot", ...]: when the
+        # extension is not installed, gh downloads it over the network, which
+        # hangs indefinitely in CI / air-gapped environments.
         "detect_binaries": ["copilot"],
-        "detect_commands": [["gh", "copilot", "--help"], ["copilot", "--help"]],
+        "detect_paths": ["~/.local/share/gh/copilot/copilot"],
     },
 ]
 
