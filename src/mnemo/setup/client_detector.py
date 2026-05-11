@@ -11,6 +11,8 @@ Each client entry declares:
 
 from __future__ import annotations
 
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -40,6 +42,7 @@ _CLIENTS = [
         "prompt_target": "claude_global",
         "format": "json",
         "mcp_field": "mcpServers",
+        "detect_binaries": ["claude"],
     },
     {
         "name": "claude-desktop",
@@ -54,12 +57,17 @@ _CLIENTS = [
     {
         "name": "cursor",
         "config_path": "~/.cursor/mcp.json",
-        # Cursor uses project-level rules; setup.command will inject it into
-        # the cwd's .cursorrules when explicitly asked.
+        # Cursor supports both legacy .cursorrules and modern project rules.
         "prompt_path": ".cursorrules",
         "prompt_target": "cursor_rules",
+        "prompt_paths": [
+            {"path": ".cursorrules", "target": "cursor_rules"},
+            {"path": ".cursor/rules/mnemo.mdc", "target": "cursor_project_rule"},
+        ],
         "format": "json",
         "mcp_field": "mcpServers",
+        "detect_binaries": ["cursor"],
+        "detect_paths": ["/Applications/Cursor.app"],
     },
     {
         "name": "codex-cli",
@@ -68,6 +76,7 @@ _CLIENTS = [
         "prompt_target": "agents_md",
         "format": "toml",
         "mcp_field": "mcp_servers",
+        "detect_binaries": ["codex"],
     },
     {
         "name": "qwen-code",
@@ -76,6 +85,7 @@ _CLIENTS = [
         "prompt_target": "qwen_md",
         "format": "json",
         "mcp_field": "mcpServers",
+        "detect_binaries": ["qwen"],
     },
     {
         "name": "gemini-cli",
@@ -84,6 +94,7 @@ _CLIENTS = [
         "prompt_target": "gemini_md",
         "format": "json",
         "mcp_field": "mcpServers",
+        "detect_binaries": ["gemini"],
     },
     {
         "name": "codebuddy",
@@ -92,28 +103,32 @@ _CLIENTS = [
         "prompt_target": "codebuddy_md",
         "format": "json",
         "mcp_field": "mcpServers",
+        "detect_binaries": ["cbc", "codebuddy"],
     },
     {
         "name": "windsurf",
         # Windsurf stores MCP config at ~/.codeium/windsurf/mcp_config.json.
-        # Currently only stdio transport is confirmed; HTTP support is uncertain.
-        # Windsurf does not support prompt/resource injection.
+        # Global Cascade rules live in memories/global_rules.md.
         "config_path": "~/.codeium/windsurf/mcp_config.json",
-        "prompt_path": None,
-        "prompt_target": None,
+        "prompt_path": "~/.codeium/windsurf/memories/global_rules.md",
+        "prompt_target": "windsurf_global_rules",
         "format": "json",
         "mcp_field": "mcpServers",
+        "detect_binaries": ["windsurf"],
+        "detect_paths": ["/Applications/Windsurf.app"],
     },
     {
         "name": "github-copilot-cli",
         # GitHub Copilot CLI stores MCP config at ~/.copilot/mcp-config.json.
         # Requires explicit "type" field ("local"/"stdio"/"http").
-        # No separate system prompt file.
+        # Copilot CLI supports local custom instructions in ~/.copilot.
         "config_path": "~/.copilot/mcp-config.json",
-        "prompt_path": None,
-        "prompt_target": None,
+        "prompt_path": "~/.copilot/copilot-instructions.md",
+        "prompt_target": "copilot_instructions",
         "format": "json",
         "mcp_field": "mcpServers",
+        "detect_binaries": ["copilot"],
+        "detect_commands": [["gh", "copilot", "--help"], ["copilot", "--help"]],
     },
 ]
 
@@ -122,6 +137,48 @@ def _resolve(path_str: str | None) -> str | None:
     if path_str is None:
         return None
     return str(Path(path_str).expanduser())
+
+
+def _binary_candidate_paths(binary: str) -> list[Path]:
+    home = Path.home()
+    paths = [
+        home / ".local" / "bin" / binary,
+        home / ".mnemo" / "bin" / binary,
+        Path("/opt/homebrew/bin") / binary,
+        Path("/usr/local/bin") / binary,
+        Path("/usr/bin") / binary,
+        Path("/bin") / binary,
+    ]
+    nvm_versions = home / ".nvm" / "versions" / "node"
+    if nvm_versions.exists():
+        paths.extend(
+            path / "bin" / binary for path in nvm_versions.iterdir() if path.is_dir()
+        )
+    return paths
+
+
+def _binary_exists(binary: str) -> bool:
+    return shutil.which(binary) is not None or any(
+        path.exists() for path in _binary_candidate_paths(binary)
+    )
+
+
+def _command_succeeds(command: list[str]) -> bool:
+    if not command or not _binary_exists(command[0]):
+        return False
+    executable = shutil.which(command[0]) or str(
+        next(path for path in _binary_candidate_paths(command[0]) if path.exists())
+    )
+    try:
+        result = subprocess.run(
+            [executable, *command[1:]],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=3,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.returncode == 0
 
 
 def detect_clients() -> list[dict]:
@@ -148,7 +205,22 @@ def detect_clients() -> list[dict]:
         else:
             chosen = primary  # write to primary even if neither exists
 
-        supported = primary.exists() or (fallback is not None and fallback.exists())
+        binary_supported = any(
+            _binary_exists(binary) for binary in client.get("detect_binaries", [])
+        )
+        path_supported = any(
+            Path(path).expanduser().exists() for path in client.get("detect_paths", [])
+        )
+        command_supported = any(
+            _command_succeeds(cmd) for cmd in client.get("detect_commands", [])
+        )
+        supported = (
+            primary.exists()
+            or (fallback is not None and fallback.exists())
+            or binary_supported
+            or path_supported
+            or command_supported
+        )
 
         results.append(
             {
@@ -156,6 +228,13 @@ def detect_clients() -> list[dict]:
                 "config_path": str(chosen),
                 "prompt_path": _resolve(client["prompt_path"]),
                 "prompt_target": client.get("prompt_target"),
+                "prompt_paths": [
+                    {
+                        "path": _resolve(prompt["path"]),
+                        "target": prompt["target"],
+                    }
+                    for prompt in client.get("prompt_paths", [])
+                ],
                 "format": client["format"],
                 "mcp_field": client["mcp_field"],
                 "supported": supported,

@@ -47,6 +47,17 @@ _DISPLAY_NAMES = {
 _PROJECT_LEVEL_PROMPT = {"cursor", "codex-cli"}
 
 
+def _prompt_entries(client: dict) -> list[dict[str, str]]:
+    entries = client.get("prompt_paths") or []
+    if entries:
+        return entries
+    prompt_path = client.get("prompt_path")
+    prompt_target = client.get("prompt_target")
+    if prompt_path is None or prompt_target is None:
+        return []
+    return [{"path": prompt_path, "target": prompt_target}]
+
+
 def _resolve_mnemo_command() -> str:
     """Pick the executable string used in stdio MCP entries.
 
@@ -98,6 +109,11 @@ def setup_command(
         "--uninstall",
         help="Remove mnemo entries (MCP config + prompt block) from every detected client.",
     ),
+    mcp_only: bool = typer.Option(
+        False,
+        "--mcp-only",
+        help="Only change MCP config; leave prompt files untouched.",
+    ),
     dry_run: bool = typer.Option(
         False, "--dry-run", help="Show what would change without writing files."
     ),
@@ -109,13 +125,18 @@ def setup_command(
         raise typer.Exit(code=2)
 
     if uninstall:
-        return _run_uninstall(client=client, no_project_prompts=no_project_prompts, dry_run=dry_run)
+        return _run_uninstall(
+            client=client,
+            no_project_prompts=no_project_prompts,
+            mcp_only=mcp_only,
+            dry_run=dry_run,
+        )
 
     return _run_install(
         mode=mode,
         port=port,
         client=client,
-        skip_prompt=skip_prompt,
+        skip_prompt=skip_prompt or mcp_only,
         no_project_prompts=no_project_prompts,
         auto=auto,
         dry_run=dry_run,
@@ -193,12 +214,10 @@ def _run_install(
                 raise typer.Exit(code=1) from exc
             continue
 
-        # Prompt injection
-        prompt_path = client.get("prompt_path")
-        prompt_target = client.get("prompt_target")
+        prompt_entries = _prompt_entries(client)
 
-        if skip_prompt or prompt_path is None or prompt_target is None:
-            if prompt_path is None:
+        if skip_prompt or not prompt_entries:
+            if not prompt_entries:
                 console.print(f"    [dim]skip prompt (client has no prompt file)[/]")
             else:
                 console.print(f"    [dim]skip prompt (--skip-prompt)[/]")
@@ -206,23 +225,26 @@ def _run_install(
 
         if client["name"] in _PROJECT_LEVEL_PROMPT and no_project_prompts:
             console.print(
-                f"    [dim]skip prompt (project-level: {prompt_path}, --no-project-prompts)[/]"
+                f"    [dim]skip prompt (project-level, --no-project-prompts)[/]"
             )
             continue
 
-        try:
-            if dry_run:
-                console.print(f"    [dim]would write prompt -> {prompt_path}[/]")
-            else:
-                changed = inject_prompt(prompt_path, target=prompt_target)
-                if changed:
-                    console.print(f"    [green]ok[/]  Prompt -> {prompt_path}")
+        for prompt_entry in prompt_entries:
+            prompt_path = prompt_entry["path"]
+            prompt_target = prompt_entry["target"]
+            try:
+                if dry_run:
+                    console.print(f"    [dim]would write prompt -> {prompt_path}[/]")
                 else:
-                    console.print(
-                        f"    [green]ok[/]  Prompt -> {prompt_path} [dim](already up-to-date)[/]"
-                    )
-        except Exception as exc:
-            console.print(f"    [yellow]warn[/] Prompt injection failed: {exc}")
+                    changed = inject_prompt(prompt_path, target=prompt_target)
+                    if changed:
+                        console.print(f"    [green]ok[/]  Prompt -> {prompt_path}")
+                    else:
+                        console.print(
+                            f"    [green]ok[/]  Prompt -> {prompt_path} [dim](already up-to-date)[/]"
+                        )
+            except Exception as exc:
+                console.print(f"    [yellow]warn[/] Prompt injection failed: {exc}")
 
     if failures:
         err_console.print(
@@ -245,7 +267,13 @@ def _run_install(
         console.print("  [dim]stdio mode is on — clients will spawn `mnemo mcp` automatically.[/]\n")
 
 
-def _run_uninstall(*, client: Optional[str] = None, no_project_prompts: bool, dry_run: bool) -> None:
+def _run_uninstall(
+    *,
+    client: Optional[str] = None,
+    no_project_prompts: bool,
+    mcp_only: bool,
+    dry_run: bool,
+) -> None:
     console.print("\n[bold]Uninstalling mnemo from detected clients...[/]\n")
 
     clients = detect_clients()
@@ -278,24 +306,29 @@ def _run_uninstall(*, client: Optional[str] = None, no_project_prompts: bool, dr
             console.print(f"    [red]err[/] {exc}")
             continue
 
-        prompt_path = entry.get("prompt_path")
-        if prompt_path is None:
+        if mcp_only:
+            continue
+
+        prompt_entries = _prompt_entries(entry)
+        if not prompt_entries:
             continue
         if entry["name"] in _PROJECT_LEVEL_PROMPT and no_project_prompts:
             continue
 
-        try:
-            if dry_run:
-                console.print(f"    [dim]would remove prompt block from {prompt_path}[/]")
-            else:
-                removed = remove_prompt(prompt_path)
-                if removed:
-                    console.print(f"    [green]ok[/]  Prompt block removed from {prompt_path}")
-                    any_change = True
+        for prompt_entry in prompt_entries:
+            prompt_path = prompt_entry["path"]
+            try:
+                if dry_run:
+                    console.print(f"    [dim]would remove prompt block from {prompt_path}[/]")
                 else:
-                    console.print(f"    [dim]Prompt block not present in {prompt_path}[/]")
-        except Exception as exc:
-            console.print(f"    [yellow]warn[/] {exc}")
+                    removed = remove_prompt(prompt_path)
+                    if removed:
+                        console.print(f"    [green]ok[/]  Prompt block removed from {prompt_path}")
+                        any_change = True
+                    else:
+                        console.print(f"    [dim]Prompt block not present in {prompt_path}[/]")
+            except Exception as exc:
+                console.print(f"    [yellow]warn[/] {exc}")
 
     if not any_change and not dry_run:
         console.print("\n[yellow]Nothing to remove — mnemo wasn't configured anywhere.[/]")

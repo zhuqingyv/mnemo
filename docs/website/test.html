@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网站测试 - Mnemo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/docs.css">
+</head>
+<body>
+    <div class="container" style="padding: 2rem;">
+        <h1>Mnemo 网站功能测试</h1>
+
+        <div class="test-section">
+            <h2>平台检测测试</h2>
+            <div id="platform-test">
+                <p>检测中...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>GitHub API 测试</h2>
+            <div id="api-test">
+                <p>测试中...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>配置文件测试</h2>
+            <div id="config-test">
+                <p>测试中...</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>样式加载测试</h2>
+            <div id="style-test">
+                <p>测试中...</p>
+            </div>
+        </div>
+
+        <div class="test-results">
+            <h2>测试结果</h2>
+            <div id="results">
+                <ul></ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script>
+        // Test functions
+        function runTests() {
+            const results = document.getElementById('results').querySelector('ul');
+            results.innerHTML = '';
+
+            function addResult(test, passed, message) {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${test}:</strong> <span style="color: ${passed ? 'green' : 'red'}">${passed ? 'PASS' : 'FAIL'}</span> - ${message}`;
+                results.appendChild(li);
+            }
+
+            // Test 1: Platform Detection
+            try {
+                const platform = PlatformDetector.detect();
+                const packageName = PlatformDetector.getPackageName(platform.os, platform.arch);
+                const installCommand = PlatformDetector.getInstallCommand(platform.os);
+                const displayName = PlatformDetector.getPlatformDisplayName(platform.os, platform.arch);
+
+                document.getElementById('platform-test').innerHTML = `
+                    <p><strong>OS:</strong> ${platform.os}</p>
+                    <p><strong>Arch:</strong> ${platform.arch}</p>
+                    <p><strong>Package:</strong> ${packageName || '不支持'}</p>
+                    <p><strong>Install Command:</strong> <code>${installCommand}</code></p>
+                    <p><strong>Display Name:</strong> ${displayName}</p>
+                `;
+
+                addResult('平台检测', true, `检测到 ${platform.os}-${platform.arch}`);
+            } catch (error) {
+                addResult('平台检测', false, error.message);
+            }
+
+            // Test 2: GitHub API
+            const githubAPI = new GitHubAPI();
+            githubAPI.getLatestRelease().then(release => {
+                document.getElementById('api-test').innerHTML = `
+                    <p><strong>Latest Version:</strong> ${release.tag_name}</p>
+                    <p><strong>Published:</strong> ${new Date(release.published_at).toLocaleString()}</p>
+                    <p><strong>Assets:</strong> ${release.assets.length} files</p>
+                `;
+                addResult('GitHub API', true, `获取到版本 ${release.tag_name}`);
+            }).catch(error => {
+                document.getElementById('api-test').innerHTML = `<p style="color: red;">API 错误: ${error.message}</p>`;
+                addResult('GitHub API', false, error.message);
+            });
+
+            // Test 3: Config File
+            try {
+                const config = window.MNEMO_CONFIG;
+                document.getElementById('config-test').innerHTML = `
+                    <p><strong>Latest Version:</strong> ${config.latestVersion}</p>
+                    <p><strong>Build Time:</strong> ${config.buildTime}</p>
+                    <p><strong>Stars:</strong> ${config.stars}</p>
+                    <p><strong>Forks:</strong> ${config.forks}</p>
+                `;
+                addResult('配置文件', true, '配置文件加载成功');
+            } catch (error) {
+                addResult('配置文件', false, error.message);
+            }
+
+            // Test 4: Styles
+            try {
+                const testElement = document.createElement('div');
+                testElement.className = 'btn btn-primary';
+                document.body.appendChild(testElement);
+                const styles = window.getComputedStyle(testElement);
+                const hasPrimaryColor = styles.backgroundColor.includes('37') || styles.backgroundColor.includes('99'); // Blue color
+                document.body.removeChild(testElement);
+
+                document.getElementById('style-test').innerHTML = `
+                    <p><strong>Primary Button Color:</strong> ${hasPrimaryColor ? '正确' : '未找到'}</p>
+                    <p><strong>CSS Loaded:</strong> ${styles.length > 0 ? '是' : '否'}</p>
+                `;
+
+                addResult('样式加载', hasPrimaryColor, hasPrimaryColor ? '样式正确加载' : '样式可能有问题');
+            } catch (error) {
+                addResult('样式加载', false, error.message);
+            }
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+
+    <style>
+        .test-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .test-section h2 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+
+        .test-results {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .test-results h2 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+
+        .test-results ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .test-results li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .test-results li:last-child {
+            border-bottom: none;
+        }
+
+        code {
+            background: #f1f5f9;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</body>
+</html>

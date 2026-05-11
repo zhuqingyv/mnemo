@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 文档 - Mnemo</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/docs.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="../assets/images/logo-128.png">
+    <link rel="icon" type="image/png" sizes="256x256" href="../assets/images/logo-256.png">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <img src="../assets/images/logo-128.png" alt="Mnemo" class="nav-logo">
+                    <h1 class="nav-title">Mnemo</h1>
+                </div>
+                <div class="nav-links">
+                    <a href="../index.html#features" class="nav-link">功能</a>
+                    <a href="../index.html#installation" class="nav-link">安装</a>
+                    <a href="../index.html#docs" class="nav-link">文档</a>
+                    <a href="https://github.com/zhuqingyv/mnemo" target="_blank" class="nav-link">GitHub</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="../index.html">首页</a> / API 文档
+            </div>
+
+            <h1 class="page-title">API 文档</h1>
+
+            <div class="api-docs">
+                <!-- Overview -->
+                <section class="api-section">
+                    <h2>概述</h2>
+                    <p>Mnemo 提供了完整的命令行界面和 MCP (Model Context Protocol) 接口，支持知识管理、搜索和同步等功能。</p>
+
+                    <div class="api-features">
+                        <div class="feature-item">
+                            <h4>知识管理</h4>
+                            <p>创建、更新、删除和查询知识条目</p>
+                        </div>
+                        <div class="feature-item">
+                            <h4>语义搜索</h4>
+                            <p>基于向量的智能搜索和推荐</p>
+                        </div>
+                        <div class="feature-item">
+                            <h4>MCP 集成</h4>
+                            <p>与主流 AI 客户端无缝集成</p>
+                        </div>
+                        <div class="feature-item">
+                            <h4>数据同步</h4>
+                            <p>支持多客户端数据同步</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CLI Commands -->
+                <section class="api-section">
+                    <h2>CLI 命令</h2>
+
+                    <div class="command-group">
+                        <h3>基础命令</h3>
+
+                        <div class="command-item">
+                            <h4>mnemo --version</h4>
+                            <p>显示版本信息</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo --version
+mnemo 0.1.0</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-item">
+                            <h4>mnemo --help</h4>
+                            <p>显示帮助信息</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo --help
+Usage: mnemo [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --version  Show the version and exit.
+  --help     Show this message and exit.
+
+Commands:
+  search     Search knowledge entries
+  create     Create new knowledge entry
+  update     Update existing knowledge entry
+  delete     Delete knowledge entry
+  get        Get knowledge entry by ID or title
+  feedback   Record feedback on knowledge entry
+  setup      Configure MCP clients
+  serve      Start HTTP server
+  mcp        Start MCP server</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="command-group">
+                        <h3>知识管理</h3>
+
+                        <div class="command-item">
+                            <h4>mnemo search</h4>
+                            <p>搜索知识条目</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo search [OPTIONS] QUERY
+
+Options:
+  --scope TEXT          Scope: global, project, session
+  --project-name TEXT   Project name for project scope
+  --mode TEXT           Search mode: hybrid, fts, vector
+  --sort-by TEXT        Sort: relevance, time, feedback
+  --limit INTEGER       Result limit (default: 20)
+  --include-archived    Include archived entries
+
+Examples:
+  mnemo search "React hooks"
+  mnemo search --mode fts "exact phrase"
+  mnemo search --scope project "current project decisions"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-item">
+                            <h4>mnemo create</h4>
+                            <p>创建新的知识条目</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo create [OPTIONS]
+
+Options:
+  --title TEXT          Title (required)
+  --summary TEXT        Summary (required)
+  --content TEXT        Content (required)
+  --tags TEXT           Comma-separated tags
+  --claim-type TEXT     Type: fact, decision, procedure, hypothesis
+  --scope TEXT          Scope: global, project, session
+  --project-name TEXT   Project name
+  --source TEXT         Source reference
+  --related TEXT        Related entries (comma-separated)
+
+Examples:
+  mnemo create --title "React Best Practices" \
+    --summary "Common React patterns and practices" \
+    --content "Detailed explanation..." \
+    --tags "react,frontend,web" \
+    --claim-type procedure</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-item">
+                            <h4>mnemo get</h4>
+                            <p>获取知识条目详情</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo get [OPTIONS] ID_OR_TITLE
+
+Options:
+  --format TEXT   Output format: text, json, markdown
+
+Examples:
+  mnemo get 123
+  mnemo get "React Best Practices"
+  mnemo get --format json 123</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-item">
+                            <h4>mnemo update</h4>
+                            <p>更新现有知识条目</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo update [OPTIONS] ID
+
+Options:
+  --title TEXT          New title
+  --summary TEXT        New summary
+  --content TEXT        New content
+  --tags TEXT           New tags
+  --claim-type TEXT     New claim type
+
+Examples:
+  mnemo update 123 --title "Updated Title"
+  mnemo update 123 --content "New content..."</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-item">
+                            <h4>mnemo delete</h4>
+                            <p>删除知识条目</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo delete ID
+
+Examples:
+  mnemo delete 123</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-item">
+                            <h4>mnemo feedback</h4>
+                            <p>记录知识条目反馈</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo feedback [OPTIONS] KNOWLEDGE_ID SIGNAL
+
+Options:
+  --reason TEXT     Feedback reason
+  --actor TEXT      Feedback actor (default: agent:unknown)
+
+Signals:
+  helpful      - The entry was useful
+  misleading   - The entry was misleading
+  outdated     - The entry is outdated
+
+Examples:
+  mnemo feedback 123 helpful
+  mnemo feedback 123 misleading --reason "Incorrect information"
+  mnemo feedback 123 outdated --reason "New API available"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="command-group">
+                        <h3>配置和服务器</h3>
+
+                        <div class="command-item">
+                            <h4>mnemo setup</h4>
+                            <p>配置 MCP 客户端</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo setup [OPTIONS]
+
+Options:
+  --auto                 Auto-configure all detected clients
+  --mcp-only            Only configure MCP, don't modify prompts
+  --mode TEXT           MCP mode: stdio, http
+  --port INTEGER        HTTP port (default: 8787)
+  --dry-run             Show what would be done
+  --uninstall           Remove configuration
+  --no-project-prompts  Skip project-specific prompts
+
+Examples:
+  mnemo setup --auto
+  mnemo setup --mode http --port 8787
+  mnemo setup --dry-run --mcp-only
+  mnemo setup --uninstall</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-item">
+                            <h4>mnemo serve</h4>
+                            <p>启动 HTTP 服务器</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo serve [OPTIONS]
+
+Options:
+  --host TEXT     Host address (default: localhost)
+  --port INTEGER  Port number (default: 8787)
+  --cors          Enable CORS
+
+Examples:
+  mnemo serve
+  mnemo serve --host 0.0.0.0 --port 8080
+  mnemo serve --cors</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-item">
+                            <h4>mnemo mcp</h4>
+                            <p>启动 MCP 服务器</p>
+                            <div class="code-block">
+                                <pre><code>$ mnemo mcp [OPTIONS]
+
+Options:
+  --mode TEXT     MCP mode: stdio, http
+  --port INTEGER  HTTP port (default: 8787)
+
+Examples:
+  mnemo mcp
+  mnemo mcp --mode http --port 8787</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- MCP API -->
+                <section class="api-section">
+                    <h2>MCP API</h2>
+                    <p>Mnemo 通过 MCP 协议提供以下工具和资源：</p>
+
+                    <div class="mcp-tools">
+                        <h3>可用工具</h3>
+
+                        <div class="tool-item">
+                            <h4>mnemo__search</h4>
+                            <p>搜索知识条目</p>
+                            <div class="tool-schema">
+                                <h5>参数：</h5>
+                                <ul>
+                                    <li><code>query</code> (string, required) - 搜索查询</li>
+                                    <li><code>scope</code> (string, optional) - 范围：global/project/session</li>
+                                    <li><code>mode</code> (string, optional) - 模式：hybrid/fts/vector</li>
+                                    <li><code>limit</code> (integer, optional) - 结果限制</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="tool-item">
+                            <h4>mnemo__create_knowledge</h4>
+                            <p>创建知识条目</p>
+                            <div class="tool-schema">
+                                <h5>参数：</h5>
+                                <ul>
+                                    <li><code>title</code> (string, required) - 标题</li>
+                                    <li><code>summary</code> (string, required) - 摘要</li>
+                                    <li><code>content</code> (string, required) - 内容</li>
+                                    <li><code>tags</code> (string, required) - 标签（逗号分隔）</li>
+                                    <li><code>claim_type</code> (string, optional) - 类型：fact/decision/procedure/hypothesis</li>
+                                    <li><code>scope</code> (string, optional) - 范围：global/project/session</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="tool-item">
+                            <h4>mnemo__get_knowledge</h4>
+                            <p>获取知识条目</p>
+                            <div class="tool-schema">
+                                <h5>参数：</h5>
+                                <ul>
+                                    <li><code>id_or_title</code> (string, required) - ID 或精确标题</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="tool-item">
+                            <h4>mnemo__update_knowledge</h4>
+                            <p>更新知识条目</p>
+                            <div class="tool-schema">
+                                <h5>参数：</h5>
+                                <ul>
+                                    <li><code>id</code> (integer, required) - 条目 ID</li>
+                                    <li><code>title</code> (string, optional) - 新标题</li>
+                                    <li><code>summary</code> (string, optional) - 新摘要</li>
+                                    <li><code>content</code> (string, optional) - 新内容</li>
+                                    <li><code>tags</code> (string, optional) - 新标签</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="tool-item">
+                            <h4>mnemo__feedback_knowledge</h4>
+                            <p>记录反馈</p>
+                            <div class="tool-schema">
+                                <h5>参数：</h5>
+                                <ul>
+                                    <li><code>knowledge_id</code> (integer, required) - 知识条目 ID</li>
+                                    <li><code>signal</code> (string, required) - 信号：helpful/misleading/outdated</li>
+                                    <li><code>reason</code> (string, optional) - 反馈原因</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- HTTP API -->
+                <section class="api-section">
+                    <h2>HTTP API</h2>
+                    <p>当使用 HTTP 模式时，Mnemo 提供 RESTful API：</p>
+
+                    <div class="http-endpoints">
+                        <h3>端点列表</h3>
+
+                        <div class="endpoint-item">
+                            <h4>GET /api/v1/search</h4>
+                            <p>搜索知识条目</p>
+                            <div class="endpoint-params">
+                                <h5>查询参数：</h5>
+                                <ul>
+                                    <li><code>q</code> (string, required) - 搜索查询</li>
+                                    <li><code>scope</code> (string) - 范围</li>
+                                    <li><code>mode</code> (string) - 搜索模式</li>
+                                    <li><code>limit</code> (integer) - 结果限制</li>
+                                </ul>
+                            </div>
+                            <div class="endpoint-response">
+                                <h5>响应：</h5>
+                                <div class="code-block">
+                                    <pre><code>{
+  "results": [
+    {
+      "id": 123,
+      "title": "React Best Practices",
+      "summary": "Common React patterns",
+      "tags": ["react", "frontend"],
+      "claim_type": "procedure",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "total": 1,
+  "query": "React"
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-item">
+                            <h4>POST /api/v1/knowledge</h4>
+                            <p>创建知识条目</p>
+                            <div class="endpoint-request">
+                                <h5>请求体：</h5>
+                                <div class="code-block">
+                                    <pre><code>{
+  "title": "New Knowledge",
+  "summary": "Summary",
+  "content": "Full content",
+  "tags": "tag1,tag2",
+  "claim_type": "fact",
+  "scope": "global"
+}</code></pre>
+                                </div>
+                            </div>
+                            <div class="endpoint-response">
+                                <h5>响应：</h5>
+                                <div class="code-block">
+                                    <pre><code>{
+  "id": 124,
+  "title": "New Knowledge",
+  "created_at": "2024-01-01T00:00:00Z"
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-item">
+                            <h4>GET /api/v1/knowledge/{id}</h4>
+                            <p>获取知识条目</p>
+                            <div class="endpoint-response">
+                                <h5>响应：</h5>
+                                <div class="code-block">
+                                    <pre><code>{
+  "id": 123,
+  "title": "React Best Practices",
+  "summary": "Common React patterns",
+  "content": "Detailed content...",
+  "tags": ["react", "frontend"],
+  "claim_type": "procedure",
+  "scope": "global",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-item">
+                            <h4>PUT /api/v1/knowledge/{id}</h4>
+                            <p>更新知识条目</p>
+                            <div class="endpoint-request">
+                                <h5>请求体：</h5>
+                                <div class="code-block">
+                                    <pre><code>{
+  "title": "Updated Title",
+  "content": "Updated content"
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-item">
+                            <h4>DELETE /api/v1/knowledge/{id}</h4>
+                            <p>删除知识条目</p>
+                            <div class="endpoint-response">
+                                <h5>响应：</h5>
+                                <div class="code-block">
+                                    <pre><code>{"message": "Knowledge entry deleted"}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-item">
+                            <h4>POST /api/v1/knowledge/{id}/feedback</h4>
+                            <p>记录反馈</p>
+                            <div class="endpoint-request">
+                                <h5>请求体：</h5>
+                                <div class="code-block">
+                                    <pre><code>{
+  "signal": "helpful",
+  "reason": "Very useful information"
+}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Examples -->
+                <section class="api-section">
+                    <h2>使用示例</h2>
+
+                    <div class="example-group">
+                        <h3>CLI 使用示例</h3>
+
+                        <div class="example-item">
+                            <h4>基本搜索</h4>
+                            <div class="code-block">
+                                <pre><code># 搜索 React 相关知识
+mnemo search "React hooks"
+
+# 在项目范围内搜索
+mnemo search --scope project "API design"
+
+# 精确短语搜索
+mnemo search --mode fts "exact phrase"
+
+# 语义搜索
+mnemo search --mode vector "similar concepts"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="example-item">
+                            <h4>创建知识条目</h4>
+                            <div class="code-block">
+                                <pre><code># 创建最佳实践条目
+mnemo create \
+  --title "React Performance Tips" \
+  --summary "Common React performance optimization techniques" \
+  --content "Use React.memo, useCallback, useMemo..." \
+  --tags "react,performance,optimization" \
+  --claim-type procedure
+
+# 创建决策记录
+mnemo create \
+  --title "Database Choice: PostgreSQL vs MongoDB" \
+  --summary "Decision to use PostgreSQL for the main application" \
+  --content "After evaluating both options..." \
+  --tags "database,postgresql,decision" \
+  --claim_type decision</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="example-item">
+                            <h4>配置 MCP</h4>
+                            <div class="code-block">
+                                <pre><code># 自动配置所有客户端
+mnemo setup --auto
+
+# 只配置 MCP，不修改提示词
+mnemo setup --mcp-only
+
+# 配置 HTTP 模式
+mnemo setup --mode http --port 8787
+
+# 预览将要进行的配置
+mnemo setup --dry-run</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="example-group">
+                        <h3>MCP 使用示例</h3>
+
+                        <div class="example-item">
+                            <h4>在 AI 客户端中使用</h4>
+                            <div class="code-block">
+                                <pre><code>User: "帮我搜索 React 相关的最佳实践"
+
+AI: 我来搜索 Mnemo 知识库中的 React 最佳实践...
+[调用 mnemo__search 工具]
+
+找到以下相关条目：
+1. React Performance Tips - 性能优化技巧
+2. React Hooks Best Practices - Hooks 使用规范
+3. React Testing Strategies - 测试策略
+
+详细内容请告诉我您想了解哪个方面。</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="example-group">
+                        <h3>HTTP API 使用示例</h3>
+
+                        <div class="example-item">
+                            <h4>curl 命令</h4>
+                            <div class="code-block">
+                                <pre><code># 搜索知识
+curl "http://localhost:8787/api/v1/search?q=React"
+
+# 创建知识
+curl -X POST http://localhost:8787/api/v1/knowledge \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "New Knowledge",
+    "summary": "Summary",
+    "content": "Content",
+    "tags": "tag1,tag2"
+  }'
+
+# 获取知识
+curl http://localhost:8787/api/v1/knowledge/123
+
+# 记录反馈
+curl -X POST http://localhost:8787/api/v1/knowledge/123/feedback \
+  -H "Content-Type: application/json" \
+  -d '{"signal": "helpful", "reason": "Very useful"}'</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="example-item">
+                            <h4>Python 示例</h4>
+                            <div class="code-block">
+                                <pre><code>import requests
+
+# 搜索知识
+response = requests.get('http://localhost:8787/api/v1/search', params={'q': 'React'})
+results = response.json()['results']
+
+# 创建知识
+knowledge = {
+    'title': 'Python Best Practices',
+    'summary': 'Common Python patterns',
+    'content': 'Detailed content...',
+    'tags': 'python,best-practices'
+}
+response = requests.post('http://localhost:8787/api/v1/knowledge', json=knowledge)
+new_id = response.json()['id']
+
+# 获取知识
+response = requests.get(f'http://localhost:8787/api/v1/knowledge/{new_id}')
+knowledge_detail = response.json()</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Error Handling -->
+                <section class="api-section">
+                    <h2>错误处理</h2>
+
+                    <div class="error-codes">
+                        <h3>HTTP 状态码</h3>
+                        <div class="error-list">
+                            <div class="error-item">
+                                <h4>200 OK</h4>
+                                <p>请求成功</p>
+                            </div>
+                            <div class="error-item">
+                                <h4>400 Bad Request</h4>
+                                <p>请求参数错误</p>
+                            </div>
+                            <div class="error-item">
+                                <h4>404 Not Found</h4>
+                                <p>资源不存在</p>
+                            </div>
+                            <div class="error-item">
+                                <h4>422 Unprocessable Entity</h4>
+                                <p>数据验证失败</p>
+                            </div>
+                            <div class="error-item">
+                                <h4>500 Internal Server Error</h4>
+                                <p>服务器内部错误</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="error-format">
+                        <h3>错误响应格式</h3>
+                        <div class="code-block">
+                            <pre><code>{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": {
+      "field": "title",
+      "issue": "Title is required"
+    }
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>项目</h4>
+                    <ul>
+                        <li><a href="https://github.com/zhuqingyv/mnemo" target="_blank">GitHub</a></li>
+                        <li><a href="https://github.com/zhuqingyv/mnemo/releases" target="_blank">发布版本</a></li>
+                        <li><a href="https://github.com/zhuqingyv/mnemo/issues" target="_blank">问题反馈</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>文档</h4>
+                    <ul>
+                        <li><a href="installation.html">安装指南</a></li>
+                        <li><a href="api.html">API 文档</a></li>
+                        <li><a href="https://github.com/zhuqingyv/mnemo/blob/main/AGENTS.md" target="_blank">Agent 使用指南</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>社区</h4>
+                    <ul>
+                        <li><a href="https://github.com/zhuqingyv/mnemo/discussions" target="_blank">讨论</a></li>
+                        <li><a href="https://github.com/zhuqingyv/mnemo/blob/main/CONTRIBUTING.md" target="_blank">贡献指南</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Mnemo. 开源项目，MIT 许可证。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -619,6 +619,11 @@ def setup(
         "--uninstall",
         help="Remove mnemo entries (MCP config + prompt block) from every detected client.",
     ),
+    mcp_only: bool = typer.Option(
+        False,
+        "--mcp-only",
+        help="Only change MCP config; leave prompt files untouched.",
+    ),
     dry_run: bool = typer.Option(
         False, "--dry-run", help="Show what would change without writing files."
     ),
@@ -634,6 +639,7 @@ def setup(
         no_project_prompts=no_project_prompts,
         auto=auto,
         uninstall=uninstall,
+        mcp_only=mcp_only,
         dry_run=dry_run,
     )
 
