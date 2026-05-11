@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.5] — 2026-05-12
+## [0.1.6] — 2026-05-12
 
 ### Fixed
 
@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Release gate: ensure core assets are present for website download
 - macOS Intel builds: use macos-14 with Rosetta for cross-compilation on ARM runners
 - Windows ARM64: fixed sqlite-vec compilation with proper MSVC ARM64 toolchain setup
+- Desktop release gate: macOS Intel desktop made non-blocking to avoid blocking core CLI release
 
 ## [0.1.0] — 2026-04-30
 
