@@ -4,12 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.2] — 2026-05-12
+## [0.1.3] — 2026-05-12
 
 ### Fixed
 
 - POSIX smoke tests: strip ANSI codes before grep to handle Rich/Typer coloring in GitHub Actions environment
 - Desktop bundled resource validation: added ANSI stripping for setup --help checks
+- CI improvements: added timeout limits, skip desktop builds on PR, upgraded macOS Intel runner
+- Release gate: ensure core assets are present for website download
 
 ## [0.1.0] — 2026-04-30
 
