@@ -99,6 +99,8 @@ test_agent "codebuddy" check_json_has_mnemo "$HOME/.codebuddy/.mcp.json"
 test_agent "codex-cli" check_toml_has_mnemo "$HOME/.codex/config.toml"
 test_agent "gemini-cli" check_json_has_mnemo "$HOME/.gemini/settings.json"
 test_agent "cursor" check_json_has_mnemo "$HOME/.cursor/mcp.json"
+test_agent "windsurf" check_json_has_mnemo "$HOME/.codeium/windsurf/mcp_config.json"
+test_agent "github-copilot-cli" check_json_has_mnemo "$HOME/.copilot/mcp-config.json"
 
 # ===== CLAUDE MCP LIST VERIFICATION =====
 info "Testing Claude Code MCP list integration"

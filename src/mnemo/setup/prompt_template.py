@@ -33,6 +33,9 @@ _PROMPT_TARGETS: dict[str, str] = {
     "cursor_rules": "cursor_rules.md",
     "agents_md": "agents_md.md",
     "mcp_instructions": "mcp_instructions.md",
+    "qwen_md": "qwen_md.md",
+    "gemini_md": "gemini_md.md",
+    "codebuddy_md": "codebuddy_md.md",
 }
 
 
@@ -105,8 +108,8 @@ def inject_prompt(
     if _MARKER_RE.search(content):
         new_content = _MARKER_RE.sub(template, content)
     else:
-        sep = "\n" if content and not content.endswith("\n") else ""
-        new_content = content + sep + template
+        sep = "\n" if content and not content.endswith("\n\n") else ""
+        new_content = template + sep + content
 
     os.makedirs(os.path.dirname(prompt_path) or ".", exist_ok=True)
     with open(prompt_path, "w", encoding="utf-8") as f:

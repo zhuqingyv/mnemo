@@ -27,6 +27,8 @@ fn detect_agents() -> Vec<AgentStatus> {
         ("codex-cli", "Codex CLI", "~/.codex/config.toml", vec!["codex"]),
         ("gemini-cli", "Gemini CLI", "~/.gemini/settings.json", vec!["gemini"]),
         ("cursor", "Cursor", "~/.cursor/mcp.json", vec!["cursor"]),
+        ("windsurf", "Windsurf", "~/.codeium/windsurf/mcp_config.json", vec![]),
+        ("github-copilot-cli", "GitHub Copilot CLI", "~/.copilot/mcp-config.json", vec!["copilot"]),
     ];
 
     let home = dirs_home();

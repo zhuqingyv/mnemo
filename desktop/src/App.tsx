@@ -10,6 +10,8 @@ import codebuddyIcon from "./assets/agents/codebuddy.svg";
 import codexIcon from "./assets/agents/codex.svg";
 import geminiIcon from "./assets/agents/gemini.svg";
 import cursorIcon from "./assets/agents/cursor.svg";
+import windsurfIcon from "./assets/agents/windsurf.svg";
+import copilotIcon from "./assets/agents/copilot.svg";
 
 const AGENT_ICONS: Record<string, string> = {
   "claude-code": claudeIcon,
@@ -18,6 +20,8 @@ const AGENT_ICONS: Record<string, string> = {
   "codex-cli": codexIcon,
   "gemini-cli": geminiIcon,
   cursor: cursorIcon,
+  windsurf: windsurfIcon,
+  "github-copilot-cli": copilotIcon,
 };
 
 interface AgentStatus {

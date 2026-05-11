@@ -35,6 +35,11 @@ _DISPLAY_NAMES = {
     "claude-desktop": "Claude Desktop",
     "cursor": "Cursor",
     "codex-cli": "Codex CLI",
+    "qwen-code": "Qwen Code",
+    "gemini-cli": "Gemini CLI",
+    "codebuddy": "CodeBuddy",
+    "windsurf": "Windsurf",
+    "github-copilot-cli": "GitHub Copilot CLI",
 }
 
 # Clients whose prompt file is project-level — only injected when running
@@ -69,6 +74,11 @@ def setup_command(
         "--mode",
         help="MCP transport: 'stdio' (default, zero background process) or 'http'.",
     ),
+    client: Optional[str] = typer.Option(
+        None,
+        "--client", "-c",
+        help="Only target a specific client (e.g. 'claude-code', 'cursor').",
+    ),
     skip_prompt: bool = typer.Option(
         False, "--skip-prompt", help="Skip system prompt injection."
     ),
@@ -99,11 +109,12 @@ def setup_command(
         raise typer.Exit(code=2)
 
     if uninstall:
-        return _run_uninstall(no_project_prompts=no_project_prompts, dry_run=dry_run)
+        return _run_uninstall(client=client, no_project_prompts=no_project_prompts, dry_run=dry_run)
 
     return _run_install(
         mode=mode,
         port=port,
+        client=client,
         skip_prompt=skip_prompt,
         no_project_prompts=no_project_prompts,
         auto=auto,
@@ -115,6 +126,7 @@ def _run_install(
     *,
     mode: str,
     port: int,
+    client: Optional[str] = None,
     skip_prompt: bool,
     no_project_prompts: bool,
     auto: bool,
@@ -123,14 +135,20 @@ def _run_install(
     console.print("\n[bold]Detecting AI clients...[/]\n")
 
     clients = detect_clients()
-    for client in clients:
-        name = _DISPLAY_NAMES.get(client["name"], client["name"])
-        if client["supported"]:
-            console.print(f"  [green]+[/] {name:<16} {client['config_path']}")
+    for c in clients:
+        name = _DISPLAY_NAMES.get(c["name"], c["name"])
+        if c["supported"]:
+            console.print(f"  [green]+[/] {name:<16} {c['config_path']}")
         else:
             console.print(f"  [dim]-[/] {name:<16} not installed")
 
     supported = [c for c in clients if c["supported"]]
+
+    if client:
+        supported = [c for c in supported if c["name"] == client]
+        if not supported:
+            console.print(f"\n[yellow]Client '{client}' not found or not installed.[/]")
+            raise typer.Exit(code=1)
     if not supported:
         console.print("\n[yellow]No supported AI clients detected. Nothing to configure.[/]")
         raise typer.Exit(code=0)
@@ -159,6 +177,7 @@ def _run_install(
                     mode=mode,
                     command=command,
                     mcp_field=client["mcp_field"],
+                    client_name=client["name"],
                 )
                 if modified:
                     console.print(f"    [green]ok[/]  MCP server -> {client['config_path']}")
@@ -226,40 +245,43 @@ def _run_install(
         console.print("  [dim]stdio mode is on — clients will spawn `mnemo mcp` automatically.[/]\n")
 
 
-def _run_uninstall(*, no_project_prompts: bool, dry_run: bool) -> None:
+def _run_uninstall(*, client: Optional[str] = None, no_project_prompts: bool, dry_run: bool) -> None:
     console.print("\n[bold]Uninstalling mnemo from detected clients...[/]\n")
 
     clients = detect_clients()
+    targets = [c for c in clients if c["supported"]]
+    if client:
+        targets = [c for c in targets if c["name"] == client]
+
     any_change = False
 
-    for client in clients:
-        if not client["supported"]:
-            continue
-        name = _DISPLAY_NAMES.get(client["name"], client["name"])
+    for entry in targets:
+        name = _DISPLAY_NAMES.get(entry["name"], entry["name"])
         console.print(f"  {name}:")
 
         try:
             if dry_run:
-                console.print(f"    [dim]would remove MCP entry from {client['config_path']}[/]")
+                console.print(f"    [dim]would remove MCP entry from {entry['config_path']}[/]")
             else:
                 removed = remove_mcp_config(
-                    config_path=client["config_path"],
-                    format=client["format"],
-                    mcp_field=client["mcp_field"],
+                    config_path=entry["config_path"],
+                    format=entry["format"],
+                    mcp_field=entry["mcp_field"],
+                    client_name=entry["name"],
                 )
                 if removed:
-                    console.print(f"    [green]ok[/]  MCP entry removed from {client['config_path']}")
+                    console.print(f"    [green]ok[/]  MCP entry removed from {entry['config_path']}")
                     any_change = True
                 else:
-                    console.print(f"    [dim]MCP entry not present in {client['config_path']}[/]")
+                    console.print(f"    [dim]MCP entry not present in {entry['config_path']}[/]")
         except Exception as exc:
             console.print(f"    [red]err[/] {exc}")
             continue
 
-        prompt_path = client.get("prompt_path")
+        prompt_path = entry.get("prompt_path")
         if prompt_path is None:
             continue
-        if client["name"] in _PROJECT_LEVEL_PROMPT and no_project_prompts:
+        if entry["name"] in _PROJECT_LEVEL_PROMPT and no_project_prompts:
             continue
 
         try:

@@ -596,6 +596,11 @@ def setup(
         "--mode",
         help="MCP transport: 'stdio' (default, zero background process) or 'http'.",
     ),
+    client: Optional[str] = typer.Option(
+        None,
+        "--client", "-c",
+        help="Only target a specific client (e.g. 'claude-code', 'cursor').",
+    ),
     skip_prompt: bool = typer.Option(
         False, "--skip-prompt", help="Skip system prompt injection."
     ),
@@ -624,6 +629,7 @@ def setup(
     setup_command(
         port=port,
         mode=mode,
+        client=client,
         skip_prompt=skip_prompt,
         no_project_prompts=no_project_prompts,
         auto=auto,

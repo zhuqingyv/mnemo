@@ -69,6 +69,52 @@ _CLIENTS = [
         "format": "toml",
         "mcp_field": "mcp_servers",
     },
+    {
+        "name": "qwen-code",
+        "config_path": "~/.qwen/settings.json",
+        "prompt_path": "~/.qwen/QWEN.md",
+        "prompt_target": "qwen_md",
+        "format": "json",
+        "mcp_field": "mcpServers",
+    },
+    {
+        "name": "gemini-cli",
+        "config_path": "~/.gemini/settings.json",
+        "prompt_path": "~/.gemini/GEMINI.md",
+        "prompt_target": "gemini_md",
+        "format": "json",
+        "mcp_field": "mcpServers",
+    },
+    {
+        "name": "codebuddy",
+        "config_path": "~/.codebuddy/.mcp.json",
+        "prompt_path": "~/.codebuddy/CODEBUDDY.md",
+        "prompt_target": "codebuddy_md",
+        "format": "json",
+        "mcp_field": "mcpServers",
+    },
+    {
+        "name": "windsurf",
+        # Windsurf stores MCP config at ~/.codeium/windsurf/mcp_config.json.
+        # Currently only stdio transport is confirmed; HTTP support is uncertain.
+        # Windsurf does not support prompt/resource injection.
+        "config_path": "~/.codeium/windsurf/mcp_config.json",
+        "prompt_path": None,
+        "prompt_target": None,
+        "format": "json",
+        "mcp_field": "mcpServers",
+    },
+    {
+        "name": "github-copilot-cli",
+        # GitHub Copilot CLI stores MCP config at ~/.copilot/mcp-config.json.
+        # Requires explicit "type" field ("local"/"stdio"/"http").
+        # No separate system prompt file.
+        "config_path": "~/.copilot/mcp-config.json",
+        "prompt_path": None,
+        "prompt_target": None,
+        "format": "json",
+        "mcp_field": "mcpServers",
+    },
 ]
 
 

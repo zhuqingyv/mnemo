@@ -36,6 +36,11 @@ The installer:
      `%APPDATA%\Claude\...`)
    - Cursor (`~/.cursor/mcp.json`)
    - Codex CLI (`~/.codex/config.toml`)
+   - Qwen Code (`~/.qwen/settings.json`)
+   - Gemini CLI (`~/.gemini/settings.json`)
+   - CodeBuddy (`~/.codebuddy/.mcp.json`)
+   - Windsurf (`~/.codeium/windsurf/mcp_config.json`)
+   - GitHub Copilot CLI (`~/.copilot/mcp-config.json`)
 
 After it finishes, tell the user to **restart their AI client** so the new
 MCP server registration takes effect.
