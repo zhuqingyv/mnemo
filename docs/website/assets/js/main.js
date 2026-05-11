@@ -1,4 +1,6 @@
 const REPO_API = "https://api.github.com/repos/zhuqingyv/mnemo/releases/latest";
+const RELEASE_PAGE = "https://github.com/zhuqingyv/mnemo/releases/latest";
+let latestRelease = null;
 let currentLanguage = window.MNEMO_I18N?.getInitialLanguage?.() || "zh-CN";
 
 function t(key) {
@@ -64,15 +66,13 @@ function detectPlatform() {
 
 function packageNameFor(platform) {
   const packages = {
-    "darwin-arm64": "mnemo-darwin-arm64",
-    "darwin-x86_64": "mnemo-darwin-x86_64",
-    "linux-arm64": "mnemo-linux-arm64",
-    "linux-x86_64": "mnemo-linux-x86_64",
-    "windows-arm64": "mnemo-windows-arm64.exe",
-    "windows-x86_64": "mnemo-windows-x86_64.exe",
+    "darwin-arm64": "mnemo-desktop-macos-arm64.dmg",
+    "darwin-x86_64": "mnemo-desktop-macos-x86_64.dmg",
+    "linux-x86_64": "mnemo-desktop-linux-x86_64.AppImage",
+    "windows-x86_64": "mnemo-desktop-windows-x86_64.exe",
   };
 
-  return packages[`${platform.os}-${platform.arch}`] || t("viewGithubReleases");
+  return packages[`${platform.os}-${platform.arch}`] || "";
 }
 
 function platformLabel(platform) {
@@ -99,19 +99,51 @@ function installCommand(platform) {
   return "curl -fsSL https://github.com/zhuqingyv/mnemo/releases/latest/download/install.sh | sh";
 }
 
+function installNoteFor(platform, packageName) {
+  if (!packageName) return t("installNoteUnavailable");
+  if (platform.os === "darwin") return t("installNoteMac");
+  if (platform.os === "windows") return t("installNoteWindows");
+  if (platform.os === "linux") return t("installNoteLinux");
+  return t("installNoteUnavailable");
+}
+
+function findReleaseAsset(release, packageName) {
+  return release?.assets?.find((asset) => asset.name === packageName) || null;
+}
+
 function updateInstallCard() {
   const platform = detectPlatform();
   const detected = document.getElementById("detected-platform");
   const recommended = document.getElementById("recommended-package");
   const command = document.getElementById("install-command");
   const directDownload = document.getElementById("direct-download");
+  const installNote = document.getElementById("install-note");
   const packageName = packageNameFor(platform);
+  const asset = findReleaseAsset(latestRelease, packageName);
 
   detected.textContent = platformLabel(platform);
-  recommended.textContent = packageName;
   command.textContent = installCommand(platform);
-  directDownload.href = `https://github.com/zhuqingyv/mnemo/releases/latest/download/${packageName}`;
-  directDownload.textContent = `${t("downloadPrefix")} ${packageName}`;
+  if (!packageName) {
+    recommended.textContent = t("viewGithubReleases");
+    directDownload.href = RELEASE_PAGE;
+    directDownload.textContent = t("viewGithubReleases");
+    if (installNote) installNote.textContent = t("installNoteUnavailable");
+  } else if (!latestRelease) {
+    recommended.textContent = packageName;
+    directDownload.href = RELEASE_PAGE;
+    directDownload.textContent = t("detecting");
+    if (installNote) installNote.textContent = installNoteFor(platform, packageName);
+  } else if (asset?.browser_download_url) {
+    recommended.textContent = packageName;
+    directDownload.href = asset.browser_download_url;
+    directDownload.textContent = `${t("downloadPrefix")} ${packageName}`;
+    if (installNote) installNote.textContent = installNoteFor(platform, packageName);
+  } else {
+    recommended.textContent = t("installNoteUnavailable");
+    directDownload.href = RELEASE_PAGE;
+    directDownload.textContent = t("viewGithubReleases");
+    if (installNote) installNote.textContent = t("installNoteUnavailable");
+  }
 }
 
 async function updateReleaseLabel() {
@@ -128,7 +160,6 @@ async function updateReleaseLabel() {
       : releaseMetadata.publishedAt
         ? `${t("published")} ${releaseMetadata.publishedAt}`
         : t("generatedByCi");
-    return;
   }
 
   try {
@@ -137,13 +168,17 @@ async function updateReleaseLabel() {
       throw new Error("release fetch failed");
     }
     const release = await response.json();
+    latestRelease = release;
     label.textContent = `${release.tag_name} · ${t("latestRelease")}`;
     version.textContent = release.tag_name;
     generated.textContent = release.published_at ? `${t("published")} ${release.published_at}` : t("latestGithubRelease");
+    updateInstallCard();
   } catch {
-    label.textContent = t("latestRelease");
-    version.textContent = "unknown";
-    generated.textContent = t("githubReleaseUnavailable");
+    if (!releaseMetadata?.version || releaseMetadata.version === "unknown" || releaseMetadata.version === "dev") {
+      label.textContent = t("latestRelease");
+      version.textContent = "unknown";
+      generated.textContent = t("githubReleaseUnavailable");
+    }
   }
 }
 
