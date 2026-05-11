@@ -35,6 +35,7 @@ jobs:
   build-cli:
     name: cli (${{ matrix.target }})
     runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
@@ -43,26 +44,32 @@ jobs:
             runner: macos-14
             artifact_name: mnemo-darwin-arm64
             binary_path: dist/mnemo
+            experimental: false
           - target: darwin-x86_64
             runner: macos-13
             artifact_name: mnemo-darwin-x86_64
             binary_path: dist/mnemo
+            experimental: false
           - target: linux-x86_64
             runner: ubuntu-22.04
             artifact_name: mnemo-linux-x86_64
             binary_path: dist/mnemo
+            experimental: false
           - target: linux-arm64
             runner: ubuntu-22.04-arm
             artifact_name: mnemo-linux-arm64
             binary_path: dist/mnemo
+            experimental: true
           - target: windows-x86_64
             runner: windows-latest
             artifact_name: mnemo-windows-x86_64.exe
             binary_path: dist/mnemo.exe
+            experimental: false
           - target: windows-arm64
             runner: windows-11-arm
             artifact_name: mnemo-windows-arm64.exe
             binary_path: dist/mnemo.exe
+            experimental: true
 
     steps:
       - name: Checkout
@@ -189,20 +196,84 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          chmod +x "out/${{ matrix.artifact_name }}"
-          "./out/${{ matrix.artifact_name }}" --help > /dev/null
-          "./out/${{ matrix.artifact_name }}" --version || true
-          "./out/${{ matrix.artifact_name }}" search --help > /dev/null
-          "./out/${{ matrix.artifact_name }}" setup --dry-run --no-project-prompts || true
+          set -uo pipefail
+          BIN="./out/${{ matrix.artifact_name }}"
+          chmod +x "$BIN"
+          export HOME="$RUNNER_TEMP/mnemo-home"
+          export MNEMO_DATA_DIR="$RUNNER_TEMP/mnemo-data"
+          export NO_COLOR=1
+          mkdir -p "$HOME" "$MNEMO_DATA_DIR"
+          FAIL=0
+
+          echo "::group::env diagnostics"
+          echo "COLUMNS=${COLUMNS:-<unset>} TERM=${TERM:-<unset>}"
+          echo "HOME=$HOME MNEMO_DATA_DIR=$MNEMO_DATA_DIR"
+          echo "::endgroup::"
+
+          echo "--- [1/6] --help ---"
+          "$BIN" --help > /dev/null 2>&1 || { echo "FAIL: --help exit=$?"; FAIL=1; }
+
+          echo "--- [2/6] --version ---"
+          "$BIN" --version 2>&1 || { echo "FAIL: --version exit=$?"; FAIL=1; }
+
+          echo "--- [3/6] search --help ---"
+          "$BIN" search --help > /dev/null 2>&1 || { echo "FAIL: search --help exit=$?"; FAIL=1; }
+
+          echo "--- [4/6] setup --help (checking --mcp-only) ---"
+          SETUP_HELP_RAW=$("$BIN" setup --help 2>&1)
+          SETUP_HELP_EXIT=$?
+          SETUP_HELP=$(printf '%s' "$SETUP_HELP_RAW" | sed $'s/\x1b\\[[0-9;]*m//g')
+          if [ $SETUP_HELP_EXIT -ne 0 ]; then
+            echo "FAIL: setup --help exit=$SETUP_HELP_EXIT"
+            echo "$SETUP_HELP_RAW"
+            FAIL=1
+          elif ! echo "$SETUP_HELP" | grep -q -- "--mcp-only"; then
+            echo "FAIL: --mcp-only not found in setup --help output:"
+            echo "$SETUP_HELP_RAW"
+            FAIL=1
+          else
+            echo "OK: found --mcp-only"
+          fi
+
+          echo "--- [5/6] serve --help ---"
+          "$BIN" serve --help > /dev/null 2>&1 || { echo "FAIL: serve --help exit=$?"; FAIL=1; }
+
+          echo "--- [6/6] setup --dry-run ---"
+          DRYRUN_OUT=$("$BIN" setup --dry-run --no-project-prompts --mcp-only 2>&1)
+          DRYRUN_EXIT=$?
+          echo "$DRYRUN_OUT"
+          if [ $DRYRUN_EXIT -ne 0 ]; then
+            echo "FAIL: setup --dry-run exit=$DRYRUN_EXIT"
+            FAIL=1
+          fi
+
+          if [ $FAIL -ne 0 ]; then
+            echo "::error::Smoke test failed — see logs above for details"
+            exit 1
+          fi
+          echo "All smoke tests passed."
 
       - name: Smoke test (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          $env:USERPROFILE = Join-Path $env:RUNNER_TEMP "mnemo-home"
+          $env:MNEMO_DATA_DIR = Join-Path $env:RUNNER_TEMP "mnemo-data"
+          New-Item -ItemType Directory -Force -Path $env:USERPROFILE | Out-Null
+          New-Item -ItemType Directory -Force -Path $env:MNEMO_DATA_DIR | Out-Null
           & "out/${{ matrix.artifact_name }}" --help | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "mnemo --help failed" }
           & "out/${{ matrix.artifact_name }}" --version
+          if ($LASTEXITCODE -ne 0) { throw "mnemo --version failed" }
           & "out/${{ matrix.artifact_name }}" search --help | Out-Null
-          & "out/${{ matrix.artifact_name }}" setup --dry-run --no-project-prompts
+          if ($LASTEXITCODE -ne 0) { throw "mnemo search --help failed" }
+          $setupHelp = (& "out/${{ matrix.artifact_name }}" setup --help) | Out-String
+          if ($LASTEXITCODE -ne 0) { throw "mnemo setup --help failed" }
+          if ($setupHelp -notmatch "--mcp-only") { throw "setup --help does not include --mcp-only" }
+          & "out/${{ matrix.artifact_name }}" serve --help | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "mnemo serve --help failed" }
+          & "out/${{ matrix.artifact_name }}" setup --dry-run --no-project-prompts --mcp-only
+          if ($LASTEXITCODE -ne 0) { throw "mnemo setup --dry-run failed" }
 
       - name: Compute SHA256
         shell: bash
@@ -224,6 +295,38 @@ jobs:
             out/${{ matrix.artifact_name }}.sha256
           retention-days: 14
           if-no-files-found: error
+
+      - name: Write CLI platform summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## CLI ${{ matrix.target }}"
+            echo ""
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Artifact | \`${{ matrix.artifact_name }}\` |"
+            echo "| Runner | \`${{ matrix.runner }}\` |"
+            echo "| Experimental | \`${{ matrix.experimental }}\` |"
+            echo "| Job status | \`${{ job.status }}\` |"
+            echo ""
+            if [ "${{ matrix.experimental }}" = "true" ]; then
+              echo "This platform is best-effort and does not block the website/release download path."
+              echo ""
+              case "${{ matrix.target }}" in
+                linux-arm64)
+                  echo "Likely failure causes: GitHub ARM runner availability, PyInstaller/native sqlite-vec dependency differences, or platform-specific smoke-test runtime errors."
+                  ;;
+                windows-arm64)
+                  echo "Likely failure causes: sqlite-vec has no stable Windows ARM64 wheel here, and the current fallback native build needs a correctly initialized MSVC ARM64 environment."
+                  ;;
+              esac
+              echo ""
+              echo "If this job failed, inspect the failed step logs above for the exact error."
+            else
+              echo "This is a core download platform. Failure blocks release readiness."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ─────────────────────────────────────────────────────────────
   # Stage 2: Build Tauri desktop installers (6 targets)
@@ -256,11 +359,7 @@ jobs:
             binary_name: mnemo
             desktop_label: linux-x86_64
           # Linux ARM64
-          - target: aarch64-unknown-linux-gnu
-            runner: ubuntu-22.04-arm
-            cli_artifact: mnemo-linux-arm64
-            binary_name: mnemo
-            desktop_label: linux-arm64
+          # Experimental CLI-only until runner/native dependency stability is proven.
           # Windows x86_64
           - target: x86_64-pc-windows-msvc
             runner: windows-latest
@@ -268,11 +367,7 @@ jobs:
             binary_name: mnemo.exe
             desktop_label: windows-x86_64
           # Windows ARM64
-          - target: aarch64-pc-windows-msvc
-            runner: windows-11-arm
-            cli_artifact: mnemo-windows-arm64.exe
-            binary_name: mnemo.exe
-            desktop_label: windows-arm64
+          # Experimental CLI-only until sqlite-vec ARM64 packaging is proven.
 
     steps:
       - name: Checkout
@@ -295,6 +390,32 @@ jobs:
           cp "cli-artifacts/${{ matrix.cli_artifact }}" "desktop/src-tauri/resources/${{ matrix.binary_name }}"
           chmod +x "desktop/src-tauri/resources/${{ matrix.binary_name }}" 2>/dev/null || true
           ls -lh "desktop/src-tauri/resources/"
+
+      - name: Validate bundled mnemo resource (POSIX)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          BIN="desktop/src-tauri/resources/${{ matrix.binary_name }}"
+          chmod +x "$BIN"
+          "$BIN" --help > /dev/null
+          "$BIN" --version
+          "$BIN" setup --help 2>&1 | sed $'s/\x1b\\[[0-9;]*m//g' | grep -- --mcp-only
+          "$BIN" serve --help > /dev/null
+
+      - name: Validate bundled mnemo resource (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $bin = "desktop/src-tauri/resources/${{ matrix.binary_name }}"
+          & $bin --help | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "bundled mnemo --help failed" }
+          & $bin --version
+          if ($LASTEXITCODE -ne 0) { throw "bundled mnemo --version failed" }
+          $setupHelp = (& $bin setup --help) | Out-String
+          if ($LASTEXITCODE -ne 0) { throw "bundled mnemo setup --help failed" }
+          if ($setupHelp -notmatch "--mcp-only") { throw "setup --help does not include --mcp-only" }
+          & $bin serve --help | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "bundled mnemo serve --help failed" }
 
       # ── Frontend: pnpm ──
       - uses: pnpm/action-setup@v4
@@ -347,6 +468,7 @@ jobs:
       - name: Collect desktop artifacts
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p desktop-out
           BUNDLE_DIR="desktop/src-tauri/target/${{ matrix.target }}/release/bundle"
 
@@ -382,10 +504,20 @@ jobs:
           fi
 
           # Rename to unified naming: mnemo-desktop-{label}.{ext}
-          cd desktop-out
-          for f in *; do
-            ext="${f##*.}"
-            mv "$f" "mnemo-desktop-${{ matrix.desktop_label }}.${ext}"
+          shopt -s nullglob
+          files=(desktop-out/*)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No desktop artifacts found in $BUNDLE_DIR" >&2
+            find "$BUNDLE_DIR" -maxdepth 3 -type f -print 2>/dev/null || true
+            exit 1
+          fi
+          for f in "${files[@]}"; do
+            base="$(basename "$f")"
+            case "$base" in
+              *.app.tar.gz) ext="app.tar.gz" ;;
+              *) ext="${base##*.}" ;;
+            esac
+            mv "$f" "desktop-out/mnemo-desktop-${{ matrix.desktop_label }}.${ext}"
           done
           ls -lh desktop-out/
 
@@ -419,13 +551,11 @@ jobs:
       - name: Stage release files
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p release
 
-          # ── CLI binaries + SHA256SUMS ──
-          find artifacts -type f \( -name "mnemo-darwin-*" -o -name "mnemo-linux-*" -o -name "mnemo-windows-*" \) -exec cp -v {} release/ \;
-
-          # Combine per-asset .sha256 files into one SHA256SUMS
-          (cd release && cat mnemo-*.sha256 > SHA256SUMS 2>/dev/null && rm -f mnemo-*.sha256 || true)
+          # ── CLI binaries ──
+          find artifacts -type f \( -name "mnemo-darwin-*" -o -name "mnemo-linux-*" -o -name "mnemo-windows-*" \) ! -name "*.sha256" -exec cp -v {} release/ \;
 
           # ── Install scripts ──
           cp scripts/install.sh release/install.sh
@@ -433,6 +563,44 @@ jobs:
 
           # ── Desktop installers ──
           find artifacts -type f \( -name "mnemo-desktop-*" \) -exec cp -v {} release/ \;
+
+          # ── Release gate: website must have downloadable core assets ──
+          required_files=(
+            "mnemo-darwin-arm64"
+            "mnemo-darwin-x86_64"
+            "mnemo-linux-x86_64"
+            "mnemo-windows-x86_64.exe"
+            "install.sh"
+            "install.ps1"
+          )
+          for required in "${required_files[@]}"; do
+            if [ ! -f "release/$required" ]; then
+              echo "Missing required release asset: $required" >&2
+              exit 1
+            fi
+          done
+
+          required_desktop_labels=(
+            "macos-arm64"
+            "macos-x86_64"
+            "linux-x86_64"
+            "windows-x86_64"
+          )
+          for label in "${required_desktop_labels[@]}"; do
+            if ! find release -maxdepth 1 -type f -name "mnemo-desktop-$label.*" | grep -q .; then
+              echo "Missing required desktop release asset for: $label" >&2
+              exit 1
+            fi
+          done
+
+          (
+            cd release
+            if command -v sha256sum >/dev/null; then
+              find . -maxdepth 1 -type f ! -name "SHA256SUMS" -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+            else
+              find . -maxdepth 1 -type f ! -name "SHA256SUMS" -print0 | sort -z | xargs -0 shasum -a 256 > SHA256SUMS
+            fi
+          )
 
           # Summary
           echo "=== Release contents ==="

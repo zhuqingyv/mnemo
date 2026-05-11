@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mnemo - Agent Memory Layer</title>
+    <meta name="description" content="Mnemo 是给 AI Agent 的本地记忆层，让 Agent 记住经验、决策和偏好。" />
+    <link rel="icon" href="assets/images/favicon-32.png" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="grain"></div>
+
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Mnemo home">
+        <img src="assets/images/mnemo-logo.png" alt="Mnemo" />
+        <span>Mnemo</span>
+      </a>
+      <nav class="nav">
+        <a href="#install" data-i18n="navInstall">Install</a>
+        <a href="#memory" data-i18n="navMemory">Memory</a>
+        <a href="#agents" data-i18n="navAgents">Agents</a>
+        <a href="https://github.com/zhuqingyv/mnemo" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+      <select id="language-select" class="language-select" aria-label="Language">
+        <option value="zh-CN">简中</option>
+        <option value="en">English</option>
+        <option value="zh-TW">繁中</option>
+      </select>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="release-pill">
+            <span></span>
+            <strong id="release-label">Latest release</strong>
+          </div>
+          <h1 data-i18n="heroTitle">给 AI Agent 的本地记忆层</h1>
+          <p data-i18n="heroDescription">
+            Mnemo 记录 agent 的项目约定、用户偏好、失败教训和成功路径。让下一次协作不再从零开始。
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#install" data-i18n="installMnemo">安装 Mnemo</a>
+            <a class="btn btn-secondary" href="https://github.com/zhuqingyv/mnemo" target="_blank" rel="noreferrer" data-i18n="viewSource">查看源码</a>
+          </div>
+        </div>
+
+        <div class="product-preview" aria-label="Mnemo desktop client preview">
+          <div class="mac-titlebar">
+            <div class="traffic-lights">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <strong data-i18n="windowTitle">mnemo - Agent 共享大脑</strong>
+          </div>
+          <div class="client-surface">
+            <img class="preview-logo" src="assets/images/mnemo-logo.png" alt="Mnemo" />
+            <div class="agent-grid">
+              <article class="agent-card linked">
+              <img src="assets/images/agents/claude.svg" alt="Claude" />
+              <strong>Claude Code</strong>
+              <span><i></i><span data-i18n="linked">已链接</span></span>
+              <button data-i18n="unlink">断开</button>
+              </article>
+              <article class="agent-card linked">
+                <img src="assets/images/agents/qwen.svg" alt="Qwen Code" />
+                <strong>Qwen Code</strong>
+                <span><i></i>已链接</span>
+                <button>断开</button>
+              </article>
+              <article class="agent-card linked">
+                <img src="assets/images/agents/codebuddy.svg" alt="CodeBuddy" />
+                <strong>CodeBuddy</strong>
+                <span><i></i>已链接</span>
+                <button>断开</button>
+              </article>
+              <article class="agent-card linked">
+                <img src="assets/images/agents/codex.svg" alt="Codex CLI" />
+                <strong>Codex CLI</strong>
+                <span><i></i>已链接</span>
+                <button>断开</button>
+              </article>
+              <article class="agent-card">
+                <img src="assets/images/agents/gemini.svg" alt="Gemini CLI" />
+                <strong>Gemini CLI</strong>
+                <span><i></i><span data-i18n="notInstalled">未安装</span></span>
+                <button class="button-install" data-i18n="openInstall">前往安装</button>
+              </article>
+              <article class="agent-card linked">
+                <img src="assets/images/agents/cursor.svg" alt="Cursor" />
+                <strong>Cursor</strong>
+                <span><i></i>已链接</span>
+                <button>断开</button>
+              </article>
+              <article class="agent-card linked">
+                <img src="assets/images/agents/windsurf.png" alt="Windsurf" />
+                <strong>Windsurf</strong>
+                <span><i></i>已链接</span>
+                <button>断开</button>
+              </article>
+              <article class="agent-card linked">
+                <img src="assets/images/agents/copilot.svg" alt="GitHub Copilot CLI" />
+                <strong>GitHub Copilot CLI</strong>
+                <span><i></i>已链接</span>
+                <button>断开</button>
+              </article>
+            </div>
+            <div class="preview-actions">
+              <button data-i18n="linkAll">全部链接</button>
+              <button data-i18n="openViz">打开可视化页面</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="install" class="install-section">
+        <div class="section-title">
+          <span data-i18n="recommendedInstall">Recommended install</span>
+          <h2 data-i18n="installTitle">根据你的电脑推荐安装包</h2>
+        </div>
+        <div class="install-panel">
+          <div class="version-box">
+            <span data-i18n="websiteRelease">Website release</span>
+            <strong id="website-version" data-i18n="detecting">检测中...</strong>
+            <small id="website-generated" data-i18n="waitingCi">等待 CI 生成</small>
+          </div>
+          <div class="detected-box">
+            <span data-i18n="detectedPlatform">Detected platform</span>
+            <strong id="detected-platform" data-i18n="detecting">检测中...</strong>
+            <small id="recommended-package" data-i18n="detecting">检测中...</small>
+          </div>
+          <div class="command-box">
+            <div class="command-topline">
+              <span data-i18n="oneLineInstall">One-line install</span>
+              <button id="copy-install" type="button" data-i18n="copy">复制</button>
+            </div>
+            <pre><code id="install-command">检测中...</code></pre>
+          </div>
+          <a id="direct-download" class="download-button" href="https://github.com/zhuqingyv/mnemo/releases/latest" target="_blank" rel="noreferrer" data-i18n="directDownload">直接下载安装包</a>
+          <a class="all-assets" href="https://github.com/zhuqingyv/mnemo/releases/latest" target="_blank" rel="noreferrer" data-i18n="viewAllAssets">查看所有安装包 →</a>
+        </div>
+      </section>
+
+      <section id="memory" class="memory-section">
+        <div class="section-title">
+          <span data-i18n="memoryPipeline">Memory pipeline</span>
+          <h2 data-i18n="memoryTitle">从经历，到可复用记忆</h2>
+        </div>
+        <div class="memory-grid">
+          <article>
+            <span>01</span>
+            <h3>Capture</h3>
+            <p data-i18n="captureText">记录事实、决策、过程、纠错和成功经验。</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Retrieve</h3>
+            <p data-i18n="retrieveText">任务开始前搜索相关记忆，减少重复解释和重复踩坑。</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Distill</h3>
+            <p data-i18n="distillText">未来将高价值记忆蒸馏为训练数据，并进入本地模型 LoRA。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="agents" class="agents-section">
+        <div class="section-title">
+          <span data-i18n="agentClients">Agent clients</span>
+          <h2 data-i18n="agentsTitle">链接你已经在用的 AI 工具</h2>
+        </div>
+        <div class="agent-strip">
+          <div><img src="assets/images/agents/claude.svg" alt="Claude" /><span>Claude</span></div>
+          <div><img src="assets/images/agents/cursor.svg" alt="Cursor" /><span>Cursor</span></div>
+          <div><img src="assets/images/agents/codex.svg" alt="Codex" /><span>Codex</span></div>
+          <div><img src="assets/images/agents/gemini.svg" alt="Gemini" /><span>Gemini</span></div>
+          <div><img src="assets/images/agents/windsurf.png" alt="Windsurf" /><span>Windsurf</span></div>
+          <div><img src="assets/images/agents/copilot.svg" alt="Copilot" /><span>Copilot</span></div>
+        </div>
+      </section>
+
+      <section class="vision-section">
+        <div class="vision-card">
+          <img src="assets/images/mnemo-logo.png" alt="Mnemo" />
+          <div>
+            <span data-i18n="longTermDirection">Long-term direction</span>
+            <h2 data-i18n="visionTitle">Agent 的海马体 + 睡眠反刍系统</h2>
+            <p data-i18n="visionText">Mnemo 的目标不是外挂记忆，而是让经验经过记录、筛选、蒸馏和评估，最终成为模型可内化的长期行为偏置。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Mnemo</span>
+      <a href="https://github.com/zhuqingyv/mnemo/releases/latest" target="_blank" rel="noreferrer" data-i18n="release">Release</a>
+      <a href="https://github.com/zhuqingyv/mnemo/issues" target="_blank" rel="noreferrer" data-i18n="issues">Issues</a>
+    </footer>
+
+    <script src="assets/js/i18n.js"></script>
+    <script src="assets/js/version.js"></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>

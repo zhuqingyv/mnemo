@@ -83,6 +83,8 @@ a = Analysis(
         "mnemo.server.app",
         "mnemo.mcp.server",
         "mnemo.setup.command",
+        "mnemo.setup.client_detector",
+        "mnemo.setup.config_writer",
         "mnemo.setup.prompt_template",
         # Async SQLite stack
         "aiosqlite",

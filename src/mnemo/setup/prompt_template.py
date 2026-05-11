@@ -31,11 +31,14 @@ _MARKER_RE = re.compile(
 _PROMPT_TARGETS: dict[str, str] = {
     "claude_global": "claude_global.md",
     "cursor_rules": "cursor_rules.md",
+    "cursor_project_rule": "cursor_project_rule.md",
     "agents_md": "agents_md.md",
     "mcp_instructions": "mcp_instructions.md",
     "qwen_md": "qwen_md.md",
     "gemini_md": "gemini_md.md",
     "codebuddy_md": "codebuddy_md.md",
+    "windsurf_global_rules": "windsurf_global_rules.md",
+    "copilot_instructions": "copilot_instructions.md",
 }
 
 
@@ -70,6 +73,12 @@ def get_prompt_template(target: str = "claude_global") -> str:
     idempotently across upgrades without touching the rest of the file.
     """
     body = get_prompt_body(target)
+    if body.startswith("---\n"):
+        end = body.find("\n---\n", 4)
+        if end != -1:
+            frontmatter = body[: end + 5]
+            rest = body[end + 5 :].lstrip("\n")
+            return f"{frontmatter}\n{_START_MARKER}\n{rest}{_END_MARKER}\n"
     return f"{_START_MARKER}\n{body}{_END_MARKER}\n"
 
 

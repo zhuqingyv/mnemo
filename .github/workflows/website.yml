@@ -1,0 +1,64 @@
+name: website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/website/**"
+      - ".github/workflows/website.yml"
+  workflow_run:
+    workflows: ["build"]
+    types: [completed]
+  release:
+    types: [published]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Generate website version metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/website/assets/js
+
+          latest_release="$(curl -fsSL https://api.github.com/repos/zhuqingyv/mnemo/releases/latest || true)"
+          latest_version="$(printf '%s' "$latest_release" | jq -r '.tag_name // "unknown"')"
+          published_at="$(printf '%s' "$latest_release" | jq -r '.published_at // ""')"
+
+          cat > docs/website/assets/js/version.js <<EOF
+          window.MNEMO_RELEASE = {
+            version: "$latest_version",
+            publishedAt: "$published_at",
+            generatedAt: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          };
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/website
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
