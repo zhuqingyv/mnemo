@@ -1,19 +1,17 @@
 name: website
 
-# Deploy mnemo website to GitHub Pages
-# This workflow builds and deploys the documentation website to GitHub Pages.
-# It runs on every push to main and on every release, ensuring the website
-# is always up-to-date with the latest version information.
-
 on:
   push:
     branches: [main]
     paths:
-      - 'docs/website/**'
-      - '.github/workflows/website.yml'
-  workflow_dispatch: {}
+      - "docs/website/**"
+      - ".github/workflows/website.yml"
+  workflow_run:
+    workflows: ["build"]
+    types: [completed]
   release:
     types: [published]
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -21,92 +19,46 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
-      - name: Build website info
-        id: website-info
+      - name: Generate website version metadata
+        shell: bash
         run: |
-          # Get latest release info
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/zhuqingyv/mnemo/releases/latest)
-          LATEST_VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
-          PUBLISHED_AT=$(echo "$LATEST_RELEASE" | jq -r '.published_at')
+          set -euo pipefail
+          mkdir -p docs/website/assets/js
 
-          # Get repo info
-          REPO_INFO=$(curl -s https://api.github.com/repos/zhuqingyv/mnemo)
-          STARS=$(echo "$REPO_INFO" | jq -r '.stargazers_count')
-          FORKS=$(echo "$REPO_INFO" | jq -r '.forks_count')
+          latest_release="$(curl -fsSL https://api.github.com/repos/zhuqingyv/mnemo/releases/latest || true)"
+          latest_version="$(printf '%s' "$latest_release" | jq -r '.tag_name // "unknown"')"
+          published_at="$(printf '%s' "$latest_release" | jq -r '.published_at // ""')"
 
-          # Create website config file
-          cat > docs/website/assets/js/config.js << EOF
-          window.MNEMO_CONFIG = {
-            latestVersion: "$LATEST_VERSION",
-            publishedAt: "$PUBLISHED_AT",
-            stars: $STARS,
-            forks: $FORKS,
-            repoUrl: "https://github.com/zhuqingyv/mnemo",
-            releasesUrl: "https://github.com/zhuqingyv/mnemo/releases",
-            docsUrl: "https://zhuqingyv.github.io/mnemo",
-            buildTime: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          cat > docs/website/assets/js/version.js <<EOF
+          window.MNEMO_RELEASE = {
+            version: "$latest_version",
+            publishedAt: "$published_at",
+            generatedAt: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           };
           EOF
-
-          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
-
-      - name: Copy assets
-        run: |
-          # Copy logo assets
-          mkdir -p docs/website/assets/images
-          cp assets/*.png docs/website/assets/images/ 2>/dev/null || true
-
-          # Generate demo screenshot if needed
-          if [ ! -f "docs/website/assets/images/demo-screenshot.png" ]; then
-            # Create a placeholder screenshot
-            convert -size 800x600 xc:#f0f9ff -pointsize 24 -fill "#1e293b" \
-              -gravity center -annotate +0+0 "Mnemo Demo" \
-              docs/website/assets/images/demo-screenshot.png 2>/dev/null || \
-              echo "Screenshot generation skipped"
-          fi
-
-          # Generate architecture diagram if needed
-          if [ ! -f "docs/website/assets/images/architecture-diagram.png" ]; then
-            # Create a placeholder architecture diagram
-            convert -size 800x600 xc:#ffffff -pointsize 20 -fill "#64748b" \
-              -gravity center -annotate +0+0 "System Architecture Diagram" \
-              docs/website/assets/images/architecture-diagram.png 2>/dev/null || \
-              echo "Architecture diagram generation skipped"
-          fi
-
-      - name: Add config script to HTML
-        run: |
-          # Add config script to all HTML files
-          find docs/website -name "*.html" -exec sed -i '/<\/head>/i\
-          <script src="assets\/js\/config.js"><\/script>' {} \;
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/website
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

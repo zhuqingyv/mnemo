@@ -24,6 +24,72 @@ const AGENT_ICONS: Record<string, string> = {
   "github-copilot-cli": copilotIcon,
 };
 
+type Language = "zh-CN" | "en" | "zh-TW";
+
+const I18N: Record<Language, Record<string, string>> = {
+  "zh-CN": {
+    notInstalled: "未安装",
+    linked: "已链接",
+    installed: "已安装",
+    linkSuccess: "链接成功",
+    linkFailed: "链接失败",
+    unlinked: "已断开",
+    unlinkFailed: "断开失败",
+    linkAllSuccess: "全部链接成功",
+    linking: "链接中...",
+    openInstall: "前往安装",
+    unlink: "断开",
+    link: "链接",
+    linkAll: "全部链接",
+    openViz: "打开可视化页面",
+    promptHint: "全局提示词未注入",
+  },
+  en: {
+    notInstalled: "Not installed",
+    linked: "Linked",
+    installed: "Installed",
+    linkSuccess: "Linked successfully",
+    linkFailed: "Link failed",
+    unlinked: "Unlinked",
+    unlinkFailed: "Unlink failed",
+    linkAllSuccess: "All agents linked",
+    linking: "Linking...",
+    openInstall: "Install",
+    unlink: "Unlink",
+    link: "Link",
+    linkAll: "Link all",
+    openViz: "Open visualization",
+    promptHint: "Global prompt not injected",
+  },
+  "zh-TW": {
+    notInstalled: "未安裝",
+    linked: "已連結",
+    installed: "已安裝",
+    linkSuccess: "連結成功",
+    linkFailed: "連結失敗",
+    unlinked: "已斷開",
+    unlinkFailed: "斷開失敗",
+    linkAllSuccess: "全部連結成功",
+    linking: "連結中...",
+    openInstall: "前往安裝",
+    unlink: "斷開",
+    link: "連結",
+    linkAll: "全部連結",
+    openViz: "開啟視覺化頁面",
+    promptHint: "全域提示詞未注入",
+  },
+};
+
+function normalizeLanguage(language: string | null | undefined): Language {
+  if (!language) return "zh-CN";
+  if (language === "zh-CN" || language === "en" || language === "zh-TW") return language;
+  const lower = language.toLowerCase();
+  if (lower.startsWith("zh-tw") || lower.startsWith("zh-hk") || lower.startsWith("zh-hant")) return "zh-TW";
+  if (lower.startsWith("en")) return "en";
+  if (lower.startsWith("zh")) return "zh-CN";
+  return "zh-CN";
+}
+
 interface AgentStatus {
   name: string;
   display_name: string;
@@ -34,14 +100,14 @@ interface AgentStatus {
   install_url: string;
 }
 
-function getStatusText(agent: AgentStatus): string {
+function getStatusText(agent: AgentStatus, copy: Record<string, string>): string {
   if (!agent.installed) {
-    return "未安装";
+    return copy.notInstalled;
   }
   if (agent.linked) {
-    return "已链接";
+    return copy.linked;
   }
-  return "已安装";
+  return copy.installed;
 }
 
 function getInitials(name: string): string {
@@ -66,6 +132,15 @@ function App() {
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [brokenIcons, setBrokenIcons] = useState<Set<string>>(new Set());
+  const [language, setLanguage] = useState<Language>(() =>
+    normalizeLanguage(localStorage.getItem("mnemo_lang") || navigator.language),
+  );
+  const copy = I18N[language];
+
+  function handleLanguageChange(nextLanguage: Language): void {
+    setLanguage(nextLanguage);
+    localStorage.setItem("mnemo_lang", nextLanguage);
+  }
 
   async function refresh() {
     const result = await invoke<AgentStatus[]>("detect_agents");
@@ -87,9 +162,9 @@ function App() {
     setMessage(null);
     try {
       await invoke("link_agent", { name });
-      setMessage("链接成功");
+      setMessage(copy.linkSuccess);
     } catch (e) {
-      setMessage(`链接失败: ${toMessage(e)}`);
+      setMessage(`${copy.linkFailed}: ${toMessage(e)}`);
     }
     await refresh();
     setLoading(null);
@@ -100,9 +175,9 @@ function App() {
     setMessage(null);
     try {
       await invoke("unlink_agent", { name });
-      setMessage("已断开");
+      setMessage(copy.unlinked);
     } catch (e) {
-      setMessage(`断开失败: ${toMessage(e)}`);
+      setMessage(`${copy.unlinkFailed}: ${toMessage(e)}`);
     }
     await refresh();
     setLoading(null);
@@ -113,9 +188,9 @@ function App() {
     setMessage(null);
     try {
       await invoke("link_all");
-      setMessage("全部链接成功");
+      setMessage(copy.linkAllSuccess);
     } catch (e) {
-      setMessage(`链接失败: ${toMessage(e)}`);
+      setMessage(`${copy.linkFailed}: ${toMessage(e)}`);
     }
     await refresh();
     setLoading(null);
@@ -127,6 +202,16 @@ function App() {
 
   return (
     <main className="container">
+      <select
+        className="language-select"
+        value={language}
+        aria-label="Language"
+        onChange={(event) => handleLanguageChange(event.target.value as Language)}
+      >
+        <option value="zh-CN">简中</option>
+        <option value="en">English</option>
+        <option value="zh-TW">繁中</option>
+      </select>
 
       <header className="header">
         <img src={mnemoLogo} alt="mnemo" className="mnemo-logo" />
@@ -145,9 +230,9 @@ function App() {
               className={`agent-card ${agent.installed && agent.linked ? "linked" : ""}`}
             >
               {shouldShowPromptHint(agent) && (
-                <div className="prompt-hint" aria-label="全局提示词未注入">
+                <div className="prompt-hint" aria-label={copy.promptHint}>
                   i
-                  <span className="prompt-hint-popover">全局提示词未注入</span>
+                  <span className="prompt-hint-popover">{copy.promptHint}</span>
                 </div>
               )}
               {brokenIcons.has(agent.name) || !AGENT_ICONS[agent.name] ? (
@@ -167,7 +252,7 @@ function App() {
               <div className="agent-name">{agent.display_name}</div>
               <div className={`agent-status ${agent.installed && agent.linked ? "status-linked" : ""}`}>
                 <span className="status-dot" />
-                {getStatusText(agent)}
+                {getStatusText(agent, copy)}
               </div>
               <button
                 className={agent.installed ? "btn-link" : "btn-install"}
@@ -187,10 +272,10 @@ function App() {
                 {loading === agent.name
                   ? "..."
                   : !agent.installed
-                    ? "前往安装"
+                    ? copy.openInstall
                     : agent.linked
-                      ? "断开"
-                      : "链接"}
+                      ? copy.unlink
+                      : copy.link}
               </button>
             </div>
           ))}
@@ -202,10 +287,10 @@ function App() {
             disabled={loading !== null}
             onClick={handleLinkAll}
           >
-            {loading === "all" ? "链接中..." : "全部链接"}
+            {loading === "all" ? copy.linking : copy.linkAll}
           </button>
           <button className="btn-secondary" onClick={handleOpenViz}>
-            打开可视化页面
+            {copy.openViz}
           </button>
         </div>
       </div>
