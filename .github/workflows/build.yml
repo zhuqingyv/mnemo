@@ -36,6 +36,7 @@ jobs:
     name: cli (${{ matrix.target }})
     runs-on: ${{ matrix.runner }}
     continue-on-error: ${{ matrix.experimental }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +47,7 @@ jobs:
             binary_path: dist/mnemo
             experimental: false
           - target: darwin-x86_64
-            runner: macos-13
+            runner: macos-15-large
             artifact_name: mnemo-darwin-x86_64
             binary_path: dist/mnemo
             experimental: false
@@ -335,7 +336,9 @@ jobs:
   build-desktop:
     name: desktop (${{ matrix.target }})
     needs: build-cli
+    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -348,7 +351,7 @@ jobs:
             desktop_label: macos-arm64
           # macOS Intel
           - target: x86_64-apple-darwin
-            runner: macos-13
+            runner: macos-15-large
             cli_artifact: mnemo-darwin-x86_64
             binary_name: mnemo
             desktop_label: macos-x86_64
@@ -537,6 +540,7 @@ jobs:
     needs: [build-cli, build-desktop]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     permissions:
       contents: write
     steps:
