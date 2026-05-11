@@ -166,9 +166,12 @@ def _binary_exists(binary: str) -> bool:
 def _command_succeeds(command: list[str]) -> bool:
     if not command or not _binary_exists(command[0]):
         return False
-    executable = shutil.which(command[0]) or str(
-        next(path for path in _binary_candidate_paths(command[0]) if path.exists())
+    executable = shutil.which(command[0]) or next(
+        (str(path) for path in _binary_candidate_paths(command[0]) if path.exists()),
+        None,
     )
+    if not executable:
+        return False
     try:
         result = subprocess.run(
             [executable, *command[1:]],
