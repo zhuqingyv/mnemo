@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::net::TcpStream;
+use std::os::unix::process::CommandExt;
 use std::process::{Child, Command, Stdio};
 use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
@@ -132,12 +133,15 @@ fn ensure_mnemo_server_running() -> Result<String, String> {
     }
 
     let mnemo = find_mnemo_binary();
-    let child = Command::new(&mnemo)
-        .args(["serve", "--host", "127.0.0.1", "--port", "8787"])
+    let mut cmd = Command::new(&mnemo);
+    cmd.args(["serve", "--host", "127.0.0.1", "--port", "8787"])
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
+        .stderr(Stdio::null());
+    // Place in its own process group — PyInstaller onefile forks on
+    // macOS, so killing only the direct child leaves the orphan alive.
+    unsafe { cmd.pre_exec(|| { libc::setpgid(0, 0); Ok(()) }); }
+    let child = cmd.spawn()
         .map_err(|e| format!("Failed to start mnemo server with {mnemo}: {e}"))?;
 
     *guard = Some(child);
@@ -168,6 +172,9 @@ fn stop_mnemo_server() {
     if let Some(server) = MNEMO_SERVER.get() {
         if let Ok(mut guard) = server.lock() {
             if let Some(child) = guard.as_mut() {
+                let pid = child.id();
+                // Kill entire process group — PyInstaller onefile forks on macOS
+                unsafe { libc::kill(-(pid as libc::pid_t), libc::SIGKILL); }
                 let _ = child.kill();
                 let _ = child.wait();
             }
