@@ -1,0 +1,626 @@
+/* =============================================
+   Mnemo Guide Page — Chat UI for knowledge help
+   Design system: matches App.css custom properties
+   ============================================= */
+
+.guide-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 20px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+
+.guide-header {
+  text-align: center;
+  position: relative;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.guide-back-btn {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.76) 0%, rgba(248, 250, 252, 0.5) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  color: #475569;
+  padding: 0 14px;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.86) inset,
+    0 6px 14px rgba(15, 23, 42, 0.08);
+}
+
+.guide-back-btn:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 18px rgba(99, 102, 241, 0.14);
+}
+
+.guide-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #11194f;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.guide-subtitle {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* ---- Status Bar ---- */
+
+.guide-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 6px 14px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(18px) saturate(1.12);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.guide-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.guide-status-faq {
+  background: rgba(148, 163, 184, 0.14);
+  color: #64748b;
+}
+
+.guide-status-loading {
+  background: rgba(250, 204, 21, 0.16);
+  color: #a16207;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.guide-status-available {
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+}
+
+.guide-status-degraded {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.guide-security-notice {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+/* ---- Chat Area ---- */
+
+.guide-chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ---- Quick Questions ---- */
+
+.guide-quick-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  padding: 0 4px 10px;
+  flex-shrink: 0;
+}
+
+.guide-quick-btn {
+  background: rgba(255, 255, 255, 0.52);
+  backdrop-filter: blur(12px) saturate(1.08);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  color: #475569;
+  padding: 0 12px;
+  height: 26px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.84) inset,
+    0 4px 10px rgba(15, 23, 42, 0.05);
+}
+
+.guide-quick-btn:hover {
+  border-color: rgba(99, 102, 241, 0.42);
+  color: #4f46e5;
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 6px 16px rgba(99, 102, 241, 0.12);
+}
+
+/* ---- Messages ---- */
+
+.guide-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 4px 8px;
+  min-height: 0;
+}
+
+.guide-message {
+  max-width: 82%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: break-word;
+  animation: fadeInUp 0.25s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.guide-message-user {
+  align-self: flex-end;
+  background:
+    linear-gradient(135deg, #6366f1 0%, #7c3aed 40%, #a855f7 100%);
+  color: #fff;
+  border-bottom-right-radius: 6px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 6px 18px rgba(99, 102, 241, 0.22);
+}
+
+.guide-message-assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  color: var(--text);
+  border-bottom-left-radius: 6px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.78) inset,
+    0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.guide-message-content {
+  line-height: 1.6;
+}
+
+.guide-message-content code {
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+  font-size: 12px;
+}
+
+.guide-message-user .guide-message-content code {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* ---- Source Tag ---- */
+
+.guide-message-source {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 500;
+  padding-top: 4px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+/* ---- Loading Dots ---- */
+
+.guide-loading-dots {
+  display: flex;
+  gap: 5px;
+  padding: 4px 0;
+}
+
+.guide-loading-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  animation: dotBounce 1.4s ease-in-out infinite both;
+}
+
+.guide-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.guide-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.guide-loading-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes dotBounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ---- Command Block ---- */
+
+.guide-commands-area {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guide-command-block {
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.guide-command-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.guide-command-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.guide-copy-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.guide-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.guide-command-code {
+  background: #0f172a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #e2e8f0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.guide-command-code code {
+  color: inherit;
+  background: none;
+  padding: 0;
+}
+
+.guide-command-warning {
+  margin-top: 8px;
+  font-size: 10px;
+  color: #facc15;
+  padding: 5px 8px;
+  background: rgba(250, 204, 21, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(250, 204, 21, 0.15);
+}
+
+/* ---- Input Form ---- */
+
+.guide-input-form {
+  display: flex;
+  gap: 8px;
+  padding: 10px 4px 4px;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.guide-input {
+  flex: 1;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.82) inset,
+    0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.guide-input::placeholder {
+  color: var(--text-dim);
+}
+
+.guide-input:focus {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 6px 20px rgba(99, 102, 241, 0.1),
+    0 0 0 3px rgba(99, 102, 241, 0.08);
+}
+
+.guide-input:disabled {
+  opacity: 0.5;
+}
+
+.guide-send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 34%),
+    linear-gradient(135deg, #38bdf8 0%, #3b82f6 38%, #7c3aed 72%, #c084fc 100%);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.34) inset,
+    0 8px 18px rgba(79, 70, 229, 0.32),
+    0 3px 6px rgba(59, 130, 246, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.guide-send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.38) inset,
+    0 10px 24px rgba(79, 70, 229, 0.42),
+    0 4px 8px rgba(59, 130, 246, 0.25);
+}
+
+.guide-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---- Error ---- */
+
+.guide-error {
+  align-self: center;
+  font-size: 11px;
+  color: #dc2626;
+  padding: 6px 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  border-radius: var(--radius-sm);
+  max-width: 90%;
+}
+
+/* ---- Scrollbar ---- */
+
+.guide-messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.guide-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.guide-messages::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+}
+
+.guide-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 600px) {
+  .guide-page {
+    padding: 12px 12px 8px;
+  }
+
+  .guide-title {
+    font-size: 17px;
+  }
+
+  .guide-message {
+    max-width: 90%;
+    font-size: 12px;
+  }
+
+  .guide-quick-btn {
+    font-size: 10px;
+    padding: 0 10px;
+    height: 24px;
+  }
+
+  .guide-back-btn {
+    font-size: 11px;
+    padding: 0 10px;
+    height: 26px;
+  }
+}
+
+@media (max-height: 600px) {
+  .guide-quick-questions {
+    gap: 4px;
+    padding-bottom: 6px;
+  }
+
+  .guide-header {
+    margin-bottom: 6px;
+  }
+
+  .guide-status-bar {
+    margin-bottom: 6px;
+    padding: 4px 10px;
+  }
+}
+
+/* ---- Dark Mode ---- */
+
+@media (prefers-color-scheme: dark) {
+  .guide-page {
+    background: #0f172a;
+  }
+
+  .guide-title {
+    color: #e2e8f0;
+    background: linear-gradient(135deg, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .guide-subtitle {
+    color: #64748b;
+  }
+
+  .guide-back-btn {
+    background:
+      linear-gradient(180deg, rgba(51, 65, 85, 0.76) 0%, rgba(30, 41, 59, 0.5) 100%);
+    border-color: rgba(71, 85, 105, 0.5);
+    color: #cbd5e1;
+  }
+
+  .guide-back-btn:hover {
+    border-color: rgba(129, 140, 248, 0.5);
+    color: #a5b4fc;
+  }
+
+  .guide-quick-btn {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(71, 85, 105, 0.4);
+    color: #94a3b8;
+  }
+
+  .guide-quick-btn:hover {
+    border-color: rgba(129, 140, 248, 0.5);
+    color: #c7d2fe;
+    background: rgba(30, 41, 59, 0.8);
+  }
+
+  .guide-message-assistant {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(71, 85, 105, 0.4);
+  }
+
+  .guide-message-assistant .guide-message-content {
+    color: #e2e8f0;
+  }
+
+  .guide-input {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(71, 85, 105, 0.5);
+    color: #e2e8f0;
+  }
+
+  .guide-input::placeholder {
+    color: #64748b;
+  }
+
+  .guide-input:focus {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(129, 140, 248, 0.5);
+  }
+
+  .guide-status-bar {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(71, 85, 105, 0.4);
+  }
+
+  .guide-status-faq {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+  }
+
+  .guide-status-available {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+  }
+
+  .guide-message-source {
+    border-top-color: rgba(100, 116, 139, 0.25);
+    color: #64748b;
+  }
+}

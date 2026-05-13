@@ -3,7 +3,7 @@ use std::net::TcpStream;
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 use std::process::{Child, Command, Stdio};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 use tauri::{
     menu::{Menu, MenuItem},
@@ -11,8 +11,13 @@ use tauri::{
     Manager,
 };
 
+mod interface;
+use interface::router::Router;
+use interface::server::WsGateway;
+
 static RESOURCE_DIR: OnceLock<Option<std::path::PathBuf>> = OnceLock::new();
 static MNEMO_SERVER: OnceLock<Mutex<Option<Child>>> = OnceLock::new();
+static WS_GATEWAY: OnceLock<Arc<WsGateway>> = OnceLock::new();
 
 #[derive(Serialize, Deserialize, Clone)]
 struct AgentStatus {
@@ -25,7 +30,218 @@ struct AgentStatus {
     install_url: String,
 }
 
-#[tauri::command]
+/// Initialize the WS Interface Gateway: builds the router, registers
+/// system handlers, and starts listening on port 8788.
+fn init_interface_gateway() {
+    let mut router = Router::new();
+
+    // --- agent.* handlers ---
+    router.register_system("agent.detect", |_params| {
+        let list = detect_agents();
+        let json = serde_json::to_value(list).map_err(|e| {
+            interface::protocol::RpcErrorDetail {
+                code: -32603,
+                message: format!("Serialization error: {}", e),
+                data: None,
+            }
+        })?;
+        Ok(serde_json::json!({ "agents": json }))
+    });
+
+    router.register_system("agent.link", |params| {
+        let name = params["name"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
+        // Ensure server is running
+        ensure_mnemo_server_running()
+            .map_err(|e| interface::protocol::RpcErrorDetail {
+                code: -32000,
+                message: e,
+                data: None,
+            })?;
+        let name_str = name.as_str();
+        match run_mnemo_setup(&["setup", "--no-project-prompts"], Some(name_str)) {
+            Ok(output) => Ok(serde_json::json!({ "status": "ok", "output": output })),
+            Err(e) => Err(interface::protocol::RpcErrorDetail {
+                code: -32000,
+                message: e,
+                data: None,
+            }),
+        }
+    });
+
+    router.register_system("agent.unlink", |params| {
+        let name = params["name"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
+        let name_str = name.as_str();
+        match run_mnemo_setup(&["setup", "--uninstall", "--mcp-only"], Some(name_str)) {
+            Ok(output) => Ok(serde_json::json!({ "status": "ok", "output": output })),
+            Err(e) => Err(interface::protocol::RpcErrorDetail {
+                code: -32000,
+                message: e,
+                data: None,
+            }),
+        }
+    });
+
+    router.register_system("agent.link_all", |_params| {
+        ensure_mnemo_server_running()
+            .map_err(|e| interface::protocol::RpcErrorDetail {
+                code: -32000,
+                message: e,
+                data: None,
+            })?;
+        match run_mnemo_setup(&["setup", "--no-project-prompts"], None) {
+            Ok(output) => Ok(serde_json::json!({ "status": "ok", "output": output })),
+            Err(e) => Err(interface::protocol::RpcErrorDetail {
+                code: -32000,
+                message: e,
+                data: None,
+            }),
+        }
+    });
+
+    router.register_system("agent.unlink_all", |_params| {
+        match run_mnemo_setup(&["setup", "--uninstall", "--mcp-only"], None) {
+            Ok(output) => Ok(serde_json::json!({ "status": "ok", "output": output })),
+            Err(e) => Err(interface::protocol::RpcErrorDetail {
+                code: -32000,
+                message: e,
+                data: None,
+            }),
+        }
+    });
+
+    // --- system.* handlers ---
+    router.register_system("system.ensure_server", |_params| {
+        match ensure_mnemo_server_running() {
+            Ok(msg) => Ok(serde_json::json!({ "status": msg })),
+            Err(e) => Ok(serde_json::json!({ "status": "error", "message": e })),
+        }
+    });
+
+    router.register_system("system.status", |_params| {
+        let server_running = server_responds();
+        Ok(serde_json::json!({
+            "server_running": server_running,
+        }))
+    });
+
+    // --- cli.* handlers ---
+    router.register_system("cli.sync", |_params| {
+        // CLI version sync: compare bundled binary vs system binary,
+        // copy if bundled is newer.
+        let updated = sync_cli_binary();
+        Ok(serde_json::json!({ "synced": updated }))
+    });
+
+    // Register backend-forwarded methods
+    for method in &[
+        "guide.ask",
+        "knowledge.create",
+        "knowledge.search",
+        "knowledge.get",
+        "knowledge.update",
+        "knowledge.delete",
+        "knowledge.feedback",
+        "knowledge.related",
+        "knowledge.tags",
+        "knowledge.by_tag",
+        "stats.overview",
+        "stats.timeline",
+        "stats.events",
+    ] {
+        router.register_backend(method);
+    }
+
+    let gateway = Arc::new(WsGateway::new(router, 8787));
+    let gateway_clone = gateway.clone();
+
+    // Store for push_event access
+    let _ = WS_GATEWAY.set(gateway);
+
+    // Spawn the WS server on port 8788
+    tauri::async_runtime::spawn(async move {
+        if let Err(e) = gateway_clone.start(8788).await {
+            eprintln!("WS Gateway error: {}", e);
+        }
+    });
+}
+
+/// Sync bundled CLI binary to system install path if bundled is newer.
+/// Returns true if an update was performed.
+fn sync_cli_binary() -> bool {
+    let _bundled = find_mnemo_binary();
+    // Only proceed if we found the bundled binary (resource directory)
+    let res_dir = RESOURCE_DIR.get().and_then(|o| o.as_ref());
+    let bundled_path = res_dir.and_then(|d| {
+        let bin = if cfg!(windows) { "mnemo.exe" } else { "mnemo" };
+        let candidates = [
+            d.join(bin),
+            d.join("Resources").join(bin),
+            d.join("resources").join(bin),
+        ];
+        candidates.into_iter().find(|p| p.exists())
+    });
+
+    if bundled_path.is_none() {
+        return false;
+    }
+    let bundled_path = bundled_path.unwrap();
+
+    let home = dirs_home();
+    let system_path =
+        std::path::PathBuf::from(format!("{}/.mnemo/bin/{}", home,
+            if cfg!(windows) { "mnemo.exe" } else { "mnemo" }));
+
+    if !system_path.exists() {
+        // No system binary yet — install it
+        if let Some(parent) = system_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        return std::fs::copy(&bundled_path, &system_path).is_ok();
+    }
+
+    // Compare versions
+    let bundled_version = get_binary_version(&bundled_path);
+    let system_version = get_binary_version(&system_path);
+
+    match (bundled_version, system_version) {
+        (Some(bv), Some(sv)) if bv > sv => {
+            let _ = std::fs::copy(&bundled_path, &system_path);
+            true
+        }
+        (Some(_), None) => {
+            let _ = std::fs::copy(&bundled_path, &system_path);
+            true
+        }
+        _ => false,
+    }
+}
+
+/// Get version string from a mnemo binary
+fn get_binary_version(path: &std::path::Path) -> Option<String> {
+    Command::new(path)
+        .arg("--version")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .output()
+        .ok()
+        .and_then(|output| {
+            if output.status.success() {
+                String::from_utf8(output.stdout)
+                    .ok()
+                    .map(|s| s.trim().to_string())
+            } else {
+                None
+            }
+        })
+}
+
 fn detect_agents() -> Vec<AgentStatus> {
     let agents: Vec<(&str, &str, &str, Vec<&str>, Vec<&str>, Vec<&str>, &str)> = vec![
         ("claude-code", "Claude Code", "~/.claude.json", vec!["claude"], vec![], vec!["~/.claude/CLAUDE.md"], "https://docs.anthropic.com/en/docs/claude-code/setup"),
@@ -68,51 +284,6 @@ fn detect_agents() -> Vec<AgentStatus> {
             },
         )
         .collect()
-}
-
-#[tauri::command]
-async fn link_agent(name: String) -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        ensure_mnemo_server_running()?;
-        run_mnemo_setup(&["setup", "--no-project-prompts"], Some(&name))
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
-}
-
-#[tauri::command]
-async fn unlink_agent(name: String) -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        run_mnemo_setup(&["setup", "--uninstall", "--mcp-only"], Some(&name))
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
-}
-
-#[tauri::command]
-async fn link_all() -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        ensure_mnemo_server_running()?;
-        run_mnemo_setup(&["setup", "--no-project-prompts"], None)
-    })
-        .await
-        .map_err(|e| format!("Task join error: {}", e))?
-}
-
-#[tauri::command]
-async fn unlink_all() -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        run_mnemo_setup(&["setup", "--uninstall", "--mcp-only"], None)
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
-}
-
-#[tauri::command]
-async fn ensure_mnemo_server() -> Result<String, String> {
-    tauri::async_runtime::spawn_blocking(ensure_mnemo_server_running)
-        .await
-        .map_err(|e| format!("Task join error: {}", e))?
 }
 
 fn ensure_mnemo_server_running() -> Result<String, String> {
@@ -302,11 +473,35 @@ fn shell_command_succeeds(program: &str, args: &[&str]) -> bool {
         format!("{program} {} >/dev/null 2>&1", args.join(" "))
     };
 
-    Command::new("/bin/zsh")
-        .args(["-lc", &command])
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false)
+    // Use interactive login shell (-lic) so that .zshrc PATH setup
+    // (nvm, fnm, etc.) takes effect even when spawned from a GUI app.
+    let mut child = match Command::new("/bin/zsh")
+        .args(["-lic", &command])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(child) => child,
+        Err(_) => return false,
+    };
+
+    // Wait up to 5 seconds to prevent hangs from slow shell init.
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => return status.success(),
+            Ok(None) => {
+                if std::time::Instant::now() > deadline {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return false;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(50));
+            }
+            Err(_) => return false,
+        }
+    }
 }
 
 fn resolve_binary(binary: &str) -> Option<std::path::PathBuf> {
@@ -328,10 +523,31 @@ fn binary_candidate_paths(binary: &str) -> Vec<std::path::PathBuf> {
         std::path::PathBuf::from(format!("/usr/local/bin/{binary}")),
         std::path::PathBuf::from(format!("/usr/bin/{binary}")),
         std::path::PathBuf::from(format!("/bin/{binary}")),
+        // fnm (Fast Node Manager)
+        std::path::PathBuf::from(format!(
+            "{home}/.local/share/fnm/aliases/default/bin/{binary}"
+        )),
+        // asdf
+        std::path::PathBuf::from(format!("{home}/.asdf/shims/{binary}")),
+        // volta
+        std::path::PathBuf::from(format!("{home}/.volta/bin/{binary}")),
+        // npm global (system node, no version manager)
+        std::path::PathBuf::from(format!("{home}/.npm-global/bin/{binary}")),
     ];
 
+    // nvm: ~/.nvm/versions/node/*/bin/{binary}
     let nvm_versions = std::path::PathBuf::from(format!("{home}/.nvm/versions/node"));
     if let Ok(entries) = std::fs::read_dir(nvm_versions) {
+        paths.extend(
+            entries
+                .flatten()
+                .map(|entry| entry.path().join("bin").join(binary)),
+        );
+    }
+
+    // nodenv: ~/.nodenv/versions/*/bin/{binary}
+    let nodenv_versions = std::path::PathBuf::from(format!("{home}/.nodenv/versions"));
+    if let Ok(entries) = std::fs::read_dir(nodenv_versions) {
         paths.extend(
             entries
                 .flatten()
@@ -342,8 +558,30 @@ fn binary_candidate_paths(binary: &str) -> Vec<std::path::PathBuf> {
     paths
 }
 
+fn find_binary_path(binary: &str) -> Option<String> {
+    resolve_binary(binary).map(|p| p.to_string_lossy().to_string())
+}
+
+fn verify_binary(path: &str) -> bool {
+    Command::new(path)
+        .arg("--version")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
 fn binary_exists(binary: &str) -> bool {
-    resolve_binary(binary).is_some() || shell_command_succeeds("command", &["-v", binary])
+    // Find the binary first, then verify it's the expected agent.
+    if let Some(path) = find_binary_path(binary) {
+        if verify_binary(&path) {
+            return true;
+        }
+    }
+    // Fall back to interactive login shell PATH lookup.
+    shell_command_succeeds("command", &["-v", binary])
 }
 
 fn agent_installed(name: &str, binaries: &[&str], app_paths: &[&str]) -> bool {
@@ -428,6 +666,10 @@ pub fn run() {
             // Store resource path for finding bundled mnemo binary
             let res_path = app.path().resource_dir().ok();
             let _ = RESOURCE_DIR.set(res_path);
+
+            // Start the WS Interface Gateway (port 8788)
+            init_interface_gateway();
+
             tauri::async_runtime::spawn_blocking(|| {
                 let _ = ensure_mnemo_server_running();
             });
@@ -472,14 +714,6 @@ pub fn run() {
                 api.prevent_close();
             }
         })
-        .invoke_handler(tauri::generate_handler![
-            detect_agents,
-            link_agent,
-            unlink_agent,
-            link_all,
-            unlink_all,
-            ensure_mnemo_server,
-        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

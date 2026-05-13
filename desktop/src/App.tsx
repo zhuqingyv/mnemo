@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { useWS } from "./hooks/useWS";
 import "./App.css";
+
+import { GuidePage } from "./guide/GuidePage";
 
 import mnemoLogo from "./assets/mnemo-logo.png";
 import claudeIcon from "./assets/agents/claude.svg";
@@ -43,6 +45,8 @@ const I18N: Record<Language, Record<string, string>> = {
     linkAll: "全部链接",
     openViz: "打开可视化页面",
     promptHint: "全局提示词未注入",
+    openGuide: "打开 Mnemo 说明书",
+    backToDashboard: "返回仪表盘",
   },
   en: {
     notInstalled: "Not installed",
@@ -60,6 +64,8 @@ const I18N: Record<Language, Record<string, string>> = {
     linkAll: "Link all",
     openViz: "Open visualization",
     promptHint: "Global prompt not injected",
+    openGuide: "Open Mnemo Guide",
+    backToDashboard: "Back to Dashboard",
   },
   "zh-TW": {
     notInstalled: "未安裝",
@@ -77,6 +83,8 @@ const I18N: Record<Language, Record<string, string>> = {
     linkAll: "全部連結",
     openViz: "開啟視覺化頁面",
     promptHint: "全域提示詞未注入",
+    openGuide: "開啟 Mnemo 說明書",
+    backToDashboard: "返回儀表板",
   },
 };
 
@@ -128,6 +136,7 @@ function shouldShowPromptHint(agent: AgentStatus): boolean {
 }
 
 function App() {
+  const { send, ready } = useWS();
   const [agents, setAgents] = useState<AgentStatus[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -136,6 +145,7 @@ function App() {
     normalizeLanguage(localStorage.getItem("mnemo_lang") || navigator.language),
   );
   const copy = I18N[language];
+  const [page, setPage] = useState<"dashboard" | "guide">("dashboard");
 
   function handleLanguageChange(nextLanguage: Language): void {
     setLanguage(nextLanguage);
@@ -143,13 +153,15 @@ function App() {
   }
 
   async function refresh() {
-    const result = await invoke<AgentStatus[]>("detect_agents");
-    setAgents(result);
+    const result = await send<{ agents: AgentStatus[] }>("agent.detect");
+    setAgents(result.agents);
   }
 
   useEffect(() => {
-    refresh();
-  }, []);
+    if (ready) {
+      refresh();
+    }
+  }, [ready]);
 
   async function handleOpenInstall(agent: AgentStatus) {
     if (agent.install_url) {
@@ -161,7 +173,7 @@ function App() {
     setLoading(name);
     setMessage(null);
     try {
-      await invoke("link_agent", { name });
+      await send("agent.link", { name });
       setMessage(copy.linkSuccess);
     } catch (e) {
       setMessage(`${copy.linkFailed}: ${toMessage(e)}`);
@@ -174,7 +186,7 @@ function App() {
     setLoading(name);
     setMessage(null);
     try {
-      await invoke("unlink_agent", { name });
+      await send("agent.unlink", { name });
       setMessage(copy.unlinked);
     } catch (e) {
       setMessage(`${copy.unlinkFailed}: ${toMessage(e)}`);
@@ -187,7 +199,7 @@ function App() {
     setLoading("all");
     setMessage(null);
     try {
-      await invoke("link_all");
+      await send("agent.link_all");
       setMessage(copy.linkAllSuccess);
     } catch (e) {
       setMessage(`${copy.linkFailed}: ${toMessage(e)}`);
@@ -200,12 +212,16 @@ function App() {
     setLoading("viz");
     setMessage(null);
     try {
-      await invoke("ensure_mnemo_server");
+      await send("system.ensure_server");
       await openUrl("http://127.0.0.1:8787/viz");
     } catch (e) {
       setMessage(`打开可视化页面失败: ${toMessage(e)}`);
     }
     setLoading(null);
+  }
+
+  if (page === "guide") {
+    return <GuidePage language={language} send={send} onBack={() => setPage("dashboard")} />;
   }
 
   return (
@@ -299,6 +315,13 @@ function App() {
           </button>
           <button className="btn-secondary" disabled={loading !== null} onClick={handleOpenViz}>
             {loading === "viz" ? "..." : copy.openViz}
+          </button>
+          <button
+            className="btn-primary"
+            disabled={loading !== null}
+            onClick={() => setPage("guide")}
+          >
+            {copy.openGuide}
           </button>
         </div>
       </div>

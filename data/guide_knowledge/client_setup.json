@@ -1,0 +1,165 @@
+[
+  {
+    "id": "setup-claude-code",
+    "type": "client_setup",
+    "title": "Claude Code 接入 Mnemo",
+    "summary": "在 Claude Code 中配置 Mnemo MCP 服务器和全局提示词，让 Claude Code agent 获得记忆能力。",
+    "tags": ["Claude Code", "接入", "MCP", "配置", "Anthropic"],
+    "intents": ["client_setup"],
+    "clients": ["Claude Code"],
+    "content": "Claude Code 是 Anthropic 推出的终端 AI 编程助手。将 Mnemo 接入 Claude Code 后，Claude Code 的 agent 就能在对话中搜索、创建和反馈 Mnemo 记忆。\n\n接入流程非常简单：先安装 Mnemo 二进制，然后运行 `mnemo setup --auto`。这个命令会自动检测到系统中安装了 Claude Code，并在 `~/.claude.json` 文件中写入 MCP 服务器配置。同时，Mnemo 的全局提示词也会被注入到 Claude Code 的系统提示词配置中。\n\n配置完成后，需要完全退出并重新启动 Claude Code。重启后，Claude Code 的 agent 就能看到 `mnemo__search`、`mnemo__create_knowledge` 等工具。你可以在对话中直接让 agent 使用这些工具，或者什么都不说 —— 如果全局提示词注入成功，agent 会主动在每次任务前搜索记忆。\n\n注意：Claude Code 的 MCP 配置存储在 `~/.claude.json` 中。如果你想手动验证配置是否写入，可以打开该文件查看，但不要手动编辑 —— 始终通过 `mnemo setup` 来管理配置。",
+    "steps": [
+      "1. 确保已安装 Mnemo（运行 mnemo --version 确认）",
+      "2. 运行 mnemo setup --auto 自动检测并配置 Claude Code",
+      "3. 验证 ~/.claude.json 中是否包含了 mnemo MCP 服务器条目",
+      "4. 完全退出 Claude Code 并重新启动",
+      "5. 在对话中测试：让 agent 尝试调用 mnemo__search 搜索任意关键词"
+    ],
+    "commands": [
+      {
+        "id": "setup-auto-claude",
+        "label": "自动配置 Claude Code",
+        "command": "mnemo setup --auto"
+      }
+    ],
+    "related": ["mnemo-setup-explanation", "verify-install"]
+  },
+  {
+    "id": "setup-cursor",
+    "type": "client_setup",
+    "title": "Cursor 接入 Mnemo",
+    "summary": "在 Cursor 编辑器中配置 Mnemo MCP 服务器，让 Cursor 的 AI agent 获得记忆能力。",
+    "tags": ["Cursor", "接入", "MCP", "配置", "编辑器"],
+    "intents": ["client_setup"],
+    "clients": ["Cursor"],
+    "content": "Cursor 是流行的 AI 代码编辑器，内置 MCP 支持。将 Mnemo 接入 Cursor 后，Cursor 的 AI agent（如 Composer、Chat）就能在对话中使用 Mnemo 记忆工具。\n\n接入流程：先安装 Mnemo 二进制，然后运行 `mnemo setup --auto`。命令会自动检测 Cursor 的存在，并在 `~/.cursor/mcp.json` 中写入 MCP 服务器配置。同时，全局提示词也会被注入到 Cursor 的配置中（具体位置为 `~/.cursor/mcp.json` 同级目录下的 prompts 配置）。\n\n配置完成后，需要完全关闭 Cursor 窗口并重新打开。重启后，在 Cursor 的 Composer 或 Chat 对话中，agent 将能调用 mnemo 工具。你可以在设置中确认 MCP 工具是否已加载，或直接在对话中让 agent 搜索记忆来测试。\n\n注意：不要手动编辑 `~/.cursor/mcp.json`。始终通过 `mnemo setup --auto` 进行配置，通过 `mnemo setup --uninstall` 来移除配置。手动编辑可能导致配置冲突或 idempotent 操作失效。",
+    "steps": [
+      "1. 确保已安装 Mnemo（运行 mnemo --version 确认）",
+      "2. 运行 mnemo setup --auto 自动检测并配置 Cursor",
+      "3. 验证 ~/.cursor/mcp.json 中是否包含了 mnemo MCP 服务器条目",
+      "4. 完全关闭 Cursor 窗口并重新打开",
+      "5. 在 Composer 或 Chat 中让 agent 尝试使用 mnemo 工具"
+    ],
+    "commands": [
+      {
+        "id": "setup-auto-cursor",
+        "label": "自动配置 Cursor",
+        "command": "mnemo setup --auto"
+      }
+    ],
+    "related": ["mnemo-setup-explanation", "verify-install"]
+  },
+  {
+    "id": "setup-codebuddy",
+    "type": "client_setup",
+    "title": "CodeBuddy 接入 Mnemo",
+    "summary": "在 CodeBuddy 中配置 Mnemo MCP 服务器，让 CodeBuddy agent 获得记忆能力。",
+    "tags": ["CodeBuddy", "接入", "MCP", "配置", "腾讯"],
+    "intents": ["client_setup"],
+    "clients": ["CodeBuddy"],
+    "content": "CodeBuddy 是腾讯推出的 AI 编程助手，支持 MCP 工具协议。将 Mnemo 接入 CodeBuddy 后，CodeBuddy 的 agent 就能使用 Mnemo 的记忆搜索、创建、反馈等功能。\n\n接入流程：先安装 Mnemo 二进制，然后运行 `mnemo setup --auto`。命令会自动检测 CodeBuddy 的存在，并在 `~/.codebuddy/.mcp.json` 中写入 MCP 服务器配置。同时，全局提示词会被注入到 CodeBuddy 的系统提示词中，让 agent 在每次任务中主动使用记忆工具。\n\n配置完成后，需要完全退出 CodeBuddy 并重新启动。重启后，agent 将能看到 `mnemo__search`、`mnemo__create_knowledge` 等工具。你可以在对话中直接测试：让 agent 搜索项目相关的记忆，看它能否正常返回结果。\n\n注意：CodeBuddy 的 MCP 配置存储在 `~/.codebuddy/.mcp.json`。不要手动编辑这个文件 —— 始终通过 `mnemo setup` 来管理。",
+    "steps": [
+      "1. 确保已安装 Mnemo（运行 mnemo --version 确认）",
+      "2. 运行 mnemo setup --auto 自动检测并配置 CodeBuddy",
+      "3. 验证 ~/.codebuddy/.mcp.json 中是否包含了 mnemo MCP 服务器条目",
+      "4. 完全退出 CodeBuddy 并重新启动",
+      "5. 在对话中让 agent 尝试使用 mnemo 工具"
+    ],
+    "commands": [
+      {
+        "id": "setup-auto-codebuddy",
+        "label": "自动配置 CodeBuddy",
+        "command": "mnemo setup --auto"
+      }
+    ],
+    "related": ["mnemo-setup-explanation", "verify-install"]
+  },
+  {
+    "id": "setup-codex-cli",
+    "type": "client_setup",
+    "title": "Codex CLI 接入 Mnemo",
+    "summary": "在 Codex CLI 中配置 Mnemo MCP 服务器，让 OpenAI Codex agent 获得记忆能力。",
+    "tags": ["Codex CLI", "OpenAI", "接入", "MCP", "配置"],
+    "intents": ["client_setup"],
+    "clients": ["Codex CLI"],
+    "content": "Codex CLI 是 OpenAI 推出的终端 AI 编程助手。将 Mnemo 接入 Codex CLI 后，Codex agent 就能在对话中搜索、创建和反馈 Mnemo 记忆。\n\n接入流程：先安装 Mnemo 二进制，然后运行 `mnemo setup --auto`。命令会自动检测 Codex CLI 的存在，并在 `~/.codex/config.toml` 中写入 MCP 服务器配置。同时，全局提示词会被注入到 Codex CLI 的提示词配置中。\n\n配置完成后，需要退出当前 Codex CLI 会话并重新启动。重启后，agent 将能看到 mnemo 工具集。与 Codex CLI 对话时，agent 应该会自动在任务开始时搜索相关记忆。\n\n注意：Codex CLI 的配置文件是 TOML 格式，存储在 `~/.codex/config.toml`。不要手动编辑此文件 —— 始终通过 `mnemo setup` 来管理 MCP 配置和提示词注入。",
+    "steps": [
+      "1. 确保已安装 Mnemo（运行 mnemo --version 确认）",
+      "2. 运行 mnemo setup --auto 自动检测并配置 Codex CLI",
+      "3. 验证 ~/.codex/config.toml 中包含了 mnemo MCP 服务器配置",
+      "4. 退出 Codex CLI 会话并重新启动",
+      "5. 在对话中让 agent 尝试搜索记忆"
+    ],
+    "commands": [
+      {
+        "id": "setup-auto-codex",
+        "label": "自动配置 Codex CLI",
+        "command": "mnemo setup --auto"
+      }
+    ],
+    "related": ["mnemo-setup-explanation", "verify-install"]
+  },
+  {
+    "id": "setup-deepseek-agent",
+    "type": "client_setup",
+    "title": "DeepSeek Agent 接入 Mnemo",
+    "summary": "在 DeepSeek Agent 中配置 Mnemo MCP 服务器，让 DeepSeek 的 AI agent 获得记忆能力。",
+    "tags": ["DeepSeek", "接入", "MCP", "配置"],
+    "intents": ["client_setup"],
+    "clients": ["DeepSeek Agent"],
+    "content": "DeepSeek Agent 是 DeepSeek 推出的 AI 编程助手。将 Mnemo 接入 DeepSeek Agent 后，DeepSeek 的 agent 就能在对话中搜索、创建和反馈 Mnemo 记忆。\n\n接入流程：先安装 Mnemo 二进制，然后运行 `mnemo setup --auto`。命令会自动检测 DeepSeek Agent 的存在，并写入 MCP 服务器配置到对应的配置文件中。同时，全局提示词会被注入，让 agent 在每次任务中主动使用记忆工具。\n\n配置完成后，需要完全退出 DeepSeek Agent 并重新启动。重启后，agent 将能看到 `mnemo__search`、`mnemo__create_knowledge` 等工具。在对话中可以直接让 agent 搜索或创建记忆来测试是否生效。\n\n注意：不同版本的 DeepSeek Agent 配置文件位置可能有所不同，`mnemo setup --auto` 会自动检测正确的路径。如果你手动修改过配置文件的位置，可以先运行 `mnemo setup --dry-run` 预览检测结果。",
+    "steps": [
+      "1. 确保已安装 Mnemo（运行 mnemo --version 确认）",
+      "2. 运行 mnemo setup --auto 自动检测并配置 DeepSeek Agent",
+      "3. 检查 mnemo setup 输出的日志，确认 DeepSeek Agent 被成功检测",
+      "4. 完全退出 DeepSeek Agent 并重新启动",
+      "5. 在对话中让 agent 尝试使用 mnemo 工具"
+    ],
+    "commands": [
+      {
+        "id": "setup-auto-deepseek",
+        "label": "自动配置 DeepSeek Agent",
+        "command": "mnemo setup --auto"
+      },
+      {
+        "id": "setup-dryrun-deepseek",
+        "label": "预览配置变更",
+        "command": "mnemo setup --auto --dry-run",
+        "warning": "--dry-run 不会实际写入配置，仅预览"
+      }
+    ],
+    "related": ["mnemo-setup-explanation", "verify-install"]
+  },
+  {
+    "id": "mnemo-setup-explanation",
+    "type": "client_setup",
+    "title": "mnemo setup 做了什么",
+    "summary": "详细解释 mnemo setup --auto 命令的工作流程：检测客户端、写入 MCP 配置、注入全局提示词。",
+    "tags": ["mnemo setup", "自动配置", "MCP配置", "提示词注入", "客户端检测"],
+    "intents": ["mcp_explain", "global_prompt_explain", "client_setup"],
+    "clients": ["Claude Code", "Cursor", "CodeBuddy", "Codex CLI", "Qwen Code", "Gemini CLI", "Windsurf", "GitHub Copilot CLI"],
+    "content": "`mnemo setup --auto` 是 Mnemo 的核心配置命令。当你在终端中运行它时，它会自动完成以下步骤：\n\n第一步：客户端检测。setup 命令会扫描系统中已安装的 AI 客户端，包括 Claude Code、Claude Desktop、Cursor、Codex CLI、Qwen Code、Gemini CLI、CodeBuddy、Windsurf、GitHub Copilot CLI 等。扫描基于标准路径检测，不需要你手动指定每个客户端的位置。\n\n第二步：写入 MCP 配置。对于每个检测到的客户端，setup 会在其配置文件中写入一个 stdio 模式的 MCP 服务器条目。例如在 Claude Code 的 `~/.claude.json` 中，它会写入类似 `{\"mnemo\": {\"command\": \"/path/to/mnemo\", \"args\": [\"mcp\"]}}` 的 JSON。这意味着客户端在启动时会自动以 stdio 模式启动 mnemo 进程，不需要后台服务。\n\n第三步：注入全局提示词。setup 会将 Mnemo 工作流规则（先搜索、再反馈、结束前记录）注入到客户端的系统提示词中。这一步确保 agent 不只是「能用」记忆工具，更「会用」记忆工具 —— 主动搜索、主动反馈、主动记录。\n\n第四步：PATH 配置。安装脚本还会将 `~/.mnemo/bin/` 添加到 shell 配置文件的 PATH 中，确保你在终端中可以直接运行 `mnemo` 命令。\n\n重要提示：mnemo setup 是 idempotent（幂等）的 —— 多次运行不会产生重复条目。它也是可逆的 —— 运行 `mnemo setup --uninstall` 可以完全移除所有注入。",
+    "steps": [
+      "1. 运行 mnemo setup --auto",
+      "2. setup 自动扫描已安装的 AI 客户端（Claude Code, Cursor, CodeBuddy 等）",
+      "3. 为每个检测到的客户端写入 stdio MCP 服务器配置",
+      "4. 将 Mnemo 工作流提示词注入到客户端的系统提示词中",
+      "5. 更新 shell PATH 配置，确保 mnemo 命令全局可用",
+      "6. 输出日志显示每个客户端是否成功配置"
+    ],
+    "commands": [
+      {
+        "id": "setup-auto",
+        "label": "自动配置所有客户端",
+        "command": "mnemo setup --auto"
+      },
+      {
+        "id": "setup-uninstall",
+        "label": "移除所有配置",
+        "command": "mnemo setup --uninstall",
+        "warning": "这将移除所有注入的 MCP 配置和提示词"
+      }
+    ],
+    "related": ["mcp-injection", "global-prompt-injection", "mcp-vs-prompt"]
+  }
+]

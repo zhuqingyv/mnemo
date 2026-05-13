@@ -1,0 +1,83 @@
+[
+  {
+    "id": "mnemo-overview",
+    "type": "concept",
+    "title": "Mnemo 是什么",
+    "summary": "Mnemo 是一个面向 AI 编程助手的本地记忆层，为 agent 团队提供共享大脑，让多个 AI 助手在协作中保持上下文一致。",
+    "tags": ["Mnemo", "AI记忆", "agent", "共享大脑", "本地"],
+    "intents": ["mnemo_overview"],
+    "content": "Mnemo 是一个运行在用户本地机器上的记忆管理系统，专门为 AI 编程助手（agent）设计。它的核心定位是 agent 团队的「共享大脑」—— 当你使用 Claude Code、Cursor、CodeBuddy 等多个 AI 客户端协同工作时，Mnemo 确保它们能够共享同一份知识库，避免每个 agent 都从零开始、反复踩同一个坑。\n\n与传统的文档系统或 wiki 不同，Mnemo 不是人工维护的知识库。它的知识条目由 agent 在工作过程中自动创建、更新和归档。每次搜索、每次反馈、每条新知识都会形成闭环，让记忆库随着真实使用不断优化。搜索到的知识如果帮助解决了问题，agent 会标记为 helpful；如果过时或误导，agent 会标记为 outdated 或 misleading，系统据此调整排序权重。\n\nMnemo 的存储完全在本地 —— 使用 SQLite 数据库，数据文件存放在用户机器的 `~/.mnemo/` 目录下。没有云端上传，没有第三方服务器，你的项目决策、技术判断、踩坑经验都留在你自己手里。\n\nMnemo 通过 MCP（Model Context Protocol）协议与 AI 客户端通信。安装后，agent 会获得一组记忆工具（search、create_knowledge、feedback_knowledge、update_knowledge 等），可以在对话中直接调用，无需离开工作流。"
+  },
+  {
+    "id": "ai-memory-asset",
+    "type": "concept",
+    "title": "AI 的记忆为什么是用户资产",
+    "summary": "AI 记忆属于用户而非服务商 —— Mnemo 将记忆数据存储在本地，由用户完全掌控，是用户在工作过程中积累的智力资产。",
+    "tags": ["用户资产", "隐私", "本地存储", "数据主权", "记忆所有权"],
+    "intents": ["privacy_security", "mnemo_overview"],
+    "content": "在使用 AI 编程助手的过程中，你反复纠正 agent 的行为、告诉它你的偏好、分享项目上下文 —— 这些交互积累起来，就是一份有价值的「记忆」。传统模式下，这些记忆要么不存在（每次对话从零开始），要么被锁在某个特定客户端的云端账户里，你无法自由迁移。\n\nMnemo 的设计原则是：AI 的记忆是用户的资产，不是服务商的资产。所有记忆数据以 SQLite 文件的形式存储在本地 `~/.mnemo/` 目录中，由用户完全掌控。你可以备份、迁移、甚至删除它，不需要任何第三方授权。如果你换了一台电脑，只需把这个目录复制过去，你积累的知识就跟着走了。\n\n这种设计也带来了隐私优势。你的项目决策、技术选择、团队约定 —— 这些敏感信息不会离开你的机器。即使你同时使用多个 AI 客户端（Claude Code、Cursor、CodeBuddy 等），它们都读写同一份本地记忆，而不需要把数据同步到谁的服务器。\n\n我们认为，你在使用 AI 工具过程中产生的知识和经验，本质上和你的代码一样，是你应该拥有的资产。Mnemo 就是这份资产的保管箱。"
+  },
+  {
+    "id": "mnemo-vs-kb",
+    "type": "concept",
+    "title": "Mnemo 和普通知识库的区别",
+    "summary": "Mnemo 是专为 AI agent 设计的原生记忆系统，具备反馈闭环和自动演化能力，而非静态的文档仓库。",
+    "tags": ["知识库对比", "agent原生", "反馈闭环", "自动演化", "动态记忆"],
+    "intents": ["mnemo_overview"],
+    "content": "普通知识库（如 Confluence、Notion、甚至项目 README）是由人手动编写和维护的静态文档系统。它们在创建后很少更新，随着时间的推移逐渐过时，最终变成无人维护的「文档坟场」。查询方式也通常是全文搜索，没有排序反馈机制。\n\nMnemo 与普通知识库有本质区别。第一，Mnemo 的知识条目由 AI agent 自动创建，而不是人工维护。agent 在解决实际问题时发现值得记录的经验，会自动写入一条知识。第二，Mnemo 有反馈闭环 —— 每条知识在被使用时都会收到 helpful、misleading 或 outdated 的反馈信号，系统根据这些信号动态调整搜索排序，让有价值的知识浮到上面，过时的知识自然下沉。第三，Mnemo 支持语义搜索和关系图谱，不是简单的关键词匹配，agent 可以跨条目发现关联。\n\n另一个关键区别是 Mnemo 的知识条目有生命周期。知识可以被更新（update）、被新版本取代（supersede）、被归档（archive），而不是永远留在搜索结果里制造噪音。这种设计让记忆库始终保持在「最有用的状态」，而不是「最大的状态」。\n\n简单来说：普通知识库是给人看的静态 wiki，Mnemo 是给 agent 用的、会自己学习和清理的动态记忆系统。"
+  },
+  {
+    "id": "public-vs-private",
+    "type": "concept",
+    "title": "Public Memory 和 Private Memory 的区别",
+    "summary": "Mnemo 支持项目共享的 Public Memory 和用户私有的 Private Memory，两者隔离存储，永不相交。",
+    "tags": ["Public Memory", "Private Memory", "隔离", "权限", "scope"],
+    "intents": ["mnemo_overview", "privacy_security"],
+    "content": "Mnemo 将记忆分为三个 scope（作用域）：global、project 和 session。其中 project 级别的记忆通常被称为「Public Memory」—— 它是项目团队共享的公共知识，比如技术决策、接口约定、团队偏好。所有接入同一个项目的 agent 都能搜索和使用这份公共记忆。\n\nsession 级别的记忆是「Private Memory」—— 它只在当前会话中可见，不会跨会话或跨 agent 共享。适合存放临时的调试状态、当前任务独有的上下文，这些信息对其他 agent 没有复用价值。\n\nglobal 级别的记忆跨项目共享，适合存放与具体项目无关的通用经验，比如某个终端的特殊行为、某个工具的使用技巧。\n\n关键设计原则是：不同 scope 的记忆在存储层是隔离的，不会混在一起。当一个 agent 搜索知识时，它可以指定 scope 过滤条件，确保不会意外读到不该读的私人记忆。这种隔离保证了团队协作时的隐私安全 —— 你个人的偏好和临时状态不会泄露给团队其他成员的 agent。"
+  },
+  {
+    "id": "mcp-injection",
+    "type": "concept",
+    "title": "MCP 注入是什么",
+    "summary": "MCP 注入是将 Mnemo 的记忆工具注册到 AI 客户端的 MCP 配置中，让 agent 在对话中可以直接调用搜索、创建、反馈等记忆操作。",
+    "tags": ["MCP", "Model Context Protocol", "注入", "工具注册", "配置"],
+    "intents": ["mcp_explain"],
+    "content": "MCP（Model Context Protocol）是由 Anthropic 提出的一种开放协议，用于 AI 模型与外部工具之间的标准化通信。你可以把它理解为 AI 客户端的「工具插件接口」—— 通过 MCP，AI 助手可以获得搜索文件、读取数据库、调用 API 等超出纯对话的能力。\n\nMCP 注入指的是将 Mnemo 提供的记忆工具集注册到 AI 客户端的 MCP 配置中。具体来说，`mnemo setup --auto` 命令会在客户端的 MCP 配置文件中写入一段 JSON 配置，告诉客户端：「有一个叫 mnemo 的 MCP 服务器，你可以通过它使用 search、create_knowledge、feedback_knowledge 等工具。」\n\n注入完成后，agent 在对话中就能看到一组以 `mnemo__` 为前缀的工具（如 `mnemo__search`、`mnemo__create_knowledge`）。当 agent 需要查询项目历史知识或记录新发现时，它可以直接调用这些工具，就像调用其他内置工具一样自然。\n\nMCP 注入是使能层 —— 它给 agent 提供了操作记忆的能力。但要 agent 主动使用这些能力，还需要全局提示词注入告诉它「什么时候该用、怎么用」。两者配合才能完整激活 Mnemo 的工作流。"
+  },
+  {
+    "id": "global-prompt-injection",
+    "type": "concept",
+    "title": "全局提示词注入是什么",
+    "summary": "全局提示词注入是在 AI 客户端的系统提示词中嵌入 Mnemo 工作流规则，让所有对话都遵循「先搜索、再反馈、结束时记录」的记忆闭环。",
+    "tags": ["提示词注入", "system prompt", "工作流", "全局规则", "agent行为"],
+    "intents": ["global_prompt_explain"],
+    "content": "全局提示词注入是 Mnemo setup 流程的第二部分。除了注册 MCP 工具，`mnemo setup --auto` 还会在 AI 客户端的全局提示词配置中注入一段 Mnemo 工作流指令。这段指令告诉 agent：每次任务开始前先搜索记忆、使用过的知识要反馈、任务结束时要把新发现写入记忆。\n\n为什么需要全局提示词注入？因为 MCP 工具只是给了 agent「能力」，但 agent 不会自动知道什么时候该用这些能力。没有提示词引导，agent 可能会忽略记忆工具，继续凭自己的训练数据回答问题，或者只在用户明确要求时才去搜索。全局提示词让记忆检索成为默认行为，而不是可选行为。\n\n注入的提示词包含四个核心规则：第一，接任何任务第一个动作就是搜索 Mnemo 记忆；第二，用过记忆后必须 feedback（helpful / misleading / outdated）；第三，任务结束前反哺 —— 如果有新发现就 create_knowledge；第四，用户的偏好、判断、纠正按原话记录为事实。\n\n全局提示词注入后在一个对话中自动生效，不需要用户每次都说「去查一下记忆」。这使得 Mnemo 对用户透明 —— agent 自己就会去查、去记、去更新，用户只需要专注于任务本身。"
+  },
+  {
+    "id": "mcp-vs-prompt",
+    "type": "concept",
+    "title": "MCP 注入和全局提示词注入的区别",
+    "summary": "MCP 注入给 agent 提供记忆操作的工具能力，全局提示词注入告诉 agent 什么时候该用这些工具 —— 两者缺一不可。",
+    "tags": ["MCP", "提示词注入", "对比", "能力vs规则", "配合"],
+    "intents": ["mcp_explain", "global_prompt_explain"],
+    "content": "很多人把 MCP 注入和全局提示词注入混为一谈，但它们解决的是完全不同的问题。MCP 注入解决的是「能不能」的问题 —— 它把一个叫 mnemo 的 MCP 服务器注册到客户端配置里，让 agent 在对话中「看到」search、create_knowledge 等工具。没有 MCP 注入，agent 根本没有操作记忆的能力。\n\n全局提示词注入解决的是「会不会」的问题 —— 它在 agent 的系统提示词中嵌入 Mnemo 工作流规则，告诉 agent 什么时候应该去搜索记忆、什么时候应该反馈、什么时候应该写入新知识。没有全局提示词，agent 即使有工具也不会主动去用。\n\n你可以用一个类比来理解：MCP 注入相当于给一个工人配备了一把锤子，全局提示词注入相当于教会他什么情况下应该用锤子而不是手。有工具没规则，工人可能永远不用；有规则没工具，工人想用也用不了。两者必须同时存在，Mnemo 的记忆闭环才能真正运转起来。\n\n这也是为什么 `mnemo setup --auto` 同时做两件事 —— 写 MCP 配置 + 注入提示词。只做其中任何一件都会导致记忆系统形同虚设。"
+  },
+  {
+    "id": "guide-capability",
+    "type": "concept",
+    "title": "本地说明书助手能做什么 / 不能做什么",
+    "summary": "清晰定义 Mnemo Guide 本地说明书助手的能力边界：只回答 Mnemo 相关问题，不联网，不执行命令，不读写用户文件。",
+    "tags": ["说明书助手", "能力边界", "限制", "安全", "职责"],
+    "intents": ["mnemo_overview", "privacy_security"],
+    "content": "Mnemo Guide 是一个运行在本地的说明书助手，它的职责是解答与 Mnemo 本身相关的所有问题 —— 概念理解、安装步骤、客户端接入、配置说明、错误排查、隐私安全、FAQ 等。你可以把它理解为 Mnemo 产品的「本地客服」。\n\n它能做什么：解释 Mnemo 的核心概念和设计理念；提供各平台的安装指南和验证方法；指导 Claude Code、Cursor、CodeBuddy 等客户端的接入配置；帮助排查常见的安装失败、配置不生效、agent 不读记忆等问题；回答关于数据隐私和安全的疑问；提供命令模板和参数说明。\n\n它不能做什么：联网搜索 —— 它只能根据本地预置的知识库回答，不知道外部世界的最新变化；执行 shell 命令 —— 它不会帮你运行 curl、irm 或任何系统命令；读取你的本地文件 —— 它不能访问你的项目代码、配置文件、私人文档；调用外部 API 或工具 —— 它没有 MCP 工具，不是通用 agent；回答与 Mnemo 无关的问题 —— 如果你问它如何写 React 组件或如何配置 Nginx，它会拒绝回答。\n\n这些限制是设计上的安全边界，不是功能缺陷。说明书助手的目标是帮你快速了解 Mnemo，而不是成为一个全能助手。"
+  },
+  {
+    "id": "privacy-security",
+    "type": "concept",
+    "title": "如何保护隐私",
+    "summary": "Mnemo 所有数据存储在本地 SQLite，默认不上传、不联网、不依赖第三方服务，用户拥有完全的数据掌控权。",
+    "tags": ["隐私", "安全", "本地存储", "数据隔离", "无上传"],
+    "intents": ["privacy_security"],
+    "content": "Mnemo 从架构设计上就优先保护用户隐私。核心原则是：所有数据留在本地，你不分享就不会离开你的机器。\n\n具体来说：Mnemo 的记忆数据存储在 `~/.mnemo/` 目录下的 SQLite 数据库中，这是一个标准的本地文件。没有任何后台进程将数据同步到云端，也没有遥测上报。MCP 通信通过 stdio（标准输入输出）进行，数据只在你的客户端和本地 mnemo 进程之间流动，不经过网络。\n\n如果你使用了 HTTP 模式（`mnemo setup --mode http --port 8787`），mnemo 会启动一个本地 HTTP 服务器监听指定端口。但即使在这种模式下，服务器也只绑定 localhost（127.0.0.1），外部网络无法访问。你需要在启动时显式指定 `--host 0.0.0.0` 才会开放到局域网 —— 但这是高级用法，常规安装不会这样做。\n\n数据隔离方面：project scope 的记忆在不同项目之间是隔离的，session scope 的记忆不会跨会话泄露。每个 scope 的查询都需要明确指定，agent 不会意外读到不属于当前上下文的私人数据。\n\n总的来说，Mnemo 是一个「默认安全」的系统 —— 你不做什么额外配置，它就不会上传、不会联网、不会泄露。如果你有更高的安全需求（比如对数据库文件加密），可以将 `~/.mnemo/` 目录放在加密磁盘上。"
+  }
+]

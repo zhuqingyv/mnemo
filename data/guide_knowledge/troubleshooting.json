@@ -1,0 +1,159 @@
+[
+  {
+    "id": "trouble-install-failed",
+    "type": "troubleshooting",
+    "title": "安装失败排查",
+    "summary": "当 install.sh 或 install.ps1 安装脚本失败时，按此清单逐项排查网络、权限、杀毒软件等问题。",
+    "tags": ["安装失败", "排查", "网络", "权限", "手动安装"],
+    "intents": ["troubleshoot"],
+    "content": "如果 curl 或 irm 安装命令执行失败，首先不要跳过安装步骤去尝试 pip install 或 brew install —— 这些方式对 Mnemo 不存在。请按照以下清单逐步排查。\n\n最常见的失败原因是网络问题。`curl -fsSL` 需要访问 GitHub (`github.com` 和 `github-releases.githubusercontent.com`)。如果你在有防火墙的企业网络或某些地区的网络中，可能无法直接访问 GitHub。解决方案包括：使用代理（在 curl 前添加 HTTPS_PROXY 环境变量），或者用浏览器直接访问 GitHub Releases 页面手动下载二进制文件。\n\n如果网络正常但脚本执行失败，检查以下几点：脚本是否有执行权限（Linux/macOS 上可以先用 `curl ... | sh` 而不是 wget）；PowerShell 的 ExecutionPolicy 是否阻止了脚本执行（Windows 上运行 `Get-ExecutionPolicy` 检查）；是否有杀毒软件拦截了下载或执行。\n\n如果以上都检查过了仍然失败，走手动恢复路线：用浏览器打开 https://github.com/zhuqingyv/mnemo/releases/latest，下载对应平台的二进制文件，手动放到 `~/.mnemo/bin/mnemo`，然后运行 `mnemo setup --auto` 完成配置。",
+    "steps": [
+      "1. 检查网络连接：能否访问 https://github.com",
+      "2. 如果网络受限，尝试使用代理或切换网络",
+      "3. 确认 curl 或 PowerShell 版本足够新（curl 7.x+, PowerShell 5.1+）",
+      "4. Windows 用户检查 ExecutionPolicy：运行 Get-ExecutionPolicy",
+      "5. 检查是否有杀毒软件或防火墙拦截了下载",
+      "6. 尝试手动下载二进制：访问 https://github.com/zhuqingyv/mnemo/releases/latest",
+      "7. 下载对应平台的二进制，放到 ~/.mnemo/bin/mnemo，然后运行 mnemo setup --auto",
+      "8. 如果仍然失败，请到 https://github.com/zhuqingyv/mnemo/issues 提交 issue"
+    ],
+    "commands": [
+      {
+        "id": "check-curl",
+        "label": "检查 curl 是否可以访问 GitHub",
+        "command": "curl -I https://github.com"
+      },
+      {
+        "id": "check-exec-policy",
+        "label": "Windows：检查执行策略",
+        "command": "Get-ExecutionPolicy"
+      }
+    ],
+    "warnings": [
+      "不要用 pip install m-nemo 或 brew install 来替代 —— 这些方式不存在",
+      "手动下载的二进制在 macOS 上可能需要运行 xattr -d com.apple.quarantine <path> 才能执行"
+    ],
+    "related": ["install-macos", "install-windows", "install-linux"]
+  },
+  {
+    "id": "trouble-mcp-not-found",
+    "type": "troubleshooting",
+    "title": "MCP 工具没有出现排查",
+    "summary": "当 AI 客户端的 agent 看不到 mnemo 工具时，按清单检查客户端重启、MCP 配置文件、MCP 服务器状态。",
+    "tags": ["MCP", "工具不可用", "排查", "配置", "重启"],
+    "intents": ["troubleshoot"],
+    "content": "如果在 AI 客户端中看不到 mnemo 开头的工具（如 mnemo__search），通常是以下几个原因之一。\n\n最常见的原因是客户端没有重启。MCP 配置在客户端启动时加载，如果你在运行 `mnemo setup --auto` 时客户端还开着，新配置不会被加载。确保完全退出客户端（不是只关闭标签页或窗口），然后再重新打开。\n\n第二个常见原因是 MCP 配置文件没有被写入。检查对应客户端的配置文件是否包含 mnemo 条目。你可以在终端用 cat 或编辑器查看：Claude Code 查看 `~/.claude.json`，Cursor 查看 `~/.cursor/mcp.json`，CodeBuddy 查看 `~/.codebuddy/.mcp.json`。如果文件中没有 mnemo 相关配置，重新运行 `mnemo setup --auto`。\n\n第三个原因是 mnemo 二进制本身有问题。运行 `mnemo --version` 确认二进制可以正常执行。如果返回错误，说明安装不完整，需要重新安装。\n\n第四个原因是客户端不支持 MCP 协议或者版本太旧。确保你的 AI 客户端是最新版本，较老版本可能不支持 MCP。",
+    "steps": [
+      "1. 完全退出 AI 客户端（不是只关闭标签页），重新启动",
+      "2. 检查 MCP 配置文件是否被写入 — cat ~/.claude.json 或 cat ~/.cursor/mcp.json",
+      "3. 如果配置不存在，重新运行 mnemo setup --auto",
+      "4. 检查 mnemo 二进制是否正常：运行 mnemo --version",
+      "5. 如果 mnemo --version 报错，重新安装 Mnemo",
+      "6. 检查 AI 客户端版本是否支持 MCP — 更新到最新版",
+      "7. 查看客户端日志（如有），检查是否有 MCP 服务器启动错误"
+    ],
+    "commands": [
+      {
+        "id": "check-claude-config",
+        "label": "查看 Claude Code MCP 配置",
+        "command": "cat ~/.claude.json | grep -A5 mnemo"
+      },
+      {
+        "id": "check-cursor-config",
+        "label": "查看 Cursor MCP 配置",
+        "command": "cat ~/.cursor/mcp.json"
+      },
+      {
+        "id": "check-codebuddy-config",
+        "label": "查看 CodeBuddy MCP 配置",
+        "command": "cat ~/.codebuddy/.mcp.json"
+      }
+    ],
+    "warnings": [
+      "不要手动编辑 MCP 配置文件 — 始终用 mnemo setup 来管理",
+      "重新运行 mnemo setup --auto 是安全的，它是幂等操作"
+    ],
+    "related": ["verify-install", "trouble-config-not-working"]
+  },
+  {
+    "id": "trouble-agent-no-memory",
+    "type": "troubleshooting",
+    "title": "Agent 没有读取记忆排查",
+    "summary": "当 agent 看起来没有搜索或使用记忆时，检查 MCP 工具可见性、全局提示词注入、反馈开关状态。",
+    "tags": ["agent", "记忆", "不读记忆", "排查", "提示词"],
+    "intents": ["troubleshoot"],
+    "content": "如果你发现 agent 在对话中从不主动搜索 Mnemo 记忆，即使 MCP 工具已经可用，通常是全局提示词注入环节出了问题。\n\n首先确认 MCP 工具确实可见。在对话中明确对 agent 说：「请使用 mnemo__search 工具搜索关键词 test。」如果 agent 回应说找不到这个工具，说明 MCP 配置有问题，先解决 MCP 问题。如果 agent 能调用工具但平时不主动用，说明全局提示词注入没有生效。\n\n全局提示词没有生效的常见原因：setup 时该客户端没有被检测到（确认 mnemo setup --auto 的输出日志中包含了该客户端）；客户端有多个提示词配置文件冲突（某些客户端允许用户自定义 prompt，可能覆盖了 Mnemo 注入的规则）；客户端的系统提示词优先级高于 Mnemo 注入。\n\n还有一个可能性是 feedback loop（反馈闭环）被 feature flag 关闭了。如果 feedback_loop_enabled=False，agent 在写入记忆时会收到 feature_disabled 的响应，这可能影响它后续使用记忆的积极性。检查 Mnemo 的配置中是否有此类开关。\n\n排查建议：先让 agent 明确调用 mnemo 工具确认可用性，再检查 `mnemo setup --auto` 的日志，最后查看客户端是否有自定义提示词覆盖了 Mnemo 规则。",
+    "steps": [
+      "1. 让 agent 明确调用 mnemo__search 工具，确认 MCP 工具可用",
+      "2. 如果工具可用但 agent 不主动用，检查全局提示词是否注入：重新运行 mnemo setup --auto",
+      "3. 查看 mnemo setup --auto 的输出日志，确认该客户端被成功检测并配置",
+      "4. 检查客户端是否有自定义提示词覆盖了 Mnemo 规则",
+      "5. 检查 Mnemo 是否启用了 feedback_loop_enabled feature flag",
+      "6. 完全退出并重启客户端，再次测试"
+    ],
+    "commands": [
+      {
+        "id": "re-setup",
+        "label": "重新注入配置和提示词",
+        "command": "mnemo setup --auto"
+      }
+    ],
+    "related": ["global-prompt-injection", "mcp-vs-prompt", "trouble-prompt-not-injected"]
+  },
+  {
+    "id": "trouble-config-not-working",
+    "type": "troubleshooting",
+    "title": "配置了但是没生效",
+    "summary": "MCP 配置已写入文件但 agent 仍看不到工具时，按清单检查重启、路径冲突、多配置覆盖。",
+    "tags": ["配置", "不生效", "重启", "冲突", "排查"],
+    "intents": ["troubleshoot"],
+    "content": "你已经确认 MCP 配置文件中有了 mnemo 条目（比如在 `~/.claude.json` 中能看到），但 agent 仍然看不到 mnemo 工具。这个问题通常由以下几个原因引起。\n\n第一：没有彻底重启客户端。有些客户端（特别是编辑器类如 Cursor）仅仅关闭文件标签页并不算重启。你需要完全退出应用（Command+Q / Alt+F4），然后重新打开。某些客户端的 MCP 配置只在启动时加载一次。\n\n第二：配置文件路径不对或者有多个配置。某些客户端支持项目级配置和用户级配置。如果你在项目级配置中写了什么，它可能覆盖用户级配置。检查是否有多个 MCP 配置文件存在。\n\n第三：mnemo 二进制路径不正确。如果 mnemo 安装后被移动或者 PATH 中指向了错误的位置，客户端启动 MCP 服务器时会失败。确认配置中写的 mnemo 路径是否真实存在（用 `which mnemo` 查看实际路径）。\n\n第四：权限问题。在某些系统上，配置文件可能被其他进程锁定。尝试关闭所有 AI 客户端，再运行 `mnemo setup --auto`，然后只打开一个客户端测试。",
+    "steps": [
+      "1. 完全退出所有 AI 客户端（Command+Q / Alt+F4）",
+      "2. 确认配置文件中的 mnemo 路径正确：检查配置中的 command 字段是否指向存在的文件",
+      "3. 运行 which mnemo 确认 mnemo 在 PATH 中，路径和配置中一致",
+      "4. 检查是否有项目级 MCP 配置覆盖了用户级配置",
+      "5. 关闭所有客户端后重新运行 mnemo setup --auto",
+      "6. 只打开一个客户端进行测试",
+      "7. 查看客户端日志（如有），检查 MCP 服务器的启动错误信息"
+    ],
+    "commands": [
+      {
+        "id": "check-which",
+        "label": "确认 mnemo 路径",
+        "command": "which mnemo"
+      },
+      {
+        "id": "check-mnemo-exists",
+        "label": "确认二进制存在",
+        "command": "ls -la ~/.mnemo/bin/mnemo"
+      }
+    ],
+    "related": ["trouble-mcp-not-found", "verify-install"]
+  },
+  {
+    "id": "trouble-prompt-not-injected",
+    "type": "troubleshooting",
+    "title": "全局提示词没生效",
+    "summary": "agent 有 MCP 工具但从不在任务中主动使用记忆时，排查全局提示词注入状态。",
+    "tags": ["提示词", "不生效", "注入", "排查", "agent行为"],
+    "intents": ["troubleshoot"],
+    "content": "agent 能看到 mnemo 工具但从不主动使用 —— 你能手动让它搜索，但它自己不会在任务开始时搜索。这说明 MCP 注入成功，但全局提示词注入失败或被覆盖了。\n\n排查第一步：重新运行 `mnemo setup --auto`。注意观察输出日志，确认 mnemo 提示词被注入到了哪些客户端。如果日志中显示客户端被 detected 但没有 injected，可能是客户端的提示词配置路径不在 setup 的已知列表中。\n\n排查第二步：检查客户端是否允许全局提示词注入。某些客户端的系统提示词与用户自定义提示词有优先级关系。如果用户已经在客户端中设置了自定义 system prompt，它可能完全覆盖 Mnemo 注入的规则。在这种情况下，你需要手动在自定义提示词中添加 Mnemo 工作流规则。\n\n排查第三步：确认客户端的提示词配置文件位置。不同客户端的提示词存储方式不同：Claude Code 通过 Claude 账户设置中的 system prompt 字段加载，Cursor 通过 rules 文件加载（`.cursor/rules/` 或 `.cursorrules`），CodeBuddy 通过 `.codebuddy/rules/` 目录加载。检查这些位置是否被成功写入。\n\n如果以上都无效，最后的办法是手动添加 Mnemo 工作流规则到客户端的全局提示词中。核心规则是：每次任务前搜索 Mnemo 记忆、用过的知识要反馈、任务结束前反哺新发现。",
+    "steps": [
+      "1. 重新运行 mnemo setup --auto，观察输出日志确认提示词注入状态",
+      "2. 检查客户端提示词配置是否被成功写入（不同客户端路径不同）",
+      "3. 检查是否有用户自定义系统提示词覆盖了 Mnemo 规则",
+      "4. 如果被覆盖，在自定义提示词中手动添加 Mnemo 工作流规则",
+      "5. 完全退出并重启客户端",
+      "6. 在对话中观察 agent 是否主动搜索记忆"
+    ],
+    "commands": [
+      {
+        "id": "re-setup-prompt",
+        "label": "重新注入配置和提示词",
+        "command": "mnemo setup --auto"
+      }
+    ],
+    "related": ["global-prompt-injection", "trouble-agent-no-memory"]
+  }
+]

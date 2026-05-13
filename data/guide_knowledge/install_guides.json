@@ -1,0 +1,151 @@
+[
+  {
+    "id": "install-macos",
+    "type": "install_guide",
+    "title": "macOS 安装指南",
+    "summary": "在 macOS 系统上通过 curl 一键安装 Mnemo，包含 SHA256 校验和 Gatekeeper 隔离移除说明。",
+    "tags": ["安装", "macOS", "curl", "Gatekeeper", "SHA256"],
+    "intents": ["install"],
+    "platforms": ["macOS"],
+    "content": "Mnemo 在 macOS 上通过 GitHub Releases 发布的预编译二进制文件分发。安装脚本会自动检测你的 macOS 版本和 CPU 架构（Apple Silicon / Intel），下载对应的二进制文件，验证 SHA256 校验和，并将二进制安装到 `~/.mnemo/bin/mnemo`。\n\n安装过程不需要 sudo 权限，所有文件都写入用户目录。安装完成后，`mnemo setup --auto` 会自动运行，将 MCP 配置和全局提示词注入到已检测到的 AI 客户端中。\n\n如果你在第一次运行 mnemo 时遇到 Gatekeeper 拦截提示（「无法验证开发者」），这是 macOS 的安全机制，不是 Mnemo 的问题。解决方法是在终端中运行 `xattr -d com.apple.quarantine ~/.mnemo/bin/mnemo` 移除隔离标记，之后就可以正常运行了。\n\n安装完成后，请务必重启你的 AI 客户端（Claude Code、Cursor、CodeBuddy 等），让新的 MCP 配置生效。",
+    "steps": [
+      "1. 打开终端（Terminal.app）",
+      "2. 运行安装命令（见下方命令）",
+      "3. 等待脚本自动完成：下载二进制、SHA256 校验、写入 ~/.mnemo/bin/、更新 PATH",
+      "4. 安装脚本会自动执行 mnemo setup --auto，将 MCP 配置写入已检测到的客户端",
+      "5. 如果提示 Gatekeeper 拦截，运行 xattr -d com.apple.quarantine ~/.mnemo/bin/mnemo",
+      "6. 运行 mnemo --version 验证安装成功",
+      "7. 重启所有 AI 客户端，让 MCP 配置生效"
+    ],
+    "commands": [
+      {
+        "id": "install-curl",
+        "label": "一键安装命令",
+        "command": "curl -fsSL https://github.com/zhuqingyv/mnemo/releases/latest/download/install.sh | sh"
+      },
+      {
+        "id": "fix-gatekeeper",
+        "label": "移除 Gatekeeper 隔离标记",
+        "command": "xattr -d com.apple.quarantine ~/.mnemo/bin/mnemo",
+        "warning": "仅在 Gatekeeper 拦截并确认文件安全后执行"
+      }
+    ],
+    "warnings": [
+      "不要用 pip install m-nemo 或 brew install —— 这两种方式不存在，Mnemo 只通过 GitHub Releases 分发",
+      "如果安装脚本因为网络问题失败，可以先下载二进制再手动安装（见验证卡片中的手动恢复步骤）"
+    ],
+    "related": ["verify-install", "manual-recovery"]
+  },
+  {
+    "id": "install-windows",
+    "type": "install_guide",
+    "title": "Windows 安装指南",
+    "summary": "在 Windows 系统上通过 PowerShell 的 irm 命令一键安装 Mnemo。",
+    "tags": ["安装", "Windows", "PowerShell", "irm"],
+    "intents": ["install"],
+    "platforms": ["Windows"],
+    "content": "Mnemo 在 Windows 上通过 PowerShell 脚本安装。安装脚本会自动检测你的 CPU 架构，下载对应的二进制文件（mnemo-windows-x86_64.exe），验证 SHA256 校验和，并将二进制安装到 `%LOCALAPPDATA%\\mnemo\\bin\\mnemo.exe`。\n\n安装过程不需要管理员权限。安装脚本会自动更新用户级 PATH 环境变量，将 mnemo 命令添加到可用命令中。安装完成后，`mnemo setup --auto` 会自动运行，将 MCP 配置和全局提示词注入到已检测到的 AI 客户端中。\n\n如果你在 PowerShell 中运行 irm 命令时遇到执行策略限制（ExecutionPolicy 错误），可以先运行 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` 来允许运行本地脚本，然后再执行安装命令。\n\n安装完成后，请务必重启你的 AI 客户端（Claude Code、Cursor、CodeBuddy 等），让新的 MCP 配置生效。",
+    "steps": [
+      "1. 打开 PowerShell（不需要以管理员身份运行）",
+      "2. 如果遇到 ExecutionPolicy 限制，先运行：Set-ExecutionPolicy -Scope CurrentUser RemoteSigned",
+      "3. 运行安装命令（见下方命令）",
+      "4. 等待脚本自动完成：下载二进制、SHA256 校验、写入 %LOCALAPPDATA%\\mnemo\\bin\\、添加到 PATH",
+      "5. 安装脚本会自动执行 mnemo setup --auto，将 MCP 配置写入已检测到的客户端",
+      "6. 重新打开 PowerShell 窗口，运行 mnemo --version 验证安装成功",
+      "7. 重启所有 AI 客户端，让 MCP 配置生效"
+    ],
+    "commands": [
+      {
+        "id": "ps-exec-policy",
+        "label": "允许当前用户运行脚本（如需要）",
+        "command": "Set-ExecutionPolicy -Scope CurrentUser RemoteSigned"
+      },
+      {
+        "id": "install-irm",
+        "label": "一键安装命令",
+        "command": "irm https://github.com/zhuqingyv/mnemo/releases/latest/download/install.ps1 | iex"
+      }
+    ],
+    "warnings": [
+      "不要用 pip install m-nemo —— Mnemo 只通过 GitHub Releases 分发",
+      "如果遇到网络问题，可以考虑使用代理或在手动下载后运行安装脚本"
+    ],
+    "related": ["verify-install", "manual-recovery"]
+  },
+  {
+    "id": "install-linux",
+    "type": "install_guide",
+    "title": "Linux 安装指南",
+    "summary": "在 Linux 系统上通过 curl 一键安装 Mnemo，适用 x86_64 架构。",
+    "tags": ["安装", "Linux", "curl", "x86_64"],
+    "intents": ["install"],
+    "platforms": ["Linux"],
+    "content": "Mnemo 在 Linux 上通过 GitHub Releases 发布的预编译二进制文件分发。安装脚本会自动检测你的 Linux 版本和 CPU 架构（当前支持 x86_64），下载对应的二进制文件，验证 SHA256 校验和，并将二进制安装到 `~/.mnemo/bin/mnemo`。\n\n安装过程不需要 root 权限，所有文件都写入用户目录。脚本会 idempotently 地将 `~/.mnemo/bin/` 添加到你的 shell 配置文件（`.bashrc`、`.zshrc` 等）的 PATH 中。安装完成后，`mnemo setup --auto` 会自动运行，将 MCP 配置和全局提示词注入到已检测到的 AI 客户端中。\n\n如果你在有防火墙的企业网络环境中，确保 GitHub (`github.com`) 的可访问性。如果无法直连，可以通过浏览器下载二进制后手动安装，或使用代理。\n\n安装完成后，重新打开终端窗口（或执行 `source ~/.bashrc` / `source ~/.zshrc`），然后运行 `mnemo --version` 验证。最后务必重启所有 AI 客户端，让 MCP 配置生效。",
+    "steps": [
+      "1. 打开终端",
+      "2. 运行安装命令（见下方命令）",
+      "3. 等待脚本自动完成：下载二进制、SHA256 校验、写入 ~/.mnemo/bin/、更新 PATH",
+      "4. 安装脚本会自动执行 mnemo setup --auto，将 MCP 配置写入已检测到的客户端",
+      "5. 重新打开终端或执行 source ~/.bashrc（或 ~/.zshrc）让 PATH 生效",
+      "6. 运行 mnemo --version 验证安装成功",
+      "7. 重启所有 AI 客户端，让 MCP 配置生效"
+    ],
+    "commands": [
+      {
+        "id": "install-curl-linux",
+        "label": "一键安装命令",
+        "command": "curl -fsSL https://github.com/zhuqingyv/mnemo/releases/latest/download/install.sh | sh"
+      }
+    ],
+    "warnings": [
+      "不要用 pip install m-nemo —— Mnemo 只通过 GitHub Releases 分发，没有 pip 包",
+      "如果企业网络限制 GitHub 访问，可手动下载二进制：https://github.com/zhuqingyv/mnemo/releases/latest"
+    ],
+    "related": ["verify-install"]
+  },
+  {
+    "id": "verify-install",
+    "type": "install_guide",
+    "title": "如何验证 Mnemo 是否生效",
+    "summary": "通过运行命令、检查配置文件、询问 agent 三个步骤验证 Mnemo 安装和注入是否成功。",
+    "tags": ["验证", "安装", "配置", "MCP", "检测"],
+    "intents": ["verify", "troubleshoot"],
+    "platforms": ["macOS", "Linux", "Windows"],
+    "content": "安装 Mnemo 后，你需要确认两个层面都生效：二进制可以运行，以及 MCP 配置和提示词已经注入到 AI 客户端中。\n\n第一步是验证二进制安装：打开终端，运行 `mnemo --version`，应该输出当前版本号。再运行 `mnemo --help`，应该输出帮助信息。如果这两个命令中任何一个返回错误，说明二进制没有正确安装或不在 PATH 中。此时不要尝试 pip install，而是回到安装步骤检查，或者使用手动恢复方法。\n\n第二步是验证 MCP 配置已写入：检查你的 AI 客户端配置文件中是否出现了 mnemo 条目。例如 Claude Code 用户查看 `~/.claude.json`，Cursor 用户查看 `~/.cursor/mcp.json`，CodeBuddy 用户查看 `~/.codebuddy/.mcp.json`，确认其中有一个 key 为 \"mnemo\" 的 MCP 服务器配置。\n\n第三步是实际测试：重启 AI 客户端后，在对话中问 agent：「请用 mnemo 工具搜索一个测试条目」。如果 agent 能成功调用 mnemo__search 工具，说明 MCP 注入成功。如果 agent 看不到这个工具，说明需要检查 MCP 配置或重启客户端。",
+    "steps": [
+      "1. 终端运行 mnemo --version，确认输出版本号（如 0.1.0）",
+      "2. 终端运行 mnemo --help，确认输出帮助信息",
+      "3. 检查客户端 MCP 配置文件是否包含 mnemo 条目",
+      "   - Claude Code：查看 ~/.claude.json",
+      "   - Cursor：查看 ~/.cursor/mcp.json",
+      "   - CodeBuddy：查看 ~/.codebuddy/.mcp.json",
+      "   - Codex CLI：查看 ~/.codex/config.toml",
+      "4. 重启 AI 客户端",
+      "5. 在对话中让 agent 尝试调用 mnemo 工具（如搜索），确认工具可用",
+      "6. 如果 agent 主动使用 mnemo 工具而无需你提示，说明全局提示词也已生效"
+    ],
+    "commands": [
+      {
+        "id": "cmd-version",
+        "label": "检查版本",
+        "command": "mnemo --version"
+      },
+      {
+        "id": "cmd-help",
+        "label": "查看帮助",
+        "command": "mnemo --help"
+      },
+      {
+        "id": "cmd-setup-check",
+        "label": "重新运行自动配置",
+        "command": "mnemo setup --auto",
+        "warning": "如果配置未生效，重新运行此命令并以 --dry-run 先预览变更"
+      }
+    ],
+    "warnings": [
+      "不要尝试用 pip install、brew install 或其他包管理器修复安装问题 —— Mnemo 不支持这些方式",
+      "如果配置文件已修改但 agent 仍看不到工具，确保完全重启了客户端（不是只重新打开标签页）"
+    ],
+    "related": ["trouble-install-failed", "trouble-mcp-not-found", "install-macos", "install-windows", "install-linux"]
+  }
+]

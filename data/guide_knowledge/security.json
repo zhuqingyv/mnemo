@@ -1,0 +1,31 @@
+[
+  {
+    "id": "security-local-storage",
+    "type": "security",
+    "title": "Mnemo 数据存储在哪里",
+    "summary": "Mnemo 的所有数据存储在本地 SQLite 数据库中，不依赖任何云端服务。",
+    "tags": ["安全", "存储", "本地", "数据库", "隐私"],
+    "intents": ["privacy_security"],
+    "content": "Mnemo 的设计核心理念是 AI 的记忆是用户的资产。所有知识条目、反馈数据、关系图谱、审计事件都存储在本地 SQLite 数据库中。\n\n默认数据目录：\n- macOS/Linux: `~/.mnemo/data/`\n- Windows: `%USERPROFILE%\\.mnemo\\data\\`\n\n数据库文件 `mnemo.db` 使用 WAL 模式，支持多进程安全读写。Mnemo 不会将你的数据上传到任何服务器，也没有远程同步功能。你的记忆完全在你的控制之下。\n\n如果你需要迁移数据，只需复制整个 `~/.mnemo/data/` 目录到新设备即可。",
+    "related": ["security-no-upload", "privacy-security"]
+  },
+  {
+    "id": "security-no-upload",
+    "type": "security",
+    "title": "Mnemo 会上传我的数据吗",
+    "summary": "不会。Mnemo 默认完全离线运行，不会上传任何数据到外部服务器。",
+    "tags": ["安全", "隐私", "上传", "离线", "网络"],
+    "intents": ["privacy_security"],
+    "content": "Mnemo 是本地优先的记忆工具，默认行为是不连接任何外部网络：\n\n1. Mnemo 的 MCP 服务器只监听 `127.0.0.1`（本机回环地址），外部无法访问。\n2. 知识搜索和检索完全在本地 SQLite 和嵌入模型中完成。\n3. 嵌入模型（BGE-M3）在本地运行，不调用云端 API。\n4. llama.cpp sidecar（如已启用）也仅监听本地端口。\n\n唯一的网络访问发生在：\n- 你手动访问可视化页面 `/viz` 时加载静态文件。\n- 你主动运行 `mnemo setup` 安装或更新时下载二进制文件。\n\n如果你对隐私有更高要求，可以通过配置禁用所有可选网络功能。Mnemo 不会收集遥测数据。",
+    "related": ["security-local-storage", "security-boundary"]
+  },
+  {
+    "id": "security-boundary",
+    "type": "security",
+    "title": "说明书助手的安全边界",
+    "summary": "Mnemo Guide 说明书助手只能访问 Mnemo 公共知识包，绝不触碰你的私人记忆或本地文件。",
+    "tags": ["安全", "隐私", "边界", "说明书", "隔离"],
+    "intents": ["privacy_security", "identity", "capability"],
+    "content": "Mnemo Guide（本地说明书助手）有严格的安全边界设计：\n\n可以访问：\n- Mnemo Public Knowledge Pack（公共知识卡片）\n- 官方安装文档摘要\n- FAQ 常见问题\n- 公共配置模板和命令样例\n\n绝不能访问：\n- 你的私人记忆（Mnemo Private Memory）\n- 你的项目记忆和笔记\n- 本地文件系统中的任何文件\n- 密钥、token、cookie 等敏感信息\n- 浏览器数据\n- shell 和终端\n- 任何外部网络（不发起网络请求）\n\n这是通过代码层面的隔离保证的：\n- Public Knowledge API 和 Private Memory API 是完全独立的两个路径\n- Guide Retriever 只绑定 Public Knowledge 数据源\n- Guide Runtime 不挂载用户私人目录\n- Guide Runtime 不暴露 shell 工具\n\n即使未来开放接入增强模型，这些安全边界也不会被突破。访问私人记忆需要独立的权限网关和用户明确授权。"
+  }
+]

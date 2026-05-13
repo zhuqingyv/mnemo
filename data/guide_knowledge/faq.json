@@ -1,0 +1,107 @@
+[
+  {
+    "id": "faq-what-is-mnemo",
+    "type": "faq",
+    "title": "Mnemo 是什么？",
+    "summary": "Mnemo 是一个本地运行的 AI 记忆层，为 agent 团队提供共享大脑，记住项目知识、技术决策和用户偏好。",
+    "tags": ["Mnemo", "介绍", "FAQ", "入门"],
+    "intents": ["faq", "mnemo_overview"],
+    "content": "Mnemo 是一个运行在本地机器上的 AI 记忆管理系统。它是 AI 编程助手（agent）的「共享大脑」—— 当你使用多个 AI 客户端协同工作时，Mnemo 让它们共享同一份知识库。\n\n它自动记住项目决策、技术约定、踩坑经验和用户偏好，让 agent 在每次对话中都能利用之前的经验，而不是从零开始。所有数据存储在本地 SQLite 文件中，不会上传到云端，你拥有完全的数据掌控权。",
+    "related": ["mnemo-overview"]
+  },
+  {
+    "id": "faq-how-install",
+    "type": "faq",
+    "title": "我应该怎么安装？",
+    "summary": "安装很简单：一条命令搞定。根据你的操作系统复制对应的命令到终端运行即可。",
+    "tags": ["安装", "FAQ", "快速开始"],
+    "intents": ["faq", "install"],
+    "platforms": ["macOS", "Linux", "Windows"],
+    "content": "安装 Mnemo 只需要一条命令：\n\n- macOS / Linux：在终端中运行 `curl -fsSL https://github.com/zhuqingyv/mnemo/releases/latest/download/install.sh | sh`\n- Windows：在 PowerShell 中运行 `irm https://github.com/zhuqingyv/mnemo/releases/latest/download/install.ps1 | iex`\n\n安装脚本会自动检测系统架构、下载二进制、验证 SHA256 校验和、安装到 `~/.mnemo/bin/`，并运行 `mnemo setup --auto` 将 MCP 配置注入到你的 AI 客户端中。\n\n安装完成后，务必重启所有 AI 客户端（Claude Code、Cursor、CodeBuddy 等），让 MCP 配置生效。详细信息请查看各平台的安装指南。",
+    "related": ["install-macos", "install-windows", "install-linux"]
+  },
+  {
+    "id": "faq-claude-access",
+    "type": "faq",
+    "title": "Claude Code 怎么接入？",
+    "summary": "先安装 Mnemo 二进制，然后运行 mnemo setup --auto，重启 Claude Code 即可。",
+    "tags": ["Claude Code", "接入", "FAQ"],
+    "intents": ["faq", "client_setup"],
+    "clients": ["Claude Code"],
+    "content": "接入 Claude Code 只需三步：\n\n1. 确保 Mnemo 已安装（运行 `mnemo --version` 确认）\n2. 运行 `mnemo setup --auto`，它会自动在 `~/.claude.json` 中写入 MCP 配置并注入全局提示词\n3. 完全退出 Claude Code 并重新启动\n\n重启后，Claude Code 的 agent 就能使用 `mnemo__search`、`mnemo__create_knowledge` 等记忆工具了。",
+    "related": ["setup-claude-code", "verify-install"]
+  },
+  {
+    "id": "faq-cursor-access",
+    "type": "faq",
+    "title": "Cursor 怎么接入？",
+    "summary": "先安装 Mnemo 二进制，然后运行 mnemo setup --auto，重启 Cursor 即可。",
+    "tags": ["Cursor", "接入", "FAQ"],
+    "intents": ["faq", "client_setup"],
+    "clients": ["Cursor"],
+    "content": "接入 Cursor 只需三步：\n\n1. 确保 Mnemo 已安装（运行 `mnemo --version` 确认）\n2. 运行 `mnemo setup --auto`，它会自动在 `~/.cursor/mcp.json` 中写入 MCP 配置\n3. 完全关闭 Cursor 窗口并重新打开\n\n重启后，Cursor 的 AI agent 就能在 Composer 和 Chat 中使用 Mnemo 记忆工具。如果 agent 看不到工具，确保完全退出应用（Command+Q）而非仅关闭窗口。",
+    "related": ["setup-cursor", "verify-install"]
+  },
+  {
+    "id": "faq-codebuddy-access",
+    "type": "faq",
+    "title": "CodeBuddy 怎么接入？",
+    "summary": "先安装 Mnemo 二进制，然后运行 mnemo setup --auto，重启 CodeBuddy 即可。",
+    "tags": ["CodeBuddy", "接入", "FAQ"],
+    "intents": ["faq", "client_setup"],
+    "clients": ["CodeBuddy"],
+    "content": "接入 CodeBuddy 只需三步：\n\n1. 确保 Mnemo 已安装（运行 `mnemo --version` 确认）\n2. 运行 `mnemo setup --auto`，它会自动在 `~/.codebuddy/.mcp.json` 中写入 MCP 配置\n3. 完全退出 CodeBuddy 并重新启动\n\n重启后，CodeBuddy 的 agent 就能使用 Mnemo 的记忆工具。你可以在对话中测试：让 agent 搜索项目相关记忆。",
+    "related": ["setup-codebuddy", "verify-install"]
+  },
+  {
+    "id": "faq-mcp-explanation",
+    "type": "faq",
+    "title": "MCP 注入是什么？",
+    "summary": "MCP 注入是将 Mnemo 的记忆工具注册到 AI 客户端，让 agent 获得搜索、创建、反馈记忆的能力。",
+    "tags": ["MCP", "FAQ", "概念"],
+    "intents": ["faq", "mcp_explain"],
+    "content": "MCP 注入是指 `mnemo setup --auto` 在你的 AI 客户端配置文件中写入一个 MCP 服务器条目，让客户端在启动时自动加载 Mnemo 提供的记忆工具集。\n\n注入后，agent 在对话中就能看到 `mnemo__search`、`mnemo__create_knowledge`、`mnemo__feedback_knowledge` 等工具，可以像调用其他内置工具一样使用它们。\n\nMCP 注入解决的是「能不能用」的问题。要让 agent 主动使用这些工具，还需要全局提示词注入。",
+    "related": ["mcp-injection", "mcp-vs-prompt"]
+  },
+  {
+    "id": "faq-prompt-explanation",
+    "type": "faq",
+    "title": "全局提示词注入是什么？",
+    "summary": "全局提示词注入是在 agent 的系统提示词中写入 Mnemo 工作流规则，让 agent 主动搜索、反馈、记录记忆。",
+    "tags": ["提示词", "FAQ", "概念"],
+    "intents": ["faq", "global_prompt_explain"],
+    "content": "全局提示词注入是 `mnemo setup --auto` 的第二部分工作。它把 Mnemo 的工作流规则（任务开始前搜索记忆、用过的知识要反馈、任务结束前反哺新发现）写入 agent 的系统提示词。\n\n没有全局提示词，agent 即使有 MCP 工具也不会主动使用。有了全局提示词，agent 会在每次任务开始时自动搜索相关记忆，在任务结束时自动把新经验写入记忆库。这让 Mnemo 对用户透明 —— agent 自己管记忆，你只管做任务。",
+    "related": ["global-prompt-injection", "mcp-vs-prompt"]
+  },
+  {
+    "id": "faq-no-memory",
+    "type": "faq",
+    "title": "Agent 没有记忆怎么办？",
+    "summary": "按此清单逐步排查：检查 MCP 工具是否可用、全局提示词是否生效、反馈开关是否开启。",
+    "tags": ["FAQ", "排查", "记忆", "agent"],
+    "intents": ["faq", "troubleshoot"],
+    "content": "如果 agent 从不主动搜索记忆或似乎没有记忆能力：\n\n1. 确认 MCP 工具是否可用 — 直接对 agent 说「请用 mnemo__search 搜索测试」\n2. 如果工具不可用，检查 MCP 配置文件并重新运行 `mnemo setup --auto`\n3. 如果工具可用但不主动用，说明全局提示词没生效 — 重新运行 `mnemo setup --auto`\n4. 确认客户端已完全重启（不只是重新打开标签页）\n5. 如果以上都正常，查看 Mnemo 的 feature flag 是否关闭了 feedback loop",
+    "related": ["trouble-agent-no-memory", "trouble-mcp-not-found", "trouble-prompt-not-injected"]
+  },
+  {
+    "id": "faq-verify",
+    "type": "faq",
+    "title": "如何验证 Mnemo 是否生效？",
+    "summary": "三步验证：检查二进制可执行、检查 MCP 配置已写入、让 agent 实际调用 mnemo 工具。",
+    "tags": ["验证", "FAQ", "安装"],
+    "intents": ["faq", "verify"],
+    "platforms": ["macOS", "Linux", "Windows"],
+    "content": "验证 Mnemo 是否生效只需三步：\n\n1. 终端运行 `mnemo --version`，应输出版本号\n2. 检查你的 AI 客户端的 MCP 配置文件是否包含 mnemo 条目（如 `~/.claude.json`）\n3. 重启客户端后，在对话中对 agent 说「请用 mnemo__search 搜索一个测试词」\n\n如果第三步 agent 成功调用了 mnemo 工具并返回结果（即使是空结果），说明 Mnemo 正常工作。如果 agent 说不认识这个工具，回到第二步排查配置。",
+    "related": ["verify-install"]
+  },
+  {
+    "id": "faq-update-memory",
+    "type": "faq",
+    "title": "如何更新 Mnemo 记忆？",
+    "summary": "更新记忆不需要用户手动操作 —— agent 会在对话中自动创建、更新和归档记忆条目。",
+    "tags": ["更新", "记忆", "FAQ"],
+    "intents": ["faq"],
+    "content": "Mnemo 记忆的更新主要由 agent 自动完成，用户通常不需要手动操作。当你和 agent 协作时：\n\n- agent 在解决问题后发现了值得记录的经验，会自动调用 `create_knowledge` 写入新记忆\n- 如果旧记忆过时了，agent 会用 `update_knowledge` 修正或调用 `create_knowledge` 并让新条目 supersede 旧条目\n- 对于不再适用的知识，agent 可以调用 `archive_knowledge` 将其归档（从搜索结果中隐藏但不删除）\n\n如果你希望主动管理记忆，你可以在对话中对 agent 说「记住这个」、「把上次那个决策更新一下」或「搜索一下之前关于 XX 的记录」。agent 会根据你的指令执行相应的记忆操作。",
+    "related": ["mnemo-overview"]
+  }
+]

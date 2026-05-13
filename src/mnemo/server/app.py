@@ -24,6 +24,7 @@ from mnemo.config import MnemoConfig
 from mnemo.db import get_session_factory, init_db, reset_engine
 from mnemo.mcp.server import mcp, set_service
 from mnemo.monitor.collector import configure as configure_monitor
+from mnemo.guide.router import router as guide_router
 from mnemo.server.routes import router as api_router
 from mnemo.services.knowledge_service import KnowledgeService
 
@@ -91,6 +92,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(guide_router, prefix="/api/v1/guide")
     app.mount("/mcp/http", mcp_http_app)
     app.mount("/mcp", mcp_sse_app)
 

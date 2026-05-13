@@ -104,6 +104,7 @@ _CLIENTS = [
         "format": "json",
         "mcp_field": "mcpServers",
         "detect_binaries": ["cbc", "codebuddy"],
+        "detect_commands": [["cbc", "--version"], ["codebuddy", "--version"]],
     },
     {
         "name": "windsurf",
@@ -152,11 +153,24 @@ def _binary_candidate_paths(binary: str) -> list[Path]:
         Path("/usr/local/bin") / binary,
         Path("/usr/bin") / binary,
         Path("/bin") / binary,
+        # fnm (Fast Node Manager)
+        home / ".local" / "share" / "fnm" / "aliases" / "default" / "bin" / binary,
+        # asdf
+        home / ".asdf" / "shims" / binary,
+        # volta
+        home / ".volta" / "bin" / binary,
+        # npm global (system node, no version manager)
+        home / ".npm-global" / "bin" / binary,
     ]
     nvm_versions = home / ".nvm" / "versions" / "node"
     if nvm_versions.exists():
         paths.extend(
             path / "bin" / binary for path in nvm_versions.iterdir() if path.is_dir()
+        )
+    nodenv_versions = home / ".nodenv" / "versions"
+    if nodenv_versions.exists():
+        paths.extend(
+            path / "bin" / binary for path in nodenv_versions.iterdir() if path.is_dir()
         )
     return paths
 
