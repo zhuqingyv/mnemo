@@ -35,8 +35,10 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from mnemo.config import MnemoConfig  # noqa: E402
 from mnemo.db import VECTOR_DIM  # noqa: E402
-from mnemo.models.knowledge import Base, Knowledge, Relation  # noqa: E402
+from mnemo.models.knowledge import Base, Knowledge, KnowledgeMeta, Relation  # noqa: E402
+from mnemo.ranking.authority import authority_score  # noqa: E402
 from mnemo.relation_types import VALID_RELATION_TYPES, ClassifyInput, classify  # noqa: E402
+from mnemo.repository.authority_repository import AUTHORITY_META_KEY  # noqa: E402
 from mnemo.repository import authority_repository as ar  # noqa: E402
 from mnemo.repository import knowledge_repository as kr  # noqa: E402
 from mnemo.services.embedding_service import EmbeddingService  # noqa: E402
@@ -186,12 +188,16 @@ def _classify_input_from(k: Knowledge) -> ClassifyInput:
 
 
 async def _apply_m3_backfill(service: KnowledgeService) -> tuple[int, int]:
-    """Mirror tests/scenario_conftest._apply_m3_backfill.
+    """Mirror tests/scenario_conftest._apply_m3_backfill — optimized.
 
     Reclassify every existing wikilink/related edge through the M3a classifier,
     then run the M3b authority recompute for every knowledge row. Without this
     pass authority is 0 everywhere and vec_only_min_final zero-caps every
     pure-vector query.
+
+    优化要点：
+    - M3a: 按目标类型分组，每类一条 UPDATE（替代逐条异步 UPDATE）。
+    - M3b: batch_incoming_counts 一次查询 + Python 算分 + 批量 upsert。
     """
     factory = service._session_factory  # noqa: SLF001
     async with factory() as session:
@@ -199,33 +205,60 @@ async def _apply_m3_backfill(service: KnowledgeService) -> tuple[int, int]:
         k_by_id = {k.id: k for k in k_rows}
         relations = (await session.execute(select(Relation))).scalars().all()
 
-        reclassified = 0
+        # --- M3a: pre-compute ClassifyInput for all nodes once ---
+        classify_inputs = {kid: _classify_input_from(k) for kid, k in k_by_id.items()}
+
+        # --- M3a: classify all relations, then batch-update by type ---
+        changes_by_type: dict[str, list[int]] = {}
         for rel in relations:
-            src = k_by_id.get(rel.source_id)
-            tgt = k_by_id.get(rel.target_id)
-            if src is None or tgt is None:
+            src_in = classify_inputs.get(rel.source_id)
+            tgt_in = classify_inputs.get(rel.target_id)
+            if src_in is None or tgt_in is None:
                 continue
             new_type = classify(
-                src=_classify_input_from(src),
-                tgt=_classify_input_from(tgt),
-                current_type=rel.relation_type,
+                src=src_in, tgt=tgt_in, current_type=rel.relation_type,
             )
             if new_type not in VALID_RELATION_TYPES:
                 continue
             if new_type != rel.relation_type:
-                await session.execute(
-                    update(Relation)
-                    .where(Relation.id == rel.id)
-                    .values(relation_type=new_type)
-                )
-                reclassified += 1
+                changes_by_type.setdefault(new_type, []).append(rel.id)
+        reclassified = sum(len(ids) for ids in changes_by_type.values())
+        for rtype, ids in changes_by_type.items():
+            await session.execute(
+                update(Relation)
+                .where(Relation.id.in_(ids))
+                .values(relation_type=rtype)
+            )
         await session.commit()
 
+        # --- M3b: batch incoming counts → compute scores → bulk upsert ---
+        kid_list = [k.id for k in k_rows]
+        all_counts = await ar.batch_incoming_counts(session, kid_list)
+
+        # Fetch existing KnowledgeMeta rows in one query
+        existing_meta = (
+            await session.execute(
+                select(KnowledgeMeta).where(
+                    KnowledgeMeta.knowledge_id.in_(kid_list),
+                    KnowledgeMeta.key == AUTHORITY_META_KEY,
+                )
+            )
+        ).scalars().all()
+        meta_by_kid = {m.knowledge_id: m for m in existing_meta}
+
         nonzero = 0
-        for kid in [k.id for k in k_rows]:
-            score = await ar.recompute_and_store_authority(session, kid)
+        for kid in kid_list:
+            score = authority_score(all_counts.get(kid, {}))
             if score > 0:
                 nonzero += 1
+            serialized = json.dumps(score)
+            row = meta_by_kid.get(kid)
+            if row is None:
+                session.add(KnowledgeMeta(
+                    knowledge_id=kid, key=AUTHORITY_META_KEY, value=serialized,
+                ))
+            else:
+                row.value = serialized
         await session.commit()
 
     return reclassified, nonzero
