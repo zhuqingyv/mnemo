@@ -671,6 +671,9 @@ pub fn run() {
             init_interface_gateway();
 
             tauri::async_runtime::spawn_blocking(|| {
+                // Sync bundled CLI to system install path before starting server.
+                // Ensures the server runs the latest version bundled with the app.
+                sync_cli_binary();
                 let _ = ensure_mnemo_server_running();
             });
 
@@ -714,6 +717,11 @@ pub fn run() {
                 api.prevent_close();
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                stop_mnemo_server();
+            }
+        });
 }
