@@ -123,6 +123,7 @@ async def vector_search(
     scope: str | None = None,
     project_name: str | None = None,
     limit: int = 20,
+    offset: int = 0,
     include_superseded: bool = False,
     include_archived: bool = False,
     distance_threshold: float = DEFAULT_COSINE_DISTANCE_THRESHOLD,
@@ -207,7 +208,7 @@ async def vector_search(
 
     rows = (await session.execute(stmt)).scalars().all()
     rows_sorted = sorted(rows, key=lambda k: cosine_by_id.get(k.id, 2.0))
-    return rows_sorted[:limit]
+    return rows_sorted[offset : offset + limit]
 
 
 async def topk_cosine_by_scope(

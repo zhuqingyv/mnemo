@@ -384,6 +384,7 @@ async def search(
     scope: str | None = None,
     project_name: str | None = None,
     limit: int = 20,
+    offset: int = 0,
     include_archived: bool = False,
     task_context: str | None = None,
     mode: str = "hybrid",
@@ -403,8 +404,10 @@ async def search(
       update_knowledge 或 archive_knowledge。
     - 摘要不够判断 → 用 get_knowledge 取完整内容，不要凭 summary 猜。
     - 没命中 → 视任务类型决定是解决它再 create_knowledge 记录下来，还是
-      放弃搜索、直接做。如果长 query 搜不到，试试缩短到 2-3 个核心词重搜；
-      系统会自动尝试缩短重试，但手动缩短效果更精准。
+      放弃搜索、直接做。系统会自动从右侧逐 token 裁剪重试（最少保留 2 词），
+      所以构造 query 时请把核心词放左边、修饰词放右边。例如"蓝牙 BLE 开发
+      工具"而非"开发蓝牙 BLE 的工具"——这样即便 4 词全 AND 无命中，系统也
+      会先丢掉"工具"、再丢掉"开发"，留下"蓝牙 BLE"命中核心结果。
 
     不建议用在：
     - 用户明确说"不要翻历史，按我说的做" —— 这时候翻记忆只会增加噪声。
@@ -412,6 +415,9 @@ async def search(
     - 已经在上一次 search 结果里了还反复搜同一个 query。
 
     参数：
+    - limit: 返回条数，默认 20。
+    - offset: 配合 limit 翻页，默认 0。offset=0 是第一页，offset=20
+      是第二页。同一个 query 换 offset 即可浏览全部结果。
     - scope：可选，"global"/"project"/"session" 过滤。
     - project_name：scope="project" 时的项目名。
     - include_archived：默认隐藏归档条目；排查旧决策时可打开。
@@ -430,6 +436,7 @@ async def search(
         scope=scope,
         project_name=project_name,
         limit=limit,
+        offset=offset,
         mode=mode,
         include_archived=include_archived,
         task_context=task_context,

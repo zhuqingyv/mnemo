@@ -53,6 +53,7 @@ from mnemo.services.lifecycle_service import (
     touch_last_accessed,
 )
 from mnemo.services.write_gate_service import run_write_gate
+from mnemo.utils.tokenizer import tokenize_for_fts
 from mnemo.health import detectors as health_detectors
 from mnemo.health import quality_detectors as health_quality
 from mnemo.health.task_store import add_task as _add_health_task  # noqa: F401
@@ -72,84 +73,6 @@ AUTO_RELATED_RELATION_TYPE = "auto_related"
 AUTO_RELATED_INITIAL_WEIGHT = 0.3
 
 
-# Stopwords/common modifiers stripped when shortening a zero-hit query for
-# the auto-fallback retry. Keep this list conservative — over-aggressive
-# stripping turns a meaningful query into noise. Covers English fillers and
-# Chinese 怎么/如何/可以/吗 style modifiers that dominate user phrasing.
-_FALLBACK_STOPWORDS: frozenset[str] = frozenset(
-    {
-        # English
-        "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
-        "do", "does", "did", "how", "what", "why", "when", "where", "which",
-        "who", "whom", "can", "could", "should", "would", "to", "of", "in",
-        "on", "at", "by", "for", "with", "from", "and", "or", "but", "if",
-        "then", "than", "so", "as", "that", "this", "these", "those", "it",
-        "its", "i", "we", "you", "they", "he", "she", "about", "into", "use",
-        "using", "used", "please", "help", "any", "some", "my", "me", "our",
-        # Chinese modifiers / fillers
-        "的", "了", "是", "在", "和", "或", "与", "及", "也", "都", "就",
-        "还", "又", "吗", "呢", "吧", "啊", "哦", "呀", "么", "嘛",
-        "怎么", "怎样", "如何", "可以", "能否", "是否", "有没有", "什么",
-        "为什么", "哪里", "哪个", "这个", "那个", "这样", "那样", "请问",
-        "帮我", "我", "你", "他", "她", "它", "我们", "你们", "他们",
-        "怎么办", "怎么用", "如何用", "如何做", "不到", "不了",
-    }
-)
-
-
-def _shorten_query_for_fallback(query: str, *, max_terms: int = 3) -> str | None:
-    """Return a shortened query with stopwords/common modifiers removed.
-
-    Strategy (kept simple per task spec):
-      1. Tokenize on whitespace and CJK boundaries.
-      2. Drop entries that are pure punctuation or in ``_FALLBACK_STOPWORDS``.
-      3. Keep the 2-3 shortest remaining tokens (shortest ≈ most specific
-         for CJK; for English, short stems like "k8s" also win).
-      4. If fewer than ``max_terms`` distinct content tokens survive, return
-         them as-is. Return ``None`` when nothing material is left or when
-         the shortened query is identical to the original.
-    """
-    import re
-
-    raw = query.strip()
-    if not raw:
-        return None
-
-    # Tokenize: whitespace splits, then split ASCII/CJK boundaries so
-    # "kubernetes集群" becomes ["kubernetes", "集群"]. CJK runs stay whole —
-    # we don't char-split because "集群" / "家常菜" carry real semantics as
-    # a single lexeme; the stopword list only targets short modifier words.
-    pieces: list[str] = []
-    token_re = re.compile(r"[A-Za-z0-9_]+|[^\sA-Za-z0-9_\W]+", re.UNICODE)
-    punct_trim = ".,!?;:\"'()[]{}<>《》「」『』，。！？；：、"
-    for chunk in raw.split():
-        chunk = chunk.strip(punct_trim)
-        if not chunk:
-            continue
-        for m in token_re.finditer(chunk):
-            pieces.append(m.group(0).lower())
-
-    content = [p for p in pieces if p not in _FALLBACK_STOPWORDS]
-    if not content:
-        return None
-
-    # Deduplicate while preserving order so "kubernetes kubernetes" collapses.
-    seen: set[str] = set()
-    unique: list[str] = []
-    for p in content:
-        if p not in seen:
-            seen.add(p)
-            unique.append(p)
-
-    # Keep the ``max_terms`` shortest (≈ most specific) tokens, preserving
-    # their original relative order so we don't reshuffle semantics.
-    ranked = sorted(unique, key=lambda p: (len(p), unique.index(p)))
-    kept = set(ranked[:max_terms])
-    shortened = " ".join(p for p in unique if p in kept)
-
-    if not shortened or shortened == raw.lower():
-        return None
-    return shortened
 SUPERSEDES_RELATION_TYPE = "supersedes"
 CONTRADICTS_RELATION_TYPE = "contradicts"
 
@@ -1447,6 +1370,7 @@ class KnowledgeService:
         scope: str | None,
         project_name: str | None,
         limit: int,
+        offset: int = 0,
         include_archived: bool,
         task_context: str | None,
     ) -> tuple[list[dict[str, Any]], bool]:
@@ -1457,14 +1381,41 @@ class KnowledgeService:
         — callers skip the auto-fallback retry in that case since FTS-only is
         already its own failure mode.
         """
+        # When offset > 0, fetch enough candidates so the final slice still
+        # has results.  FTS and vector each contribute to RRF k=60, so we
+        # inflate the fetch window by offset to give the rerank step enough
+        # headroom for pagination.
+        fetch_limit = max(limit + offset, limit, 20)
         fts_hits = await sr.fts_search(
             session,
             query,
             scope=scope,
             project_name=project_name,
-            limit=limit,
+            limit=fetch_limit,
             include_archived=include_archived,
         )
+
+        # Progressive trim: when FTS yields zero hits and the query has > 2
+        # tokens, retry from the right — each retry drops one token so the
+        # FTS5 AND expression is progressively loosened.  Stops at 2 tokens.
+        if (
+            not fts_hits
+            and getattr(self._config, "search_progressive_trim_enabled", True)
+        ):
+            tokens = tokenize_for_fts(query).split()
+            n = len(tokens) - 1
+            while n >= 2 and not fts_hits:
+                fts_hits = await sr.fts_search(
+                    session,
+                    query,
+                    max_tokens=n,
+                    scope=scope,
+                    project_name=project_name,
+                    limit=fetch_limit,
+                    include_archived=include_archived,
+                )
+                n -= 1
+
         fts_dicts = [_summary_dict(h) for h in fts_hits]
 
         embedding = self._get_embedding()
@@ -1499,7 +1450,7 @@ class KnowledgeService:
                     query_vec,
                     scope=scope,
                     project_name=project_name,
-                    limit=limit,
+                    limit=fetch_limit,
                     include_archived=include_archived,
                     distance_threshold=vector_threshold,
                 )
@@ -1525,7 +1476,7 @@ class KnowledgeService:
             reranked = await self._quality_rerank(
                 session, fused, query_scope=scope, task_context=task_context
             )
-            final_hits = reranked[:limit]
+            final_hits = reranked[offset : offset + limit]
             if self._config.contradiction_pair_enabled:
                 await self._attach_conflict_pairs(session, final_hits)
             return final_hits, True
@@ -1537,7 +1488,7 @@ class KnowledgeService:
         reranked = await self._quality_rerank(
             session, fused, query_scope=scope, task_context=task_context
         )
-        final_hits = reranked[:limit]
+        final_hits = reranked[offset : offset + limit]
         if final_hits:
             surviving_ids = [e["id"] for e in final_hits]
             survivors = [
@@ -1558,6 +1509,7 @@ class KnowledgeService:
         scope: str | None = None,
         project_name: str | None = None,
         limit: int = 20,
+        offset: int = 0,
         mode: str = "hybrid",
         include_archived: bool = False,
         task_context: str | None = None,
@@ -1605,6 +1557,7 @@ class KnowledgeService:
                     scope=scope,
                     project_name=project_name,
                     limit=limit,
+                    offset=offset,
                     include_archived=include_archived,
                 )
                 await self._apply_stale_lifecycle(session, list(hits))
@@ -1622,6 +1575,7 @@ class KnowledgeService:
                     scope=scope,
                     project_name=project_name,
                     limit=limit,
+                    offset=offset,
                     include_archived=include_archived,
                 )
                 await self._apply_stale_lifecycle(session, list(hits))
@@ -1639,34 +1593,10 @@ class KnowledgeService:
                 scope=scope,
                 project_name=project_name,
                 limit=limit,
+                offset=offset,
                 include_archived=include_archived,
                 task_context=task_context,
             )
-
-            # Auto-fallback (P0 UX): when the first attempt yields zero hits
-            # and the query has strippable stopwords, retry once with a
-            # shortened form. Applies regardless of degraded status — FTS-only
-            # paths also suffer from long-query dilution. Skipped only when the
-            # flag is off. Tagged hits carry ``auto_fallback: true``.
-            if (
-                not final_hits
-                and getattr(self._config, "search_auto_fallback_enabled", True)
-            ):
-                shortened = _shorten_query_for_fallback(query)
-                if shortened:
-                    retry_hits, _ = await self._run_hybrid_search(
-                        session,
-                        shortened,
-                        scope=scope,
-                        project_name=project_name,
-                        limit=limit,
-                        include_archived=include_archived,
-                        task_context=task_context,
-                    )
-                    if retry_hits:
-                        for h in retry_hits:
-                            h["auto_fallback"] = True
-                        final_hits = retry_hits
 
             await self._run_p2_search_detectors(session, query, final_hits)
             return await self._apply_sort_by(session, final_hits, sort_by)

@@ -33,7 +33,7 @@ _WS_RUN = re.compile(r"\s+")
 # intentionally small — jieba.analyse already applies its own IDF-based
 # filtering, so we only need to drop a few very-high-frequency modifier words
 # that slip through on short texts. These duplicate the spirit of the
-# ``_FALLBACK_STOPWORDS`` set in knowledge_service.py, trimmed to what matters
+#     the old ``_FALLBACK_STOPWORDS`` set, trimmed to what matters
 # for keyword-level granularity (no 1-char filler since we already drop length
 # < 2 tokens below).
 _EDGE_KEYWORD_STOPWORDS: frozenset[str] = frozenset(

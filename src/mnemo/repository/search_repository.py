@@ -15,7 +15,7 @@ from mnemo.utils.tokenizer import tokenize_for_fts
 _FTS_SPECIAL = re.compile(r'[\"\':;,.!?()\[\]{}*+\-~^=<>|&/\\]')
 
 
-def _sanitize_query(query: str) -> str:
+def _sanitize_query(query: str, *, max_tokens: int | None = None) -> str:
     """Turn a free-form query into a safe FTS5 MATCH expression.
 
     1. Run jieba segmentation so Chinese phrases break into the same tokens
@@ -23,6 +23,8 @@ def _sanitize_query(query: str) -> str:
     2. Strip FTS operator characters from every segment.
     3. Quote each remaining token as a literal phrase; tokens combine with
        implicit AND.
+    4. If ``max_tokens`` is set, keep only the first N tokens. Used by
+       progressive trim in the hybrid search path.
     """
     if not query:
         return ""
@@ -31,6 +33,8 @@ def _sanitize_query(query: str) -> str:
     tokens = [tok for tok in cleaned.split() if tok]
     if not tokens:
         return ""
+    if max_tokens is not None and len(tokens) > max_tokens:
+        tokens = tokens[:max_tokens]
     return " ".join(f'"{tok}"' for tok in tokens)
 
 
@@ -41,10 +45,12 @@ async def fts_search(
     scope: str | None = None,
     project_name: str | None = None,
     limit: int = 20,
+    offset: int = 0,
     include_superseded: bool = False,
     include_archived: bool = False,
+    max_tokens: int | None = None,
 ) -> list[Knowledge]:
-    match_expr = _sanitize_query(query)
+    match_expr = _sanitize_query(query, max_tokens=max_tokens)
     if not match_expr:
         return []
 
@@ -53,7 +59,7 @@ async def fts_search(
         "JOIN knowledge_fts f ON f.rowid = k.id "
         "WHERE knowledge_fts MATCH :q"
     )
-    params: dict[str, object] = {"q": match_expr, "limit": limit}
+    params: dict[str, object] = {"q": match_expr, "limit": limit, "offset": offset}
     if not include_superseded and not include_archived:
         sql += " AND k.status NOT IN ('superseded', 'archived')"
     elif not include_superseded:
@@ -66,7 +72,7 @@ async def fts_search(
     if project_name is not None:
         sql += " AND k.project_name = :project_name"
         params["project_name"] = project_name
-    sql += " ORDER BY bm25(knowledge_fts) LIMIT :limit"
+    sql += " ORDER BY bm25(knowledge_fts) LIMIT :limit OFFSET :offset"
 
     result = await session.execute(text(sql), params)
     ids = [row[0] for row in result.all()]
