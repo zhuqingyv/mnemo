@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "docs/website/**"
+      - "website/**"
       - ".github/workflows/website.yml"
   workflow_run:
     workflows: ["build"]
@@ -40,13 +40,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p docs/website/assets/js
+          mkdir -p website/assets/js
 
           latest_release="$(curl -fsSL https://api.github.com/repos/zhuqingyv/mnemo/releases/latest || true)"
           latest_version="$(printf '%s' "$latest_release" | jq -r '.tag_name // "unknown"')"
           published_at="$(printf '%s' "$latest_release" | jq -r '.published_at // ""')"
 
-          cat > docs/website/assets/js/version.js <<EOF
+          cat > website/assets/js/version.js <<EOF
           window.MNEMO_RELEASE = {
             version: "$latest_version",
             publishedAt: "$published_at",
@@ -57,7 +57,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/website
+          path: website
 
       - name: Deploy to GitHub Pages
         id: deployment

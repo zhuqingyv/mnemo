@@ -7,7 +7,7 @@ Builds one self-contained executable that bundles:
   - sqlite_vec native library (.dylib / .so / .dll)
   - jieba dictionaries
   - fastmcp data files
-  - the visualization front-end (docs/demo/) under `mnemo_viz/`
+  - the visualization front-end (viz/) under `mnemo_viz/`
   - the agent prompt markdown files (src/mnemo/setup/prompts/*.md)
 
 No host-specific path is hard-coded; PyInstaller's collect_* helpers locate
@@ -25,7 +25,7 @@ from PyInstaller.utils.hooks import (
 )
 
 PROJECT_ROOT = Path(SPECPATH).resolve()
-VIZ_SRC = PROJECT_ROOT / "docs" / "demo"
+VIZ_SRC = PROJECT_ROOT / "viz"
 
 # ---------------------------------------------------------------------------
 # Resource collection

@@ -5,7 +5,7 @@
  * 依赖：__viz._3dMaps（nodes/labelDistance/labelEls/nodesById）, __viz.g3d.style.truncTitle3D, 全局 THREE
  * 注册：__viz.g3d.labels = { rebuildLabels, updateLabelLayer, updateLabels }
  *
- * 源行：docs/demo/viz_v2/index.html 3041–3155
+ * 源行：viz/viz_v2/index.html 3041–3155
  */
 (function () {
   'use strict';

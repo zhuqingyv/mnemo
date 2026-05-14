@@ -5,7 +5,7 @@
  * 依赖：无（不读 __viz.*，不触 DOM / three.js）
  * 注册：__viz.g3d.style = { projectColor3D, nodeColor3D, edgeStyle3D, truncTitle3D }
  *
- * 源行：docs/demo/viz_v2/index.html 2848–2883
+ * 源行：viz/viz_v2/index.html 2848–2883
  */
 (function () {
   'use strict';

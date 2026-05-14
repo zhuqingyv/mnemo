@@ -7,7 +7,7 @@
  *       __viz.detail.openDetail, __viz.util.escapeHtml, 全局 ForceGraph3D
  * 注册：__viz.g3d.initGraph
  *
- * 源行：docs/demo/viz_v2/index.html 3158–3248
+ * 源行：viz/viz_v2/index.html 3158–3248
  */
 (function () {
   'use strict';

@@ -7,7 +7,7 @@
  *       __viz.g2d.loop.stopGraphLoop
  * 注册：__viz.g3d.lifecycle = { recolorNode, updateSearchMatch, activate, deactivate }
  *
- * 源行：docs/demo/viz_v2/index.html 3253–3348
+ * 源行：viz/viz_v2/index.html 3253–3348
  */
 (function () {
   'use strict';

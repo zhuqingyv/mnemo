@@ -1,6 +1,6 @@
 # viz_v2 模块拆分 TASK-LIST
 
-本文档按 Wave 分组列出所有拆分任务。源文件：`docs/demo/viz_v2/index.html`（3526 行）。
+本文档按 Wave 分组列出所有拆分任务。源文件：`viz/viz_v2/index.html`（3526 行）。
 目标：拆成 ≤ 200 行 / 文件的 CSS + JS 模块，通过 `window.__viz` 命名空间通信。
 
 > 所有 JS 文件采用 IIFE + 解构 + 注册模式，详见 `INTERFACE-CONTRACTS.md`。
@@ -166,7 +166,7 @@
 | W5-04 | 搜索 + 详情烟测 | CDP 向 `.search-wrap input` 派 input 事件值 `mnemo`，等 500ms，断言 `state.searchResults.length > 0`；点第一个 `.k-card`，断言 `.detail-overlay` 可见 |
 | W5-05 | 空闲性能烟测 | 切到 2D + 等 10s，断言 `window.__vizPerf._lastActiveAt` 与 `performance.now()` 差值 > 5000（rAF 已停，空闲 CPU 0%）|
 | W5-06 | 行数验证 | 对每个 .css / .js 跑 `wc -l`，所有文件 ≤ 200 行；`index.html` ≤ 70 行；列表写进验证报告 |
-| W5-07 | 交付报告 | 写 `docs/demo/viz_v2/SPLIT-REPORT.md`：(1) 所有文件 wc -l 表；(2) CDP 截图 4 张（list/2d/3d/detail）；(3) Console 无 error 的证据（screenshot of DevTools）；(4) 手动切换 200 次不崩的证据 |
+| W5-07 | 交付报告 | 写 `viz/viz_v2/SPLIT-REPORT.md`：(1) 所有文件 wc -l 表；(2) CDP 截图 4 张（list/2d/3d/detail）；(3) Console 无 error 的证据（screenshot of DevTools）；(4) 手动切换 200 次不崩的证据 |
 
 **完成判据（整 Wave）**：所有 W5-0x 通过；生成 SPLIT-REPORT.md 并 commit。
 

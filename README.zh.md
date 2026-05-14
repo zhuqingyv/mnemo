@@ -32,7 +32,7 @@ mnemo 现在最推荐的使用方式是桌面客户端。
 安装客户端，打开它，然后把你已经在使用的 AI 工具链接到 mnemo。客户端内置 `mnemo` CLI，所以安装好客户端，也就顺便给 Agent 准备好了本地 MCP 服务。
 
 <p align="center">
-  <img src="images/client-preview.png" alt="mnemo 桌面客户端链接 Claude Code、Qwen Code、CodeBuddy、Codex CLI、Gemini CLI、Cursor、Windsurf 和 GitHub Copilot CLI" width="900">
+  <img src="assets/client-preview.png" alt="mnemo 桌面客户端链接 Claude Code、Qwen Code、CodeBuddy、Codex CLI、Gemini CLI、Cursor、Windsurf 和 GitHub Copilot CLI" width="900">
 </p>
 
 客户端是 mnemo 的控制台：
@@ -272,7 +272,7 @@ open http://127.0.0.1:8787/viz/
 2D 图谱展示 Agent 维护出的记忆网络：条目会通过类型化关系、反馈和最近活动聚拢，而不是变成一组平铺的笔记。
 
 <p align="center">
-  <img src="images/1-compressed.jpg" alt="mnemo 大规模 2D 记忆图谱和实时指标" width="900">
+  <img src="assets/1-compressed.jpg" alt="mnemo 大规模 2D 记忆图谱和实时指标" width="900">
 </p>
 
 ### 搜索界面：不是查笔记，是调动记忆
@@ -280,7 +280,7 @@ open http://127.0.0.1:8787/viz/
 搜索界面同时融合全文、语义和图谱关系，并展示实时排序与维护任务。Agent 不只是拿到答案，还能在工作过程中顺手修正记忆库。
 
 <p align="center">
-  <img src="images/2-compressed.jpg" alt="mnemo 搜索界面、混合结果和维护任务" width="900">
+  <img src="assets/2-compressed.jpg" alt="mnemo 搜索界面、混合结果和维护任务" width="900">
 </p>
 
 ### 详情面板：每条记忆都有可信档案
@@ -288,7 +288,7 @@ open http://127.0.0.1:8787/viz/
 详情面板让每条记忆都可检查。status、scope、source、tags、反馈、生命周期事件和关联条目都贴近正文，Agent 和人都能判断这条记忆为什么仍然值得信任。
 
 <p align="center">
-  <img src="images/3-compressed.jpg" alt="mnemo 记忆详情面板、元数据和关联条目" width="900">
+  <img src="assets/3-compressed.jpg" alt="mnemo 记忆详情面板、元数据和关联条目" width="900">
 </p>
 
 ### 3D 图谱：看见记忆从平面长成空间
@@ -296,7 +296,7 @@ open http://127.0.0.1:8787/viz/
 3D 视图把记忆网络变成可以旋转、探索、观察聚类的空间结构。它让你看到哪些经验已经形成稳定核心，哪些记忆还在边缘等待更多证据。
 
 <p align="center">
-  <img src="images/4-compressed.jpg" alt="mnemo 3D 记忆图谱和空间聚类" width="900">
+  <img src="assets/4-compressed.jpg" alt="mnemo 3D 记忆图谱和空间聚类" width="900">
 </p>
 
 mnemo 先让记忆可见，然后让记忆内化，最后让 Agent 进化。

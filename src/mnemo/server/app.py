@@ -34,7 +34,7 @@ def _resolve_viz_dir() -> Path:
 
     Resolution order:
       1. PyInstaller onefile bundle: extracted under sys._MEIPASS/mnemo_viz/
-      2. Source / editable install:   <repo>/docs/demo/
+      2. Source / editable install:   <repo>/viz/
       3. Env override (MNEMO_VIZ_DIR) for debug or custom front-ends.
     """
     override = os.environ.get("MNEMO_VIZ_DIR")
@@ -47,7 +47,7 @@ def _resolve_viz_dir() -> Path:
         if bundled.is_dir():
             return bundled
 
-    return Path(__file__).resolve().parent.parent.parent.parent / "docs" / "demo"
+    return Path(__file__).resolve().parent.parent.parent.parent / "viz"
 
 
 VIZ_DIR = _resolve_viz_dir()

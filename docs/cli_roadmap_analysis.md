@@ -11,7 +11,7 @@
 | CLI 入口 | `mnemo` (`src/mnemo/cli/main.py`) | 成熟，基于 Typer，含 CRUD / search / monitor / serve / setup / mcp 等命令 |
 | MCP Server 入口 | `mnemo-mcp` (`src/mnemo/mcp/server.py`) | 成熟，FastMCP 实现，11 个 tools，支持 stdio |
 | HTTP Server | `mnemo serve` (`src/mnemo/server/app.py`) | 成熟，FastAPI + uvicorn，挂载 REST + MCP(SSE/HTTP) + `/viz` 静态文件 |
-| 可视化界面 | `docs/demo/viz_v2/` | 已有 2D/3D WebGL 可视化，通过 `mnemo serve` 访问 `/viz` |
+| 可视化界面 | `viz/viz_v2/` | 已有 2D/3D WebGL 可视化，通过 `mnemo serve` 访问 `/viz` |
 | 自动配置 | `mnemo setup` (`src/mnemo/setup/`) | 已支持 Claude Code、Cursor、Codex-CLI 的检测与配置注入 |
 | 二进制打包 | `mnemo.spec` (PyInstaller) + `install.sh` | 已有 macOS arm64 产物 (`dist/mnemo-darwin-arm64`)，install.sh 支持 curl 安装 |
 | 数据存储 | SQLite (`~/.mnemo/mnemo.db`) | 单文件，多实例需通过 `MNEMO_DATA_DIR` 环境变量隔离 |
@@ -25,7 +25,7 @@
 **目标**：用户执行一行命令（如 `mnemo open`）即可在浏览器打开可视化界面，无需记忆 URL。
 
 **现状**：
-- ✅ 可视化界面本身已存在（`docs/demo/viz_v2/`，2D Canvas + 3D WebGL）。
+- ✅ 可视化界面本身已存在（`viz/viz_v2/`，2D Canvas + 3D WebGL）。
 - ✅ HTTP Server 已会在 `/viz` 挂载静态文件。
 - ❌ **缺少直接打开浏览器的 CLI 命令**。当前只有 `mnemo serve`（前台启动 server），setup 提示里也只是文字提示 `open http://127.0.0.1:8787/viz/`。
 
@@ -244,7 +244,7 @@ mnemo setup              # 保留（向后兼容），内部委托给 mcp instal
 ### Phase 2：二进制打包与安装脚本优化
 
 1. **完善 PyInstaller spec**
-   - 确保 `docs/demo/viz_v2` 静态文件被打包进二进制（PyInstaller `--add-data`）。
+   - 确保 `viz/viz_v2` 静态文件被打包进二进制（PyInstaller `--add-data`）。
    - 确保 `sqlite_vec` 动态库在各平台正确收集（当前只写了 `.dylib`）。
    - 添加 Windows `.exe` 和 Linux 构建。
 

@@ -32,7 +32,7 @@ mnemo is now easiest to use as a desktop client.
 Install the app, open it, and link the AI tools you already use. The desktop client bundles the `mnemo` CLI, so installing the client also gives agents the local MCP server they need.
 
 <p align="center">
-  <img src="images/client-preview-en.png" alt="mnemo desktop client linking Claude Code, Qwen Code, CodeBuddy, Codex CLI, Gemini CLI, Cursor, Windsurf, and GitHub Copilot CLI" width="900">
+  <img src="assets/client-preview-en.png" alt="mnemo desktop client linking Claude Code, Qwen Code, CodeBuddy, Codex CLI, Gemini CLI, Cursor, Windsurf, and GitHub Copilot CLI" width="900">
 </p>
 
 The client is the control surface:
@@ -256,7 +256,7 @@ open http://127.0.0.1:8787/viz/
 The 2D graph shows the memory network agents maintain: entries cluster through typed relations, feedback, and recent activity instead of becoming a flat note list.
 
 <p align="center">
-  <img src="images/1-compressed.jpg" alt="mnemo large-scale 2D memory graph with live metrics" width="900">
+  <img src="assets/1-compressed.jpg" alt="mnemo large-scale 2D memory graph with live metrics" width="900">
 </p>
 
 ### Search interface: not notes, memory activation
@@ -264,7 +264,7 @@ The 2D graph shows the memory network agents maintain: entries cluster through t
 The search interface combines full-text, semantic, and graph signals with real-time ranking and maintenance task dispatch. Agents do not just get answers; they can improve the memory base while working.
 
 <p align="center">
-  <img src="images/2-compressed.jpg" alt="mnemo search interface with hybrid results and maintenance tasks" width="900">
+  <img src="assets/2-compressed.jpg" alt="mnemo search interface with hybrid results and maintenance tasks" width="900">
 </p>
 
 ### Detail panel: every memory has a trust file
@@ -272,7 +272,7 @@ The search interface combines full-text, semantic, and graph signals with real-t
 The detail panel keeps each memory inspectable. Status, scope, source, tags, feedback, lifecycle events, and related entries stay close to the content, so agents and humans can audit why a memory should still be trusted.
 
 <p align="center">
-  <img src="images/3-compressed.jpg" alt="mnemo memory detail panel with metadata and related entries" width="900">
+  <img src="assets/3-compressed.jpg" alt="mnemo memory detail panel with metadata and related entries" width="900">
 </p>
 
 ### 3D graph: memory grows from a plane into space
@@ -280,7 +280,7 @@ The detail panel keeps each memory inspectable. Status, scope, source, tags, fee
 The 3D view turns the memory network into a spatial structure you can rotate, explore, and inspect by cluster. It shows which experiences have formed a stable core and which memories are still waiting for stronger evidence.
 
 <p align="center">
-  <img src="images/4-compressed.jpg" alt="mnemo 3D memory graph with spatial clusters" width="900">
+  <img src="assets/4-compressed.jpg" alt="mnemo 3D memory graph with spatial clusters" width="900">
 </p>
 
 mnemo makes memory visible, then internalizes it, then helps agents evolve.

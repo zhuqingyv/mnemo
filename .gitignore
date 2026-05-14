@@ -26,3 +26,4 @@ htmlcov/
 test-results/
 .mnemo/
 *.db-journal
+.qwen/

@@ -1,6 +1,6 @@
 # viz v2 架构方案
 
-**目标**：把 `docs/demo/viz_v1_live.html`（单文件 2487 行）用 nova-dom 重构为多文件组件化结构 `docs/demo/viz_v2/`，每个代码文件 ≤ 200 行。
+**目标**：把 `viz/viz_v1_live.html`（单文件 2487 行）用 nova-dom 重构为多文件组件化结构 `viz/viz_v2/`，每个代码文件 ≤ 200 行。
 
 **分界**：所有 `innerHTML` 拼接的 UI 走 nova-dom；Canvas 2D 绘图、物理引擎、RAF 动画循环、拖拽/滚轮交互、颜色工具保持原生 JS（框架无感知，Canvas API 本来就不是 DOM）。
 
@@ -9,7 +9,7 @@
 ## 1. 目录树
 
 ```
-docs/demo/viz_v2/
+viz/viz_v2/
 ├── index.html                       ~60 行   入口 HTML，只挂 <div id="app">、引 main.js
 ├── styles/
 │   ├── tokens.css                   ~40 行   CSS 变量（颜色/字体/radius）

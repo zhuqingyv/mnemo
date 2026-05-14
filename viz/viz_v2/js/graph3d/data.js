@@ -5,7 +5,7 @@
  * 依赖：__viz.state（仅读 knowledge / _rawRelations）, __viz._3dMaps（nodes/links/索引）
  * 注册：__viz.g3d.data = { build3DGraphData, diff3DGraphData, recomputeEdgeCounts3D }
  *
- * 源行：docs/demo/viz_v2/index.html 2885–3036
+ * 源行：viz/viz_v2/index.html 2885–3036
  *
  * 注意：3D 的 nodes/links 存在 _3dMaps（非 reactive），3d-force-graph 才能安全
  *       读写节点上的 Float32Array 位置向量，不被 nova-dom Proxy 打断 receiver。
