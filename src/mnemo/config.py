@@ -40,6 +40,29 @@ class MnemoConfig(BaseSettings):
     embedding_warmup_timeout_ms: int = Field(default=10000)
     embedding_content_max_chars: int = Field(default=1500)
 
+    # Guide LLM configuration (post-V0, docs/builtin-llm-guide-design.md).
+    # enabled: False keeps the V0 deterministic pipeline; True enables the
+    #   local LLM (llama-server or Ollama) pipeline.
+    # provider: "llama_cpp" talks to llama-server on localhost:8080;
+    #   "ollama" talks to Ollama on localhost:11434.
+    # model_name: identifier shown in UI and used for Ollama model pull check.
+    # model_path: path to GGUF file; empty = look in bundled resources or
+    #   ~/.mnemo/models/.
+    # runtime: "llama_cpp" for llama-server, "ollama" for Ollama API.
+    # context_size: token window for the model (must fit prompt + output).
+    # max_tokens: maximum generated tokens per response.
+    guide_model: dict = Field(
+        default_factory=lambda: {
+            "enabled": False,
+            "provider": "llama_cpp",
+            "model_name": "Qwen2.5-1.5B-Instruct-GGUF",
+            "model_path": "",
+            "runtime": "llama_cpp",
+            "context_size": 4096,
+            "max_tokens": 512,
+        }
+    )
+
     # M3b authority rerank on top of RRF (TECH_PLAN §4 / §5). Values here are
     # the M3b-validated weights (acc 79.6% / int 89.5% / top3 90.0% / neg
     # 9/10 on real service.search). M4 task #3 attempted a 1875-combo grid

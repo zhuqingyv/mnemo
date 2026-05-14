@@ -141,6 +141,7 @@ fn init_interface_gateway() {
     // Register backend-forwarded methods
     for method in &[
         "guide.ask",
+        "guide.status",
         "knowledge.create",
         "knowledge.search",
         "knowledge.get",

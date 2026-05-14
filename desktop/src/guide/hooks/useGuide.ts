@@ -1,7 +1,14 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ChatMessage, AskResponse, ModelStatus } from "../types";
 
 type SendFn = <T = unknown>(method: string, params?: unknown) => Promise<T>;
+
+interface GuideStatus {
+  enabled: boolean;
+  available: boolean;
+  provider: string;
+  model_name: string;
+}
 
 export function useGuide(send: SendFn) {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -16,6 +23,25 @@ export function useGuide(send: SendFn) {
   const [loading, setLoading] = useState(false);
   const [modelStatus, setModelStatus] = useState<ModelStatus>("faq");
   const [error, setError] = useState<string | null>(null);
+
+  // Check guide model status on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const status = await send<GuideStatus>("guide.status", {});
+        if (cancelled) return;
+        if (status.enabled) {
+          setModelStatus(status.available ? "available" : "degraded");
+        } else {
+          setModelStatus("faq");
+        }
+      } catch {
+        // guide.status not available → default to FAQ mode
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [send]);
 
   const ask = useCallback(async (question: string) => {
     const userMsg: ChatMessage = {

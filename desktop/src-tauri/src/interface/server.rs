@@ -262,6 +262,7 @@ impl WsGateway {
         match method {
             // Guide
             "guide.ask" => ("POST", "/guide/ask".to_string()),
+            "guide.status" => ("GET", "/guide/status".to_string()),
             "guide.quick_questions" => ("GET", "/guide/quick_questions".to_string()),
 
             // Knowledge CRUD
