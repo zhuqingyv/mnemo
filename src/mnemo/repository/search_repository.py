@@ -45,6 +45,7 @@ async def fts_search(
     scope: str | None = None,
     project_name: str | None = None,
     limit: int = 20,
+    offset: int = 0,
     include_superseded: bool = False,
     include_archived: bool = False,
     max_tokens: int | None = None,
@@ -58,7 +59,7 @@ async def fts_search(
         "JOIN knowledge_fts f ON f.rowid = k.id "
         "WHERE knowledge_fts MATCH :q"
     )
-    params: dict[str, object] = {"q": match_expr, "limit": limit}
+    params: dict[str, object] = {"q": match_expr, "limit": limit, "offset": offset}
     if not include_superseded and not include_archived:
         sql += " AND k.status NOT IN ('superseded', 'archived')"
     elif not include_superseded:
@@ -71,7 +72,7 @@ async def fts_search(
     if project_name is not None:
         sql += " AND k.project_name = :project_name"
         params["project_name"] = project_name
-    sql += " ORDER BY bm25(knowledge_fts) LIMIT :limit"
+    sql += " ORDER BY bm25(knowledge_fts) LIMIT :limit OFFSET :offset"
 
     result = await session.execute(text(sql), params)
     ids = [row[0] for row in result.all()]

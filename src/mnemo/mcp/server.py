@@ -384,6 +384,7 @@ async def search(
     scope: str | None = None,
     project_name: str | None = None,
     limit: int = 20,
+    offset: int = 0,
     include_archived: bool = False,
     task_context: str | None = None,
     mode: str = "hybrid",
@@ -414,6 +415,9 @@ async def search(
     - 已经在上一次 search 结果里了还反复搜同一个 query。
 
     参数：
+    - limit: 返回条数，默认 20。
+    - offset: 配合 limit 翻页，默认 0。offset=0 是第一页，offset=20
+      是第二页。同一个 query 换 offset 即可浏览全部结果。
     - scope：可选，"global"/"project"/"session" 过滤。
     - project_name：scope="project" 时的项目名。
     - include_archived：默认隐藏归档条目；排查旧决策时可打开。
@@ -432,6 +436,7 @@ async def search(
         scope=scope,
         project_name=project_name,
         limit=limit,
+        offset=offset,
         mode=mode,
         include_archived=include_archived,
         task_context=task_context,

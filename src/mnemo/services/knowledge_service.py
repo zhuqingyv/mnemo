@@ -1370,6 +1370,7 @@ class KnowledgeService:
         scope: str | None,
         project_name: str | None,
         limit: int,
+        offset: int = 0,
         include_archived: bool,
         task_context: str | None,
     ) -> tuple[list[dict[str, Any]], bool]:
@@ -1380,12 +1381,17 @@ class KnowledgeService:
         — callers skip the auto-fallback retry in that case since FTS-only is
         already its own failure mode.
         """
+        # When offset > 0, fetch enough candidates so the final slice still
+        # has results.  FTS and vector each contribute to RRF k=60, so we
+        # inflate the fetch window by offset to give the rerank step enough
+        # headroom for pagination.
+        fetch_limit = max(limit + offset, limit, 20)
         fts_hits = await sr.fts_search(
             session,
             query,
             scope=scope,
             project_name=project_name,
-            limit=limit,
+            limit=fetch_limit,
             include_archived=include_archived,
         )
 
@@ -1405,7 +1411,7 @@ class KnowledgeService:
                     max_tokens=n,
                     scope=scope,
                     project_name=project_name,
-                    limit=limit,
+                    limit=fetch_limit,
                     include_archived=include_archived,
                 )
                 n -= 1
@@ -1444,7 +1450,7 @@ class KnowledgeService:
                     query_vec,
                     scope=scope,
                     project_name=project_name,
-                    limit=limit,
+                    limit=fetch_limit,
                     include_archived=include_archived,
                     distance_threshold=vector_threshold,
                 )
@@ -1470,7 +1476,7 @@ class KnowledgeService:
             reranked = await self._quality_rerank(
                 session, fused, query_scope=scope, task_context=task_context
             )
-            final_hits = reranked[:limit]
+            final_hits = reranked[offset : offset + limit]
             if self._config.contradiction_pair_enabled:
                 await self._attach_conflict_pairs(session, final_hits)
             return final_hits, True
@@ -1482,7 +1488,7 @@ class KnowledgeService:
         reranked = await self._quality_rerank(
             session, fused, query_scope=scope, task_context=task_context
         )
-        final_hits = reranked[:limit]
+        final_hits = reranked[offset : offset + limit]
         if final_hits:
             surviving_ids = [e["id"] for e in final_hits]
             survivors = [
@@ -1503,6 +1509,7 @@ class KnowledgeService:
         scope: str | None = None,
         project_name: str | None = None,
         limit: int = 20,
+        offset: int = 0,
         mode: str = "hybrid",
         include_archived: bool = False,
         task_context: str | None = None,
@@ -1550,6 +1557,7 @@ class KnowledgeService:
                     scope=scope,
                     project_name=project_name,
                     limit=limit,
+                    offset=offset,
                     include_archived=include_archived,
                 )
                 await self._apply_stale_lifecycle(session, list(hits))
@@ -1567,6 +1575,7 @@ class KnowledgeService:
                     scope=scope,
                     project_name=project_name,
                     limit=limit,
+                    offset=offset,
                     include_archived=include_archived,
                 )
                 await self._apply_stale_lifecycle(session, list(hits))
@@ -1584,6 +1593,7 @@ class KnowledgeService:
                 scope=scope,
                 project_name=project_name,
                 limit=limit,
+                offset=offset,
                 include_archived=include_archived,
                 task_context=task_context,
             )
