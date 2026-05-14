@@ -78,10 +78,12 @@ class MnemoConfig(BaseSettings):
     # dispatcher/hint behavior reverts to pre-phase5.
     task_tracking_enabled: bool = Field(default=True)
 
-    # P0 UX: when hybrid search returns zero hits, retry once with a shortened
-    # query (stopwords/common modifiers stripped). Tagged results carry
-    # ``auto_fallback: true`` so callers can show a "did you mean" hint.
-    search_auto_fallback_enabled: bool = Field(default=True)
+    # When FTS5 returns zero hits, progressively trim tokens from the right
+    # (N, N-1, N-2, ... down to 2) and retry with the shorter query.  This
+    # softens the strict AND semantics so one cold token doesn't kill the
+    # whole query.  When even 2-token FTS still returns nothing, the system
+    # falls through to the vec_only path (gated by ``vec_only_min_final``).
+    search_progressive_trim_enabled: bool = Field(default=True)
 
     # Auto-link by vector similarity — on create_knowledge, top-K nearest
     # neighbors above ``auto_link_threshold`` get a ``related`` edge with the
