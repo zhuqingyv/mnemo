@@ -10,7 +10,7 @@ export interface AskResponse {
   intent: string;
   commands: Command[];
   model_used: boolean;
-  source: "fixed_reply" | "knowledge_card" | "faq" | "install_template" | "fallback";
+  source: "llm" | "fixed_reply" | "knowledge_card" | "faq" | "install_template" | "fallback";
   cards_used: string[];
 }
 
